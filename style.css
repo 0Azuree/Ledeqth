@@ -6,35 +6,35 @@ body, html {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #000000; /* OLED Black */
     color: #FFFFFF;
-    overflow-x: hidden; /* Prevent horizontal scrollbar from snowflakes */
+    overflow-x: hidden;
 }
 
 body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    position: relative; /* Needed for absolute positioning of snow container */
+    position: relative;
 }
 
 /* Snowfall Container */
 #snow-container {
-    position: fixed; /* Fixed position stays behind content */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allows clicks to go through */
-    overflow: hidden; /* Hide snowflakes going outside */
-    z-index: -1; /* Place behind main content */
+    pointer-events: none;
+    overflow: hidden;
+    z-index: -1;
 }
 
 /* Individual Snowflake Style */
 .snowflake {
     position: absolute;
-    top: -10px; /* Start above screen */
-    background-color: white;
+    top: -10px;
+    background-color: white; /* Snow is white */
     border-radius: 50%;
-    opacity: 0.8;
+    /* Opacity managed by JS and animation */
     pointer-events: none;
     animation: snowfall linear infinite;
 }
@@ -43,111 +43,104 @@ body {
 @keyframes snowfall {
     0% {
         transform: translateY(0) translateX(0) rotate(0deg);
-        opacity: 0.8;
+        opacity: 0.8; /* Start visible */
     }
     100% {
-        /* Fall down screen height + a bit extra */
         transform: translateY(105vh) translateX(15px) rotate(360deg);
-        opacity: 0;
+        opacity: 0; /* Fade out at bottom */
     }
-    /* Add variations in horizontal movement if desired */
-    /* 50% { transform: translateY(50vh) translateX(10px) rotate(180deg); opacity: 0.6; } */
 }
 
 
 /* Main Content Area Styling */
 main {
     flex-grow: 1;
-    padding: 20px 20px 40px 20px; /* Adjusted padding (less top padding needed now) */
+    padding: 40px 20px 40px 20px; /* Added more top padding */
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    z-index: 1; /* Ensure main content is above snow */
-    position: relative; /* Needed if children use absolute positioning */
-}
-
-/* Navigation Styling (Now inside Main) */
-nav {
-    width: 100%; /* Take full width for centering */
-    text-align: center; /* Center the inline-block list items */
-    margin-bottom: 40px; /* Space below nav buttons */
-    margin-top: 20px; /* Space above nav buttons */
-}
-
-nav ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: inline-flex; /* Use inline-flex to group buttons */
-    gap: 20px; /* Increased space between buttons */
-    justify-content: center;
-}
-
-nav li {
-    display: inline-block; /* Redundant with flex but harmless */
-}
-
-.nav-button {
-    text-decoration: none;
-    padding: 10px 25px; /* Slightly larger padding */
-    background-color: #404040; /* Darker Gray */
-    color: #FFFFFF;
-    border: none;
-    border-radius: 5px;
-    font-size: 1.1em; /* Slightly larger font */
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.1s ease;
-}
-
-.nav-button:hover {
-    background-color: #606060; /* Lighter dark gray on hover */
-}
-
-.nav-button:active {
-    transform: scale(0.97); /* Slightly more pronounced click effect */
-}
-
-
-/* Specific styling for the home page main content */
-main.home-main {
-    justify-content: center; /* Center title/description vertically */
+    z-index: 1;
+    position: relative;
 }
 
 /* Giant Title Styling */
 .main-title {
     font-size: 5rem;
     font-weight: bold;
-    margin: 0 0 15px 0; /* Add margin below title */
+    margin: 0 0 15px 0;
     line-height: 1.2;
-    color: #FFFFFF; /* Ensure it's white */
-    /* Thin dark gray outline using text-shadow */
+    color: #FFFFFF;
     text-shadow:
        -1px -1px 0 #333,
         1px -1px 0 #333,
        -1px  1px 0 #333,
-        1px  1px 0 #333; /* Adjust color (#333) and thickness (1px) if needed */
+        1px  1px 0 #333;
 }
 
 /* Description Styling */
 .description {
     font-size: 1.2em;
-    color: #bbbbbb; /* Slightly brighter gray for readability */
+    color: #bbbbbb;
     max-width: 650px;
     line-height: 1.6;
-    margin-bottom: 30px; /* Space below description */
+    margin-bottom: 40px; /* Space below description, before buttons */
 }
+
+
+/* Navigation Styling (Now Below Title/Description) */
+nav {
+    width: 100%;
+    text-align: center;
+     /* Adjusted Margins: More space above now, less below */
+    margin-top: 0; /* Removed top margin as description margin handles space */
+    margin-bottom: 30px;
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: inline-flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+nav li {
+    display: inline-block;
+}
+
+.nav-button {
+    text-decoration: none;
+    padding: 10px 25px;
+    background-color: #1c1c1c; /* NEW Darker Gray */
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.nav-button:hover {
+    background-color: #3a3a3a; /* NEW Hover for darker gray */
+}
+
+.nav-button:active {
+    transform: scale(0.97);
+}
+
 
 /* Styling for content on Projects/Games pages */
 main h2 {
     font-size: 2.5em;
-    margin-top: 20px; /* Add space above H2 since nav is closer */
-    margin-bottom: 20px;
+    margin-top: 0; /* Reset top margin as nav is now above */
+    margin-bottom: 30px; /* Increased space below H2 */
     color: #eee;
 }
 
-main p { /* Default paragraph styling for subpages */
+main p { /* Default paragraph styling for subpages - NOT the main description */
     font-size: 1.1em;
     color: #ccc;
     max-width: 800px;
@@ -155,8 +148,9 @@ main p { /* Default paragraph styling for subpages */
     line-height: 1.6;
 }
 
-/* Placeholder for Project/Game item styling */
-.project-item, .game-item {
+/* Project/Game item styling */
+.game-item, /* Combined rule */
+.project-item {
     background-color: #1a1a1a;
     padding: 25px;
     margin-bottom: 25px;
@@ -167,11 +161,32 @@ main p { /* Default paragraph styling for subpages */
     text-align: left;
 }
 
-.project-item h3, .game-item h3 {
+.game-item h3, /* Combined rule */
+.project-item h3 {
     margin-top: 0;
     margin-bottom: 10px;
-    color: #00aaff; /* Keep example accent color */
+    color: #00aaff;
 }
+
+/* Style for links inside game/project items to look like buttons */
+.game-link-button,
+.project-link-button { /* Add this class to project links too if desired */
+    display: inline-block; /* Allow padding and margins */
+    padding: 8px 15px;
+    background-color: #007bff; /* Example blue */
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 10px; /* Space above the button */
+    transition: background-color 0.3s ease;
+    font-weight: 500;
+}
+
+.game-link-button:hover,
+.project-link-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
+
 
 /* Optional Footer Styling */
 footer {
@@ -182,57 +197,24 @@ footer {
     border-top: 1px solid #333;
     color: #888;
     font-size: 0.9em;
-    position: relative; /* Ensure footer is above snow */
+    position: relative;
     z-index: 1;
 }
 
-/* Media Queries for Responsiveness */
+/* Media Queries */
 @media (max-width: 768px) {
-    .main-title {
-        font-size: 3.5rem;
-    }
-     .description {
-        font-size: 1.1em;
-        max-width: 90%;
-     }
-     nav ul {
-        gap: 15px;
-     }
-    .nav-button {
-        padding: 8px 18px;
-        font-size: 1em;
-    }
+    .main-title { font-size: 3.5rem; }
+     .description { font-size: 1.1em; max-width: 90%; margin-bottom: 30px;}
+     nav ul { gap: 15px; }
+    .nav-button { padding: 8px 18px; font-size: 1em; }
 }
 
 @media (max-width: 480px) {
-    .main-title {
-        font-size: 2.8rem; /* Further reduce size */
-        /* Adjust text shadow slightly if needed for smaller size */
-        text-shadow:
-           -1px -1px 0 #333,
-            1px -1px 0 #333,
-           -1px  1px 0 #333,
-            1px  1px 0 #333;
-    }
-    .description {
-        font-size: 1em;
-     }
-
-    nav {
-        margin-bottom: 25px; /* Adjust spacing */
-        margin-top: 15px;
-    }
-    nav ul {
-        /* Allow buttons to wrap if needed */
-        flex-wrap: wrap;
-        gap: 10px; /* Reduce gap when wrapped */
-    }
-    .nav-button {
-        padding: 7px 15px;
-        font-size: 0.9em;
-    }
-
-     main h2 {
-        font-size: 2em;
-    }
+    .main-title { font-size: 2.8rem; }
+    .description { font-size: 1em; margin-bottom: 25px;}
+    nav { margin-bottom: 25px; }
+    nav ul { flex-wrap: wrap; gap: 10px; }
+    .nav-button { padding: 7px 15px; font-size: 0.9em; }
+     main h2 { font-size: 2em; margin-bottom: 20px;}
+    .game-item, .project-item { width: 90%; padding: 20px; }
 }
