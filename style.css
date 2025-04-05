@@ -6,32 +6,33 @@ body, html {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background-color: #000000; /* OLED Black */
     color: #FFFFFF;
-    overflow-x: hidden;
+    overflow-x: hidden; /* Prevent horizontal scrollbar from snowflakes */
 }
 
 body {
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    position: relative;
+    position: relative; /* Needed for absolute/fixed children */
 }
 
 /* Snowfall Container */
 #snow-container {
-    position: fixed;
+    position: fixed; /* Fixed position stays behind content */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none;
-    overflow: hidden;
-    z-index: -1;
+    pointer-events: none; /* Allows clicks to go through */
+    overflow: hidden; /* Hide snowflakes going outside */
+    z-index: -1; /* Place behind main content */
+    display: block; /* Added for precaution */
 }
 
 /* Individual Snowflake Style */
 .snowflake {
     position: absolute;
-    top: -10px;
+    top: -10px; /* Start above screen */
     background-color: white; /* Snow is white */
     border-radius: 50%;
     /* Opacity managed by JS and animation */
@@ -46,63 +47,78 @@ body {
         opacity: 0.8; /* Start visible */
     }
     100% {
+        /* Fall down screen height + a bit extra */
         transform: translateY(105vh) translateX(15px) rotate(360deg);
         opacity: 0; /* Fade out at bottom */
     }
 }
 
-
 /* Main Content Area Styling */
 main {
-    flex-grow: 1;
-    padding: 40px 20px 40px 20px; /* Added more top padding */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    z-index: 1;
-    position: relative;
+    flex-grow: 1; /* Takes available space */
+    display: flex; /* Use flexbox for children */
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center children horizontally (like h2 on other pages) */
+    padding: 20px; /* Consistent padding */
+    z-index: 1; /* Ensure main content is above snow */
+    position: relative; /* For stacking context */
+}
+
+/* Specific styling for the home page main element */
+main.home-main {
+    /* Override default main alignment for homepage */
+    justify-content: center; /* Vertically center the single child (.content-block) */
+    align-items: center; /* Horizontally center the single child (.content-block) */
+    text-align: center; /* Ensure text align applies if needed */
+}
+
+/* Wrapper Div for Centered Content on Homepage */
+.content-block {
+    /* This block will be centered by main.home-main */
+    text-align: center; /* Center text elements (h1, p, nav links) inside */
+    max-width: 90%; /* Prevent it from getting too wide on large screens */
 }
 
 /* Giant Title Styling */
 .main-title {
     font-size: 5rem;
     font-weight: bold;
-    margin: 0 0 15px 0;
+    margin: 0 0 15px 0; /* Margin below title */
     line-height: 1.2;
     color: #FFFFFF;
     text-shadow:
        -1px -1px 0 #333,
         1px -1px 0 #333,
        -1px  1px 0 #333,
-        1px  1px 0 #333;
+        1px  1px 0 #333; /* Thin dark gray outline */
 }
 
 /* Description Styling */
 .description {
     font-size: 1.2em;
     color: #bbbbbb;
-    max-width: 650px;
+    max-width: 650px; /* Limit width within the content block */
     line-height: 1.6;
+    margin-left: auto; /* Center the description block itself if narrower */
+    margin-right: auto;
     margin-bottom: 40px; /* Space below description, before buttons */
 }
-
 
 /* Navigation Styling (Now Below Title/Description) */
 nav {
     width: 100%;
     text-align: center;
-     /* Adjusted Margins: More space above now, less below */
-    margin-top: 0; /* Removed top margin as description margin handles space */
-    margin-bottom: 30px;
+     /* Adjusted Margins: No top margin needed now */
+    margin-top: 0;
+    margin-bottom: 20px; /* Space below buttons */
 }
 
 nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: inline-flex;
-    gap: 20px;
+    display: inline-flex; /* Group buttons nicely */
+    gap: 20px; /* Space between buttons */
     justify-content: center;
 }
 
@@ -113,7 +129,7 @@ nav li {
 .nav-button {
     text-decoration: none;
     padding: 10px 25px;
-    background-color: #1c1c1c; /* NEW Darker Gray */
+    background-color: #1c1c1c; /* User requested Darker Gray */
     color: #FFFFFF;
     border: none;
     border-radius: 5px;
@@ -124,19 +140,18 @@ nav li {
 }
 
 .nav-button:hover {
-    background-color: #3a3a3a; /* NEW Hover for darker gray */
+    background-color: #3a3a3a; /* Hover for darker gray */
 }
 
 .nav-button:active {
-    transform: scale(0.97);
+    transform: scale(0.97); /* Click effect */
 }
-
 
 /* Styling for content on Projects/Games pages */
 main h2 {
     font-size: 2.5em;
-    margin-top: 0; /* Reset top margin as nav is now above */
-    margin-bottom: 30px; /* Increased space below H2 */
+    margin-top: 0; /* Reset top margin */
+    margin-bottom: 30px; /* Space below H2 */
     color: #eee;
 }
 
@@ -151,21 +166,21 @@ main p { /* Default paragraph styling for subpages - NOT the main description */
 /* Project/Game item styling */
 .game-item, /* Combined rule */
 .project-item {
-    background-color: #1a1a1a;
+    background-color: #1a1a1a; /* Dark background for items */
     padding: 25px;
     margin-bottom: 25px;
     border-radius: 8px;
-    border: 1px solid #333;
-    width: 85%;
-    max-width: 750px;
-    text-align: left;
+    border: 1px solid #333; /* Subtle border */
+    width: 85%; /* Responsive width */
+    max-width: 750px; /* Max width for readability */
+    text-align: left; /* Align text left within items */
 }
 
 .game-item h3, /* Combined rule */
 .project-item h3 {
     margin-top: 0;
     margin-bottom: 10px;
-    color: #00aaff;
+    color: #00aaff; /* Example accent color for titles within items */
 }
 
 /* Style for links inside game/project items to look like buttons */
@@ -187,34 +202,350 @@ main p { /* Default paragraph styling for subpages - NOT the main description */
     background-color: #0056b3; /* Darker blue on hover */
 }
 
+/* Optional Footer Styling */
+footer {
+    text-align: center;
+    padding: 15px;
+    margin-top: auto; /* Pushes footer to the bottom */
+    background-color: #111111; /* Slightly off-black */
+    border-top: 1px solid #333; /* Separator line */
+    color: #888; /* Dim text color */
+    font-size: 0.9em;
+    position: relative; /* Ensure footer is above snow */
+    z-index: 1;
+}
+
+/* Media Queries for Responsiveness */
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 3.5rem;
+    }
+     .description {
+        font-size: 1.1em;
+        max-width: 90%;
+        margin-bottom: 30px;
+     }
+     nav ul {
+        gap: 15px;
+     }
+    .nav-button {
+        padding: 8px 18px;
+        font-size: 1em;
+    }
+    main h2 {
+        font-size: 2.2em;
+    }
+    .game-item, .project-item {
+        width: 90%;
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-title {
+        font-size: 2.8rem;
+    }
+    .description {
+        font-size: 1em;
+        margin-bottom: 25px;
+     }
+    nav {
+        margin-bottom: 25px;
+    }
+    nav ul {
+        /* Allow buttons to wrap if needed */
+        flex-wrap: wrap;
+        gap: 10px; /* Reduce gap when wrapped */
+    }
+    .nav-button {
+        padding: 7px 15px;
+        font-size: 0.9em;
+    }
+     main h2 {
+        font-size: 2em;
+        margin-bottom: 20px;
+    }
+    .game-item, .project-item {
+        width: 95%; /* Take slightly more width on very small screens */
+        padding: 15px;
+    }
+    .game-link-button, .project-link-button {
+        padding: 7px 12px;
+        font-size: 0.9em;
+    }
+}/* Basic Reset & Body Styling */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #000000; /* OLED Black */
+    color: #FFFFFF;
+    overflow-x: hidden; /* Prevent horizontal scrollbar from snowflakes */
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: relative; /* Needed for absolute/fixed children */
+}
+
+/* Snowfall Container */
+#snow-container {
+    position: fixed; /* Fixed position stays behind content */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none; /* Allows clicks to go through */
+    overflow: hidden; /* Hide snowflakes going outside */
+    z-index: -1; /* Place behind main content */
+    display: block; /* Added for precaution */
+}
+
+/* Individual Snowflake Style */
+.snowflake {
+    position: absolute;
+    top: -10px; /* Start above screen */
+    background-color: white; /* Snow is white */
+    border-radius: 50%;
+    /* Opacity managed by JS and animation */
+    pointer-events: none;
+    animation: snowfall linear infinite;
+}
+
+/* Snowfall Animation */
+@keyframes snowfall {
+    0% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+        opacity: 0.8; /* Start visible */
+    }
+    100% {
+        /* Fall down screen height + a bit extra */
+        transform: translateY(105vh) translateX(15px) rotate(360deg);
+        opacity: 0; /* Fade out at bottom */
+    }
+}
+
+/* Main Content Area Styling */
+main {
+    flex-grow: 1; /* Takes available space */
+    display: flex; /* Use flexbox for children */
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center children horizontally (like h2 on other pages) */
+    padding: 20px; /* Consistent padding */
+    z-index: 1; /* Ensure main content is above snow */
+    position: relative; /* For stacking context */
+}
+
+/* Specific styling for the home page main element */
+main.home-main {
+    /* Override default main alignment for homepage */
+    justify-content: center; /* Vertically center the single child (.content-block) */
+    align-items: center; /* Horizontally center the single child (.content-block) */
+    text-align: center; /* Ensure text align applies if needed */
+}
+
+/* Wrapper Div for Centered Content on Homepage */
+.content-block {
+    /* This block will be centered by main.home-main */
+    text-align: center; /* Center text elements (h1, p, nav links) inside */
+    max-width: 90%; /* Prevent it from getting too wide on large screens */
+}
+
+/* Giant Title Styling */
+.main-title {
+    font-size: 5rem;
+    font-weight: bold;
+    margin: 0 0 15px 0; /* Margin below title */
+    line-height: 1.2;
+    color: #FFFFFF;
+    text-shadow:
+       -1px -1px 0 #333,
+        1px -1px 0 #333,
+       -1px  1px 0 #333,
+        1px  1px 0 #333; /* Thin dark gray outline */
+}
+
+/* Description Styling */
+.description {
+    font-size: 1.2em;
+    color: #bbbbbb;
+    max-width: 650px; /* Limit width within the content block */
+    line-height: 1.6;
+    margin-left: auto; /* Center the description block itself if narrower */
+    margin-right: auto;
+    margin-bottom: 40px; /* Space below description, before buttons */
+}
+
+/* Navigation Styling (Now Below Title/Description) */
+nav {
+    width: 100%;
+    text-align: center;
+     /* Adjusted Margins: No top margin needed now */
+    margin-top: 0;
+    margin-bottom: 20px; /* Space below buttons */
+}
+
+nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: inline-flex; /* Group buttons nicely */
+    gap: 20px; /* Space between buttons */
+    justify-content: center;
+}
+
+nav li {
+    display: inline-block;
+}
+
+.nav-button {
+    text-decoration: none;
+    padding: 10px 25px;
+    background-color: #1c1c1c; /* User requested Darker Gray */
+    color: #FFFFFF;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.1em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
+}
+
+.nav-button:hover {
+    background-color: #3a3a3a; /* Hover for darker gray */
+}
+
+.nav-button:active {
+    transform: scale(0.97); /* Click effect */
+}
+
+/* Styling for content on Projects/Games pages */
+main h2 {
+    font-size: 2.5em;
+    margin-top: 0; /* Reset top margin */
+    margin-bottom: 30px; /* Space below H2 */
+    color: #eee;
+}
+
+main p { /* Default paragraph styling for subpages - NOT the main description */
+    font-size: 1.1em;
+    color: #ccc;
+    max-width: 800px;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+/* Project/Game item styling */
+.game-item, /* Combined rule */
+.project-item {
+    background-color: #1a1a1a; /* Dark background for items */
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    border: 1px solid #333; /* Subtle border */
+    width: 85%; /* Responsive width */
+    max-width: 750px; /* Max width for readability */
+    text-align: left; /* Align text left within items */
+}
+
+.game-item h3, /* Combined rule */
+.project-item h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #00aaff; /* Example accent color for titles within items */
+}
+
+/* Style for links inside game/project items to look like buttons */
+.game-link-button,
+.project-link-button { /* Add this class to project links too if desired */
+    display: inline-block; /* Allow padding and margins */
+    padding: 8px 15px;
+    background-color: #007bff; /* Example blue */
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    margin-top: 10px; /* Space above the button */
+    transition: background-color 0.3s ease;
+    font-weight: 500;
+}
+
+.game-link-button:hover,
+.project-link-button:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+}
 
 /* Optional Footer Styling */
 footer {
     text-align: center;
     padding: 15px;
-    margin-top: auto;
-    background-color: #111111;
-    border-top: 1px solid #333;
-    color: #888;
+    margin-top: auto; /* Pushes footer to the bottom */
+    background-color: #111111; /* Slightly off-black */
+    border-top: 1px solid #333; /* Separator line */
+    color: #888; /* Dim text color */
     font-size: 0.9em;
-    position: relative;
+    position: relative; /* Ensure footer is above snow */
     z-index: 1;
 }
 
-/* Media Queries */
+/* Media Queries for Responsiveness */
 @media (max-width: 768px) {
-    .main-title { font-size: 3.5rem; }
-     .description { font-size: 1.1em; max-width: 90%; margin-bottom: 30px;}
-     nav ul { gap: 15px; }
-    .nav-button { padding: 8px 18px; font-size: 1em; }
+    .main-title {
+        font-size: 3.5rem;
+    }
+     .description {
+        font-size: 1.1em;
+        max-width: 90%;
+        margin-bottom: 30px;
+     }
+     nav ul {
+        gap: 15px;
+     }
+    .nav-button {
+        padding: 8px 18px;
+        font-size: 1em;
+    }
+    main h2 {
+        font-size: 2.2em;
+    }
+    .game-item, .project-item {
+        width: 90%;
+        padding: 20px;
+    }
 }
 
 @media (max-width: 480px) {
-    .main-title { font-size: 2.8rem; }
-    .description { font-size: 1em; margin-bottom: 25px;}
-    nav { margin-bottom: 25px; }
-    nav ul { flex-wrap: wrap; gap: 10px; }
-    .nav-button { padding: 7px 15px; font-size: 0.9em; }
-     main h2 { font-size: 2em; margin-bottom: 20px;}
-    .game-item, .project-item { width: 90%; padding: 20px; }
+    .main-title {
+        font-size: 2.8rem;
+    }
+    .description {
+        font-size: 1em;
+        margin-bottom: 25px;
+     }
+    nav {
+        margin-bottom: 25px;
+    }
+    nav ul {
+        /* Allow buttons to wrap if needed */
+        flex-wrap: wrap;
+        gap: 10px; /* Reduce gap when wrapped */
+    }
+    .nav-button {
+        padding: 7px 15px;
+        font-size: 0.9em;
+    }
+     main h2 {
+        font-size: 2em;
+        margin-bottom: 20px;
+    }
+    .game-item, .project-item {
+        width: 95%; /* Take slightly more width on very small screens */
+        padding: 15px;
+    }
+    .game-link-button, .project-link-button {
+        padding: 7px 12px;
+        font-size: 0.9em;
+    }
 }
