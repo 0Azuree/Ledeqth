@@ -1,0 +1,170 @@
+/* Basic Reset & Body Styling */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Modern font stack */
+    background-color: #000000; /* OLED Black */
+    color: #FFFFFF; /* White text */
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh; /* Ensure body takes at least full viewport height */
+}
+
+/* Header Styling */
+header {
+    display: flex;
+    justify-content: space-between; /* Pushes items to ends */
+    align-items: center; /* Vertically aligns items */
+    padding: 15px 30px; /* Padding top/bottom and left/right */
+    background-color: #111111; /* Slightly off-black for subtle contrast */
+    border-bottom: 1px solid #333; /* Subtle separator line */
+    position: sticky; /* Optional: Makes header stick to top on scroll */
+    top: 0;
+    z-index: 100;
+}
+
+.top-left-title {
+    font-size: 1.3em; /* Adjust size as needed */
+    font-weight: bold;
+    color: #cccccc; /* Slightly dimmer white */
+}
+
+/* Navigation Styling */
+nav ul {
+    list-style: none; /* Remove default bullet points */
+    padding: 0;
+    margin: 0;
+    display: flex; /* Arrange buttons horizontally */
+    gap: 15px; /* Space between buttons */
+}
+
+nav li {
+    display: inline-block; /* Keeps items in line */
+}
+
+.nav-button {
+    text-decoration: none; /* Remove underline from links */
+    padding: 8px 18px; /* Button padding */
+    background-color: #555555; /* Primary Gray */
+    color: #FFFFFF; /* Accent White (text) */
+    border: none;
+    border-radius: 5px; /* Slightly rounded corners */
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease; /* Smooth hover effect */
+}
+
+.nav-button:hover {
+    background-color: #777777; /* Lighter gray on hover */
+}
+
+.nav-button:active {
+    transform: scale(0.98); /* Slight shrink effect on click */
+}
+
+/* Main Content Area Styling */
+main {
+    flex-grow: 1; /* Allows main to fill remaining vertical space */
+    padding: 40px 20px; /* Padding around content */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center content horizontally by default */
+    text-align: center; /* Center text within main */
+}
+
+/* Specific styling for the home page main content */
+main.home-main {
+    justify-content: center; /* Center the giant title vertically */
+}
+
+/* Giant Title Styling */
+.main-title {
+    font-size: 5rem; /* Giant size - adjust as needed */
+    font-weight: bold;
+    margin: 0; /* Remove default margins */
+    line-height: 1.2;
+    /* Optional: Add a subtle text shadow for depth */
+    /* text-shadow: 0 0 10px rgba(255, 255, 255, 0.1); */
+}
+
+/* Styling for content on Projects/Games pages */
+main h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: #eee;
+}
+
+main p {
+    font-size: 1.1em;
+    color: #ccc;
+    max-width: 800px; /* Limit width for readability */
+    margin-bottom: 30px;
+}
+
+/* Placeholder for Project/Game item styling (add when you have content) */
+.project-item, .game-item {
+    background-color: #1a1a1a; /* Dark background for items */
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    width: 80%; /* Adjust width as needed */
+    max-width: 700px;
+    text-align: left; /* Align text left within items */
+}
+
+.project-item h3, .game-item h3 {
+    margin-top: 0;
+    color: #00aaff; /* Example accent color for titles */
+}
+
+/* Optional Footer Styling */
+footer {
+    text-align: center;
+    padding: 15px;
+    margin-top: auto; /* Pushes footer to the bottom */
+    background-color: #111111;
+    border-top: 1px solid #333;
+    color: #888;
+    font-size: 0.9em;
+}
+
+/* Media Queries for Responsiveness (Example) */
+@media (max-width: 768px) {
+    .main-title {
+        font-size: 3.5rem; /* Smaller title on smaller screens */
+    }
+
+    header {
+        flex-direction: column; /* Stack header items vertically */
+        padding: 10px;
+    }
+
+    .top-left-title {
+        margin-bottom: 10px; /* Add space below title when stacked */
+    }
+
+    nav ul {
+        justify-content: center; /* Center nav buttons when stacked */
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .main-title {
+        font-size: 2.5rem;
+    }
+
+    .nav-button {
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
+
+     .top-left-title {
+        font-size: 1.1em;
+    }
+}
