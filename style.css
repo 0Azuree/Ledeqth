@@ -25,7 +25,7 @@ body {
     height: 100%;
     pointer-events: none; /* Allows clicks to go through */
     overflow: hidden; /* Hide snowflakes going outside */
-    /* z-index: -1; */ /* <-- Temporarily commented out for testing visibility */
+    /* z-index: -1; */ /* <-- Kept commented out as user confirmed this fixed visibility */
     display: block; /* Added for precaution */
 }
 
@@ -60,7 +60,7 @@ main {
     flex-direction: column; /* Stack children vertically */
     align-items: center; /* Center children horizontally (like h2 on other pages) */
     padding: 20px; /* Consistent padding */
-    z-index: 1; /* Ensure main content is above snow (if snow z-index is auto/0) */
+    z-index: 1; /* Ensure main content is above snow (since snow z-index is auto/0) */
     position: relative; /* For stacking context */
 }
 
@@ -104,14 +104,19 @@ main.home-main {
     margin-bottom: 40px; /* Space below description, before buttons */
 }
 
-/* Navigation Styling (Now Below Title/Description) */
+/* Navigation Styling (Now Below Title/Description on Home) */
 nav {
     width: 100%;
     text-align: center;
      /* Adjusted Margins: No top margin needed now */
-    margin-top: 0;
+    margin-top: 0; /* No top margin needed on home */
     margin-bottom: 20px; /* Space below buttons */
 }
+/* Add top margin for nav on sub-pages if needed */
+main:not(.home-main) nav {
+    margin-top: 20px; /* Add some space above nav on sub-pages */
+}
+
 
 nav ul {
     list-style: none;
@@ -147,15 +152,15 @@ nav li {
     transform: scale(0.97); /* Click effect */
 }
 
-/* Styling for content on Projects/Games pages */
+/* Styling for content on Projects/Games/Suggestions pages */
 main h2 {
     font-size: 2.5em;
-    margin-top: 0; /* Reset top margin */
-    margin-bottom: 30px; /* Space below H2 */
+    /* margin-top: 0; */ /* Handled by nav margin now */
+    margin-bottom: 20px; /* Space below H2 */
     color: #eee;
 }
 
-main p { /* Default paragraph styling for subpages - NOT the main description */
+main p:not(.description) { /* Default paragraph styling for subpages - NOT the main description */
     font-size: 1.1em;
     color: #ccc;
     max-width: 800px;
@@ -212,7 +217,28 @@ footer {
     color: #888; /* Dim text color */
     font-size: 0.9em;
     position: relative; /* Ensure footer is above snow */
-    z-index: 1; /* Ensure footer is above snow (if snow z-index is auto/0) */
+    z-index: 1; /* Ensure footer is above snow (since snow z-index is auto/0) */
+}
+
+/* Google Form Container Styling */
+.google-form-container {
+    width: 90%; /* Responsive width */
+    max-width: 700px; /* Max width for the form */
+    margin-top: 20px;
+    margin-bottom: 30px;
+    background-color: #111; /* Optional: slight background contrast */
+    padding: 5px; /* Optional: small padding around iframe */
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05); /* Subtle glow */
+}
+
+.google-form-container iframe {
+    display: block; /* Remove extra space below iframe */
+    width: 100%; /* Make iframe fill container width */
+    /* Height is usually controlled by the iframe code itself, but you can set a min/max height */
+    min-height: 600px;
+    border: none; /* Remove default iframe border */
+    border-radius: 3px; /* Match container radius */
 }
 
 /* Media Queries for Responsiveness */
@@ -238,6 +264,13 @@ footer {
     .game-item, .project-item {
         width: 90%;
         padding: 20px;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Adjust iframe height on smaller screens if needed */
+    .google-form-container iframe {
+        min-height: 500px;
     }
 }
 
