@@ -87,10 +87,10 @@ main.home-main {
     line-height: 1.2;
     color: #FFFFFF;
     text-shadow:
-       -1px -1px 0 #333,
-        1px -1px 0 #333,
-       -1px  1px 0 #333,
-        1px  1px 0 #333; /* Thin dark gray outline */
+        -1px -1px 0 #333,
+         1px -1px 0 #333,
+        -1px  1px 0 #333,
+         1px  1px 0 #333; /* Thin dark gray outline */
 }
 
 /* Description Styling */
@@ -241,19 +241,87 @@ footer {
     border-radius: 3px; /* Match container radius */
 }
 
+
+/* --- New Styles for AI Page --- */
+
+.ai-container {
+    background-color: #1a1a1a; /* Dark background for the AI interaction area */
+    padding: 25px;
+    margin-top: 20px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    border: 1px solid #333; /* Subtle border */
+    width: 90%; /* Responsive width */
+    max-width: 800px; /* Max width for readability */
+    display: flex; /* Use flexbox for layout */
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center children horizontally */
+}
+
+#user-prompt {
+    width: 100%; /* Make textarea fill the container width */
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #222; /* Dark input background */
+    color: #eee; /* Light text color */
+    font-size: 1em;
+    resize: vertical; /* Allow vertical resizing */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+#user-prompt::placeholder {
+    color: #888; /* Placeholder text color */
+}
+
+#send-prompt-button {
+    /* Using the existing .project-link-button style for consistency */
+    margin-top: 0; /* Adjust margin since it's right after textarea */
+    margin-bottom: 15px; /* Space below the button */
+    align-self: flex-start; /* Align button to the left (or start) of the flex container */
+}
+
+#ai-response {
+    width: 100%; /* Make response area fill the container width */
+    padding: 15px;
+    border: 1px solid #555;
+    border-radius: 4px;
+    background-color: #222; /* Dark background */
+    color: #eee; /* Light text color */
+    min-height: 150px; /* Minimum height for the response area */
+    overflow-y: auto; /* Add scroll if content overflows */
+    text-align: left; /* Ensure text aligns left */
+    white-space: pre-wrap; /* Preserve whitespace and wrap long lines */
+    word-wrap: break-word; /* Break words if they are too long */
+}
+
+#ai-response p {
+    margin: 0 0 10px 0; /* Adjust margins for paragraphs inside the response */
+    line-height: 1.6;
+    color: #bbb; /* Slightly dimmer color for response text */
+}
+
+/* Optional: Style for loading message */
+#ai-response.loading {
+    font-style: italic;
+    color: #888;
+}
+
+
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
     .main-title {
         font-size: 3.5rem;
     }
-     .description {
+    .description {
         font-size: 1.1em;
         max-width: 90%;
         margin-bottom: 30px;
-     }
-     nav ul {
+    }
+    nav ul {
         gap: 15px;
-     }
+    }
     .nav-button {
         padding: 8px 18px;
         font-size: 1em;
@@ -264,6 +332,14 @@ footer {
     .game-item, .project-item {
         width: 90%;
         padding: 20px;
+    }
+     /* AI page adjustments */
+    .ai-container {
+        width: 95%; /* Slightly more width on smaller screens */
+        padding: 20px;
+    }
+     #send-prompt-button {
+         align-self: center; /* Center the button on smaller screens if preferred */
     }
 }
 
@@ -281,7 +357,7 @@ footer {
     .description {
         font-size: 1em;
         margin-bottom: 25px;
-     }
+    }
     nav {
         margin-bottom: 25px;
     }
@@ -294,7 +370,7 @@ footer {
         padding: 7px 15px;
         font-size: 0.9em;
     }
-     main h2 {
+    main h2 {
         font-size: 2em;
         margin-bottom: 20px;
     }
@@ -305,5 +381,18 @@ footer {
     .game-link-button, .project-link-button {
         padding: 7px 12px;
         font-size: 0.9em;
+    }
+     /* AI page adjustments */
+    .ai-container {
+        padding: 15px;
+    }
+    #user-prompt {
+        margin-bottom: 10px;
+    }
+    #send-prompt-button {
+        margin-bottom: 10px;
+    }
+    #ai-response {
+        min-height: 100px;
     }
 }
