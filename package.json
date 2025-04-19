@@ -1,0 +1,18 @@
+{
+    "name": "Ledeqth",  // You can change this name to something descriptive
+    "version": "1.0.0",          // Standard starting version
+    "description": "Website for Ledeqth with AI function", // Add a brief description
+    "main": "index.html",        // Points to your main file (optional for static sites, but good practice)
+    "scripts": {                 // Standard script section (can leave as is)
+      "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "keywords": [],              // Optional: add keywords related to your site
+    "author": "",                // Optional: add your name or handle
+    "license": "ISC",            // Or your preferred license (e.g., MIT, Unlicense)
+    "dependencies": {
+      "@google/generative-ai": "^0.1.3"
+      // This is the crucial line telling Netlify to install this library
+      // for your functions (and the rest of the project, though not needed there).
+      // The version number ^0.1.3 means install version 0.1.3 or the latest compatible version.
+    }
+  }
