@@ -21,7 +21,7 @@ if (!API_KEY) {
 const genAI = new GoogleGenerativeAI(API_KEY);
 // Choose the model you want to use (e.g., 'gemini-pro', 'gemini-1.5-flash-latest')
 // Check Google's documentation for available models and pricing.
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }); // Changed the model name
 
 
 // This is the main function that Netlify runs
