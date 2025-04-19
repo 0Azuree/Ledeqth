@@ -1,3 +1,8 @@
+/* Add at the very top for smooth scrolling on internal links */
+html {
+    scroll-behavior: smooth;
+}
+
 /* Basic Reset & Body Styling */
 body, html {
     margin: 0;
@@ -50,6 +55,13 @@ body {
     }
 }
 
+/* New: Fade-in Animation Keyframes */
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+
 /* Main Content Area Styling */
 main {
     flex-grow: 1;
@@ -59,6 +71,10 @@ main {
     padding: 20px;
     z-index: 1;
     position: relative;
+    /* New: Fade-in Animation */
+    opacity: 0; /* Start invisible */
+    animation: fadeIn 1s ease-out forwards; /* Apply the animation */
+    animation-delay: 0.5s; /* Add a slight delay so snow starts first */
 }
 
 /* Specific styling for the home page main element */
@@ -139,6 +155,8 @@ nav li {
 
 .nav-button:hover {
     background-color: #3a3a3a;
+    /* New: Text shadow on hover */
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5); /* Add a subtle white glow */
 }
 
 .nav-button:active {
@@ -171,7 +189,18 @@ main p:not(.description) {
     width: 85%;
     max-width: 750px;
     text-align: left;
+    /* New: Transition for hover effects */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; /* Smooth hover effects */
 }
+
+/* New: Hover effects for Project/Game items */
+.game-item:hover,
+.project-item:hover {
+    transform: translateY(-5px) scale(1.02); /* Lift slightly and scale up */
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4); /* Add a shadow */
+    border-color: #00aaff; /* Change border color (matches item title color) */
+}
+
 
 .game-item h3,
 .project-item h3 {
