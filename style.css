@@ -18,24 +18,22 @@ body {
 
 /* Snowfall Container */
 #snow-container {
-    position: fixed; /* Fixed position stays behind content */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allows clicks to go through */
-    overflow: hidden; /* Hide snowflakes going outside */
-    /* z-index: -1; */ /* <-- Kept commented out as user confirmed this fixed visibility */
-    display: block; /* Added for precaution */
+    pointer-events: none;
+    overflow: hidden;
+    display: block;
 }
 
 /* Individual Snowflake Style */
 .snowflake {
     position: absolute;
-    top: -10px; /* Start above screen */
-    background-color: white; /* Snow is white */
+    top: -10px;
+    background-color: white;
     border-radius: 50%;
-    /* Opacity managed by JS and animation */
     pointer-events: none;
     animation: snowfall linear infinite;
 }
@@ -44,86 +42,81 @@ body {
 @keyframes snowfall {
     0% {
         transform: translateY(0) translateX(0) rotate(0deg);
-        opacity: 0.8; /* Start visible */
+        opacity: 0.8;
     }
     100% {
-        /* Fall down screen height + a bit extra */
         transform: translateY(105vh) translateX(15px) rotate(360deg);
-        opacity: 0; /* Fade out at bottom */
+        opacity: 0;
     }
 }
 
 /* Main Content Area Styling */
 main {
-    flex-grow: 1; /* Takes available space */
-    display: flex; /* Use flexbox for children */
-    flex-direction: column; /* Stack children vertically */
-    align-items: center; /* Center children horizontally (like h2 on other pages) */
-    padding: 20px; /* Consistent padding */
-    z-index: 1; /* Ensure main content is above snow (since snow z-index is auto/0) */
-    position: relative; /* For stacking context */
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    z-index: 1;
+    position: relative;
 }
 
 /* Specific styling for the home page main element */
 main.home-main {
-    /* Override default main alignment for homepage */
-    justify-content: center; /* Vertically center the single child (.content-block) */
-    align-items: center; /* Horizontally center the single child (.content-block) */
-    text-align: center; /* Ensure text align applies if needed */
+    justify-content: center;
+    align-items: center;
+    text-align: center;
 }
 
 /* Wrapper Div for Centered Content on Homepage */
 .content-block {
-    /* This block will be centered by main.home-main */
-    text-align: center; /* Center text elements (h1, p, nav links) inside */
-    max-width: 90%; /* Prevent it from getting too wide on large screens */
+    text-align: center;
+    max-width: 90%;
 }
 
 /* Giant Title Styling */
 .main-title {
     font-size: 5rem;
     font-weight: bold;
-    margin: 0 0 15px 0; /* Margin below title */
+    margin: 0 0 15px 0;
     line-height: 1.2;
     color: #FFFFFF;
     text-shadow:
         -1px -1px 0 #333,
          1px -1px 0 #333,
         -1px  1px 0 #333,
-         1px  1px 0 #333; /* Thin dark gray outline */
+         1px  1px 0 #333;
 }
 
 /* Description Styling */
 .description {
     font-size: 1.2em;
     color: #bbbbbb;
-    max-width: 650px; /* Limit width within the content block */
+    max-width: 650px;
     line-height: 1.6;
-    margin-left: auto; /* Center the description block itself if narrower */
+    margin-left: auto;
     margin-right: auto;
-    margin-bottom: 40px; /* Space below description, before buttons */
+    margin-bottom: 40px;
 }
 
-/* Navigation Styling (Now Below Title/Description on Home) */
+/* Navigation Styling */
 nav {
     width: 100%;
     text-align: center;
-     /* Adjusted Margins: No top margin needed now */
-    margin-top: 0; /* No top margin needed on home */
-    margin-bottom: 20px; /* Space below buttons */
-}
-/* Add top margin for nav on sub-pages if needed */
-main:not(.home-main) nav {
-    margin-top: 20px; /* Add some space above nav on sub-pages */
+    margin-top: 0;
+    margin-bottom: 20px;
 }
 
+main:not(.home-main) nav {
+    margin-top: 20px;
+}
 
 nav ul {
     list-style: none;
     padding: 0;
     margin: 0;
-    display: inline-flex; /* Group buttons nicely */
-    gap: 20px; /* Space between buttons */
+    display: inline-flex;
+    gap: 20px;
     justify-content: center;
 }
 
@@ -134,7 +127,7 @@ nav li {
 .nav-button {
     text-decoration: none;
     padding: 10px 25px;
-    background-color: #1c1c1c; /* User requested Darker Gray */
+    background-color: #1c1c1c;
     color: #FFFFFF;
     border: none;
     border-radius: 5px;
@@ -145,22 +138,21 @@ nav li {
 }
 
 .nav-button:hover {
-    background-color: #3a3a3a; /* Hover for darker gray */
+    background-color: #3a3a3a;
 }
 
 .nav-button:active {
-    transform: scale(0.97); /* Click effect */
+    transform: scale(0.97);
 }
 
 /* Styling for content on Projects/Games/Suggestions pages */
 main h2 {
     font-size: 2.5em;
-    /* margin-top: 0; */ /* Handled by nav margin now */
-    margin-bottom: 20px; /* Space below H2 */
+    margin-bottom: 20px;
     color: #eee;
 }
 
-main p:not(.description) { /* Default paragraph styling for subpages - NOT the main description */
+main p:not(.description) {
     font-size: 1.1em;
     color: #ccc;
     max-width: 800px;
@@ -169,143 +161,151 @@ main p:not(.description) { /* Default paragraph styling for subpages - NOT the m
 }
 
 /* Project/Game item styling */
-.game-item, /* Combined rule */
+.game-item,
 .project-item {
-    background-color: #1a1a1a; /* Dark background for items */
+    background-color: #1a1a1a;
     padding: 25px;
     margin-bottom: 25px;
     border-radius: 8px;
-    border: 1px solid #333; /* Subtle border */
-    width: 85%; /* Responsive width */
-    max-width: 750px; /* Max width for readability */
-    text-align: left; /* Align text left within items */
+    border: 1px solid #333;
+    width: 85%;
+    max-width: 750px;
+    text-align: left;
 }
 
-.game-item h3, /* Combined rule */
+.game-item h3,
 .project-item h3 {
     margin-top: 0;
     margin-bottom: 10px;
-    color: #00aaff; /* Example accent color for titles within items */
+    color: #00aaff;
 }
 
 /* Style for links inside game/project items to look like buttons */
 .game-link-button,
-.project-link-button { /* Add this class to project links too if desired */
-    display: inline-block; /* Allow padding and margins */
+.project-link-button {
+    display: inline-block;
     padding: 8px 15px;
-    background-color: #007bff; /* Example blue */
+    background-color: #007bff;
     color: white;
     text-decoration: none;
     border-radius: 4px;
-    margin-top: 10px; /* Space above the button */
+    margin-top: 10px;
     transition: background-color 0.3s ease;
     font-weight: 500;
 }
 
 .game-link-button:hover,
 .project-link-button:hover {
-    background-color: #0056b3; /* Darker blue on hover */
+    background-color: #0056b3;
 }
 
 /* Optional Footer Styling */
 footer {
     text-align: center;
     padding: 15px;
-    margin-top: auto; /* Pushes footer to the bottom */
-    background-color: #111111; /* Slightly off-black */
-    border-top: 1px solid #333; /* Separator line */
-    color: #888; /* Dim text color */
+    margin-top: auto;
+    background-color: #111111;
+    border-top: 1px solid #333;
+    color: #888;
     font-size: 0.9em;
-    position: relative; /* Ensure footer is above snow */
-    z-index: 1; /* Ensure footer is above snow (since snow z-index is auto/0) */
+    position: relative;
+    z-index: 1;
 }
 
 /* Google Form Container Styling */
 .google-form-container {
-    width: 90%; /* Responsive width */
-    max-width: 700px; /* Max width for the form */
+    width: 90%;
+    max-width: 700px;
     margin-top: 20px;
     margin-bottom: 30px;
-    background-color: #111; /* Optional: slight background contrast */
-    padding: 5px; /* Optional: small padding around iframe */
+    background-color: #111;
+    padding: 5px;
     border-radius: 5px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05); /* Subtle glow */
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
 }
 
 .google-form-container iframe {
-    display: block; /* Remove extra space below iframe */
-    width: 100%; /* Make iframe fill container width */
-    /* Height is usually controlled by the iframe code itself, but you can set a min/max height */
+    display: block;
+    width: 100%;
     min-height: 600px;
-    border: none; /* Remove default iframe border */
-    border-radius: 3px; /* Match container radius */
+    border: none;
+    border-radius: 3px;
 }
 
 
-/* --- New Styles for AI Page --- */
+/* --- Updated Styles for AI Page --- */
 
 .ai-container {
-    background-color: #1a1a1a; /* Dark background for the AI interaction area */
+    background-color: #1a1a1a;
     padding: 25px;
     margin-top: 20px;
     margin-bottom: 25px;
-    border-radius: 8px;
-    border: 1px solid #333; /* Subtle border */
-    width: 90%; /* Responsive width */
-    max-width: 800px; /* Max width for readability */
-    display: flex; /* Use flexbox for layout */
+    border-radius: 10px; /* Added rounded corners */
+    border: 1px solid #333;
+    width: 90%;
+    max-width: 800px;
+    display: flex;
     flex-direction: column; /* Stack children vertically */
-    align-items: center; /* Center children horizontally */
-}
-
-#user-prompt {
-    width: 100%; /* Make textarea fill the container width */
-    padding: 10px;
-    margin-bottom: 15px;
-    border: 1px solid #555;
-    border-radius: 4px;
-    background-color: #222; /* Dark input background */
-    color: #eee; /* Light text color */
-    font-size: 1em;
-    resize: vertical; /* Allow vertical resizing */
-    box-sizing: border-box; /* Include padding and border in element's total width and height */
-}
-
-#user-prompt::placeholder {
-    color: #888; /* Placeholder text color */
-}
-
-#send-prompt-button {
-    /* Using the existing .project-link-button style for consistency */
-    margin-top: 0; /* Adjust margin since it's right after textarea */
-    margin-bottom: 15px; /* Space below the button */
-    align-self: flex-start; /* Align button to the left (or start) of the flex container */
+    align-items: center;
+    min-height: 500px; /* Give the container a minimum height to see flex-grow effect */
 }
 
 #ai-response {
-    width: 100%; /* Make response area fill the container width */
+    width: 100%;
     padding: 15px;
     border: 1px solid #555;
-    border-radius: 4px;
-    background-color: #222; /* Dark background */
-    color: #eee; /* Light text color */
-    min-height: 150px; /* Minimum height for the response area */
-    overflow-y: auto; /* Add scroll if content overflows */
-    text-align: left; /* Ensure text aligns left */
-    white-space: pre-wrap; /* Preserve whitespace and wrap long lines */
-    word-wrap: break-word; /* Break words if they are too long */
+    border-radius: 8px; /* Added rounded corners */
+    background-color: #222;
+    color: #eee;
+    min-height: 150px;
+    overflow-y: auto;
+    text-align: left;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    flex-grow: 1; /* Allow response area to take available space, pushing prompt area down */
+    margin-bottom: 20px; /* Add space between response and prompt area */
 }
 
 #ai-response p {
-    margin: 0 0 10px 0; /* Adjust margins for paragraphs inside the response */
+    margin: 0; /* Reset margin for paragraphs inside response */
     line-height: 1.6;
-    color: #bbb; /* Slightly dimmer color for response text */
+    color: #bbb;
 }
 
-/* Optional: Style for loading message */
 #ai-response.loading {
     font-style: italic;
     color: #888;
+}
+
+.prompt-input-area { /* New styles for the wrapper */
+    width: 100%; /* Make the wrapper fill the container width */
+    display: flex; /* Use flexbox for prompt and button inside */
+    flex-direction: column; /* Stack prompt and button vertically */
+    align-items: flex-start; /* Align children (prompt/button) to the left */
+}
+
+
+#user-prompt {
+    width: 100%; /* Make textarea fill the wrapper width */
+    padding: 10px;
+    margin-bottom: 15px; /* Space below prompt box */
+    border: 1px solid #555;
+    border-radius: 8px; /* Added rounded corners */
+    background-color: #222;
+    color: #eee;
+    font-size: 1em;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+#user-prompt::placeholder {
+    color: #888;
+}
+
+#send-prompt-button {
+    /* Using the existing .project-link-button style for base */
+    margin-top: 0; /* Already handled by textarea margin-bottom */
+     border-radius: 5px; /* Add slightly rounded corners to the button */
 }
 
 
@@ -335,12 +335,23 @@ footer {
     }
      /* AI page adjustments */
     .ai-container {
-        width: 95%; /* Slightly more width on smaller screens */
-        padding: 20px;
+         width: 95%;
+         padding: 20px;
+         min-height: 400px;
     }
+    #ai-response {
+        min-height: 100px;
+        margin-bottom: 15px;
+    }
+    #user-prompt {
+        margin-bottom: 10px;
+    }
+     .prompt-input-area {
+         align-items: center;
+     }
      #send-prompt-button {
-         align-self: center; /* Center the button on smaller screens if preferred */
-    }
+         /* align-self: center; */
+     }
 }
 
 @media (max-width: 600px) {
@@ -362,9 +373,8 @@ footer {
         margin-bottom: 25px;
     }
     nav ul {
-        /* Allow buttons to wrap if needed */
         flex-wrap: wrap;
-        gap: 10px; /* Reduce gap when wrapped */
+        gap: 10px;
     }
     .nav-button {
         padding: 7px 15px;
@@ -375,7 +385,7 @@ footer {
         margin-bottom: 20px;
     }
     .game-item, .project-item {
-        width: 95%; /* Take slightly more width on very small screens */
+        width: 95%;
         padding: 15px;
     }
     .game-link-button, .project-link-button {
@@ -384,15 +394,19 @@ footer {
     }
      /* AI page adjustments */
     .ai-container {
-        padding: 15px;
-    }
-    #user-prompt {
-        margin-bottom: 10px;
-    }
-    #send-prompt-button {
-        margin-bottom: 10px;
+         padding: 15px;
+         min-height: 350px;
     }
     #ai-response {
-        min-height: 100px;
-    }
+         padding: 10px;
+         min-height: 80px;
+         margin-bottom: 10px;
+     }
+      #user-prompt {
+        padding: 8px;
+        margin-bottom: 8px; /* Adjusted */
+      }
+       #send-prompt-button {
+        margin-bottom: 0; /* Adjusted */
+       }
 }
