@@ -1,0 +1,8 @@
+{
+  "name": "ai-functions",
+  "version": "1.0.0",
+  "description": "Netlify functions for AI interaction",
+  "dependencies": {
+    "@google/generative-ai": "^0.1.3"
+  }
+}
