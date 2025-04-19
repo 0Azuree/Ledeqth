@@ -17,70 +17,53 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear previous response and show loading message
         responseDiv.innerHTML = '<p>Loading...</p>';
         responseDiv.classList.add('loading'); // Add loading class for styling
+        sendButton.disabled = true; // Disable button while loading
 
-        // --- SECURITY WARNING ---
-        // *** DO NOT PUT YOUR API KEY HERE IN CLIENT-SIDE JAVASCRIPT ***
-        // Exposing your API key in the browser is a major security risk.
-
-        // --- Conceptual Secure Server-Side API Call ---
-        // In a real application, you would send the 'prompt' to your own server.
-        // Your server would then use your API key to call the actual AI service (e.g., Google's API).
-        // The server would then send the AI's response back to this front-end JavaScript.
-
-        // Example of how you *might* fetch from your own secure backend endpoint:
-        /*
-        const secureBackendEndpoint = '/api/get-ai-response'; // Replace with your actual backend endpoint
+        // *** THIS IS THE FETCH REQUEST TO YOUR NETLIFY FUNCTION ***
+        // The path /.netlify/functions/ai-handler is the standard way to access Netlify functions
+        const functionEndpoint = '/.netlify/functions/ai-handler';
 
         try {
-            const response = await fetch(secureBackendEndpoint, {
+            const response = await fetch(functionEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt: prompt }) // Send the user's prompt to your server
+                body: JSON.stringify({ prompt: prompt }) // Send the user's prompt to your backend function
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // Handle HTTP errors (e.g., 400, 500)
+                const errorBody = await response.json().catch(() => ({ message: `Error: ${response.status} ${response.statusText}` }));
+                 throw new Error(errorBody.message || `HTTP error! status: ${response.status}`);
             }
 
-            const data = await response.json(); // Assuming your server sends back JSON
+            const data = await response.json(); // Assuming your Netlify function sends back JSON { response: "AI text" }
 
             // Display the AI's response
             if (data && data.response) {
-                responseDiv.innerHTML = `<p>${data.response.replace(/\n/g, '<br>')}</p>`; // Display response, handling newlines
+                // Replace newlines with <br> for HTML display
+                responseDiv.innerHTML = `<p>${data.response.replace(/\n/g, '<br>')}</p>`;
             } else {
-                responseDiv.innerHTML = '<p style="color: #ff6666;">Error: No valid response from server.</p>';
+                responseDiv.innerHTML = '<p style="color: #ff6666;">Error: Invalid response format from backend.</p>';
             }
 
         } catch (error) {
-            console.error('Error fetching AI response:', error);
-            responseDiv.innerHTML = `<p style="color: #ff6666;">Error: Could not get response. Please try again later.</p>`;
+            console.error('Error calling Netlify function:', error);
+            responseDiv.innerHTML = `<p style="color: #ff6666;">Error: Could not get AI response. Details: ${error.message}</p>`;
         } finally {
             responseDiv.classList.remove('loading'); // Remove loading class
+            sendButton.disabled = false; // Re-enable button
         }
-        */
-
-        // --- Placeholder Simulation (REMOVE IN REAL APP) ---
-        // This simulates an AI response without using an API key directly.
-        // Replace this entire simulation block with the secure server-side fetch logic above.
-        console.log("Simulating AI response for prompt:", prompt);
-        setTimeout(() => {
-            const simulatedResponse = `Thank you for your prompt: "${prompt}".\n\nThis is a simulated AI response. To get a real response, you need a secure backend to handle the API call with your key.`;
-            responseDiv.innerHTML = `<p>${simulatedResponse.replace(/\n/g, '<br>')}</p>`; // Display simulation
-            responseDiv.classList.remove('loading');
-        }, 1500); // Simulate a delay
-
-        // --- End Placeholder Simulation ---
-
 
         promptTextarea.value = ''; // Clear the textarea after sending
     });
 
     // Optional: Allow sending prompt with Enter key
     promptTextarea.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter' && !event.shiftKey) { // Check for Enter key, but not Shift + Enter
-            event.preventDefault(); // Prevent default newline behavior
+        // Check for Enter key, but not Shift + Enter (which typically adds a newline)
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault(); // Prevent default newline behavior in textarea
             sendButton.click(); // Trigger button click
         }
     });
