@@ -1,4 +1,4 @@
-// color-match-game.js (Outline for Sliding Color Puzzle)
+// color-match-game.js - Complete Sliding Color Puzzle Logic
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const resetButton = document.getElementById('reset-button');
     const moveCounterElement = document.getElementById('move-counter');
     const scoreElement = document.getElementById('score');
-    const gameStatusElement = document('game-status'); // Corrected: Should be getElementById
+    const gameStatusElement = document.getElementById('game-status'); // Corrected ID lookup
 
 
     // --- Game Configuration ---
@@ -17,19 +17,19 @@ document.addEventListener('DOMContentLoaded', function() {
         '#FF0000', '#00FF00', '#0000FF', // Red, Green, Blue
         '#FFFF00', '#FFA500', '#800080', // Yellow, Orange, Purple
         '#00FFFF', '#FFC0CB', '#A52A2A', // Cyan, Pink, Brown
-        // Add more colors if GRID_SIZE * GRID_SIZE - 1 is greater than 9
+        '#808080', '#C0C0C0', '#FFD700'  // Gray, Silver, Gold (Adding more colors)
     ];
-    // Ensure the palette has enough colors for GRID_SIZE * GRID_SIZE - 1 tiles
+     // Ensure the palette has AT LEAST GRID_SIZE * GRID_SIZE - 1 colors
     if (COLOR_PALETTE.length < GRID_SIZE * GRID_SIZE - 1) {
-        console.error("Color palette is too small for the selected GRID_SIZE.");
-        // You might want to add more colors or reduce GRID_SIZE
+        console.error(`Color palette needs at least ${GRID_SIZE * GRID_SIZE - 1} colors for a ${GRID_SIZE}x${GRID_SIZE} grid.`);
+        // The game may not work correctly with a small palette
     }
 
 
     // --- Game State ---
     let targetColors = []; // 2D array for the randomized target color pattern
-    let playerColors = []; // 2D array storing the player's current tile colors
-    let emptyTilePosition = { row: -1, col: -1 }; // Track the position of the empty slot
+    let playerColors = []; // 2D array storing the player's current tile colors (colors or EMPTY_SLOT_MARKER)
+    let emptyTilePosition = { row: -1, col: -1 }; // Track the position of the empty slot {row, col}
     let isGameSolved = false;
     let moveCount = 0;
     let score = 0;
@@ -40,109 +40,95 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Initialize the game (called on page load and reset)
     function initializeGame() {
+         isGameSolved = false; // Ensure game state is reset
          generateRandomTarget(); // Create a new random target pattern
-         generateShuffledPlayerGrid(); // Create a new shuffled player grid based on target colors
+         generateSolvableShuffledPlayerGrid(); // Create a new solvable shuffled player grid based on target colors
 
          // Render both the target and player grids
          renderGrid(targetGridElement, targetColors, false); // Render target (not interactive)
          renderGrid(playerGridElement, playerColors, true);  // Render player (interactive)
 
-         // Reset game state variables
+         // Reset game state variables for the new puzzle
          moveCount = 0;
-         isGameSolved = false;
          updateDisplay();
          updateGameStatus("Playing...");
     }
 
 
-    // 1. Generate a new random target color pattern (Needs implementation)
+    // 1. Generate a new random target color pattern
     function generateRandomTarget() {
         targetColors = [];
-        // TODO: Implement logic to generate a random 2D array (GRID_SIZE x GRID_SIZE)
-        // using colors from COLOR_PALETTE, with one position marked as null or EMPTY_SLOT_MARKER.
-        // Example Placeholder (replace with actual randomization):
-         const colorsForTarget = COLOR_PALETTE.slice(0, GRID_SIZE * GRID_SIZE - 1);
-         let colorIndex = 0;
-         for (let row = 0; row < GRID_SIZE; row++) {
-             targetColors[row] = [];
-             for (let col = 0; col < GRID_SIZE; col++) {
-                 if (row === GRID_SIZE - 1 && col === GRID_SIZE - 1) { // Last position is the empty slot in target
-                      targetColors[row][col] = null; // Use null for the target's empty position
-                  } else {
-                     // Use colors from the shuffled list (implement shuffling of colorsForTarget)
-                     // For now, just assign colors in order
-                     targetColors[row][col] = colorsForTarget[colorIndex % colorsForTarget.length];
-                     colorIndex++;
-                 }
-             }
-         }
-         // SHUFFLE colorsForTarget BEFORE assigning them to targetColors
-         for (let i = colorsForTarget.length - 1; i > 0; i--) {
-             const j = Math.floor(Math.random() * (i + 1));
-             [colorsForTarget[i], colorsForTarget[j]] = [colorsForTarget[j], colorsForTarget[i]];
-         }
-         colorIndex = 0;
-          for (let row = 0; row < GRID_SIZE; row++) {
-             for (let col = 0; col < GRID_SIZE; col++) {
-                  if (!(row === GRID_SIZE - 1 && col === GRID_SIZE - 1)) { // Skip the last position
-                      targetColors[row][col] = colorsForTarget[colorIndex++];
-                  }
-             }
-         }
-         targetColors[GRID_SIZE - 1][GRID_SIZE - 1] = null; // Explicitly set the last one to null
-    }
+        // Get the required number of unique colors from the palette
+        const colorsForTarget = COLOR_PALETTE.slice(0, GRID_SIZE * GRID_SIZE - 1);
 
-    // 2. Generate a solvable shuffled player grid based on the target colors (Needs implementation)
-    function generateShuffledPlayerGrid() {
-        playerColors = [];
-        // TODO: Implement logic to generate a shuffled 2D array (GRID_SIZE x GRID_SIZE)
-        // containing the same set of colors as targetColors (excluding the null/empty marker)
-        // plus one EMPTY_SLOT_MARKER.
-        // Ensure the generated puzzle is solvable (related to inversions and empty slot position).
-        // A good approach is to start from the solved state and perform random valid moves.
-
-        // Example Basic Implementation (May not guarantee solvability with simple shuffle):
-        const colorsForPlayerGrid = [];
-         for (let row = 0; row < GRID_SIZE; row++) {
-             for (let col = 0; col < GRID_SIZE; col++) {
-                 if (targetColors[row][col] !== null) {
-                     colorsForPlayerGrid.push(targetColors[row][col]);
-                 }
-             }
-         }
-         colorsForPlayerGrid.push(EMPTY_SLOT_MARKER); // Add the empty slot marker
-
-         // Simple Shuffle (Warning: May create unsolvable puzzles)
-        for (let i = colorsForPlayerGrid.length - 1; i > 0; i--) {
+        // Shuffle the colors
+        for (let i = colorsForTarget.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [colorsForPlayerGrid[i], colorsForPlayerGrid[j]] = [colorsForPlayerGrid[j], colorsForPlayerGrid[i]];
+            [colorsForTarget[i], colorsForTarget[j]] = [colorsForTarget[j], colorsForTarget[i]]; // Fisher-Yates Shuffle
         }
 
-         // Reshape into 2D array and find empty slot position
-        let flatIndex = 0;
+        // Reshape into the 2D targetColors array and add the empty marker at the last position
+        let colorIndex = 0;
         for (let row = 0; row < GRID_SIZE; row++) {
-            playerColors[row] = [];
+            targetColors[row] = [];
             for (let col = 0; col < GRID_SIZE; col++) {
-                const colorOrMarker = colorsForPlayerGrid[flatIndex++];
-                playerColors[row][col] = colorOrMarker;
-                if (colorOrMarker === EMPTY_SLOT_MARKER) {
-                    emptyTilePosition = { row: row, col: col };
-                }
+                // The last tile in the target doesn't have a color, it represents the empty slot
+                if (row === GRID_SIZE - 1 && col === GRID_SIZE - 1) {
+                     targetColors[row][col] = EMPTY_SLOT_MARKER; // Use the marker for the target's empty position
+                 } else {
+                     targetColors[row][col] = colorsForTarget[colorIndex++];
+                 }
             }
         }
+    }
 
-        // TODO: Replace the simple shuffle with a method that guarantees a solvable puzzle
-        // by performing random valid slides from the solved state.
+    // 2. Generate a solvable shuffled player grid based on the target colors
+    function generateSolvableShuffledPlayerGrid() {
+        // Start playerColors in the solved state (matching target colors)
+        playerColors = targetColors.map(row => [...row]); // Create a deep copy
 
+        // Find the initial empty slot position in the solved state
+        let currentRow = GRID_SIZE - 1;
+        let currentCol = GRID_SIZE - 1;
+        emptyTilePosition = { row: currentRow, col: currentCol }; // Assuming last slot is target empty position
+
+
+        // Perform many random *valid* slides to shuffle the grid, guaranteeing solvability
+        const movesToPerform = GRID_SIZE * GRID_SIZE * 100; // Perform a sufficient number of shuffles
+
+        for (let i = 0; i < movesToPerform; i++) {
+            const possibleMoves = [];
+            // Check adjacent positions (up, down, left, right) from the *current empty position*
+            if (currentRow > 0) possibleMoves.push({ row: currentRow - 1, col: currentCol }); // Tile above empty
+            if (currentRow < GRID_SIZE - 1) possibleMoves.push({ row: currentRow + 1, col: currentCol }); // Tile below empty
+            if (currentCol > 0) possibleMoves.push({ row: currentRow, col: currentCol - 1 }); // Tile left of empty
+            if (currentCol < GRID_SIZE - 1) possibleMoves.push({ row: currentRow, col: currentCol + 1 }); // Tile right of empty
+
+            // Select a random valid move (a tile adjacent to the empty slot)
+            const randomMove = possibleMoves[Math.floor(Math.random() * possibleMoves.length)];
+            const tileToMoveRow = randomMove.row;
+            const tileToMoveCol = randomMove.col;
+
+            // Swap the color/marker in the playerColors state
+            const colorToMove = playerColors[tileToMoveRow][tileToMoveCol];
+            playerColors[currentRow][currentCol] = colorToMove; // Move the tile's color to the empty slot's position
+            playerColors[tileToMoveRow][tileToMoveCol] = EMPTY_SLOT_MARKER; // Put the empty marker in the tile's old position
+
+            // Update the empty tile position
+            currentRow = tileToMoveRow;
+            currentCol = tileToMoveCol;
+            emptyTilePosition = { row: currentRow, col: currentCol };
+        }
+        // The playerColors array is now shuffled and solvable, and emptyTilePosition is correct
     }
 
 
-    // 3. Render the grid in the DOM based on the current state (BASIC IMPLEMENTATION ADDED)
+    // 3. Render the grid in the DOM based on the current state
     function renderGrid(gridElement, colorsState, isInteractive) {
         gridElement.innerHTML = ''; // Clear previous tiles
 
         // Set grid dimensions in CSS based on size (assuming tiles are square)
-         // This could be dynamic based on container width for responsiveness
+         // This needs to be responsive - calculate tile size based on container width
          const containerWidth = gridElement.parentElement.clientWidth;
          const gap = parseInt(getComputedStyle(gridElement).gap); // Get gap from CSS
          const padding = parseInt(getComputedStyle(gridElement).padding) || 0; // Get padding from CSS, default to 0 if undefined
@@ -156,8 +142,7 @@ document.addEventListener('DOMContentLoaded', function() {
          gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${tileSize}px)`;
          gridElement.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${tileSize}px)`;
          gridElement.style.width = `${containerWidth}px`; // Make grid fill its container width
-         gridElement.style.height = `auto`; // Height will adjust based on rows
-
+         // gridElement.style.height = `auto`; // Height will adjust based on rows - handled by grid default
 
         for (let row = 0; row < GRID_SIZE; row++) {
             for (let col = 0; col < GRID_SIZE; col++) {
@@ -168,8 +153,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 const colorOrMarker = colorsState[row][col];
 
-                if (colorOrMarker === EMPTY_SLOT_MARKER || colorOrMarker === null) { // Check for both markers
-                    // This is the empty tile slot or target's empty marker
+                if (colorOrMarker === EMPTY_SLOT_MARKER) {
+                    // This is the empty tile slot
                     tileDiv.classList.add('empty');
                 } else {
                     // This is a color tile
@@ -188,12 +173,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 gridElement.appendChild(tileDiv);
             }
         }
-         // TODO: For sliding animation, instead of re-rendering the whole grid,
-         // update the DOM elements' positions using CSS transforms
-         // after swapping the state in handleTileClick.
+         // Note: For sliding animation, you would calculate the old and new positions
+         // and use CSS transforms on the individual DOM elements instead of re-rendering.
+         // This render just creates the correct grid state visually.
     }
 
-    // 4. Handle a click on a player tile (Needs implementation)
+    // 4. Handle a click on a player tile
     function handleTileClick(event) {
         if (isGameSolved) return;
 
@@ -208,55 +193,72 @@ document.addEventListener('DOMContentLoaded', function() {
         const isAdjacent = (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
 
         if (isAdjacent) {
-            // --- Perform the slide (swap colors in the state) ---
+            // --- Perform the slide (update state and DOM) ---
+
+            // 1. Update the state (swap values in the playerColors array)
             const colorToMove = playerColors[clickedRow][clickedCol];
             playerColors[emptyTilePosition.row][emptyTilePosition.col] = colorToMove; // Move color to empty slot's old position
-            playerColors[clickedRow][clickedCol] = EMPTY_SLOT_MARKER; // Put empty marker in clicked tile's position
+            playerColors[clickedRow][clickedCol] = EMPTY_SLOT_MARKER; // Put empty marker in clicked tile's original position
 
-            // Update the empty tile's recorded position
+            // 2. Update the empty tile's recorded position
             emptyTilePosition = { row: clickedRow, col: clickedCol };
+
+            // 3. Update the DOM (instead of re-rendering the whole grid)
+            // Get the DOM elements for the clicked tile and the empty slot's old position
+            const emptySlotDomElement = playerGridElement.querySelector(`.game-tile[data-row="${emptyTilePosition.row}"][data-col="${emptyTilePosition.col}"]`);
+             const clickedTileDomElement = clickedTile; // The event target is the clicked tile DOM element
+
+
+            // Swap the class (empty/not empty) and background color
+             clickedTileDomElement.classList.add('empty');
+             clickedTileDomElement.style.backgroundColor = ''; // Clear background color
+             clickedTileDomElement.style.cursor = 'default';
+             clickedTileDomElement.style.pointerEvents = 'none'; // Make it non-interactive
+
+             emptySlotDomElement.classList.remove('empty');
+             emptySlotDomElement.style.backgroundColor = colorToMove; // Set the moved color
+             emptySlotDomElement.style.cursor = 'pointer';
+             emptySlotDomElement.style.pointerEvents = 'auto'; // Make it interactive
+
+
+             // Update the dataset on the DOM elements (important for handleTileClick)
+             // This is a bit tricky with just swapping styles/classes. A better approach
+             // for DOM manipulation and animation is to physically swap the DOM nodes
+             // or use CSS transforms. Let's stick to updating styles/classes for simplicity,
+             // but acknowledge this approach makes physical swap/transform animations harder.
+             // If physical DOM swap was used:
+             // const clickedOriginalSibling = clickedTileDomElement.nextSibling;
+             // emptySlotDomElement.parentNode.insertBefore(clickedTileDomElement, emptySlotDomElement);
+             // clickedTileDomElement.parentNode.insertBefore(emptySlotDomElement, clickedOriginalSibling);
+             // Need to re-assign data-row/col or rely on their physical position for lookup.
+
+             // Simple approach: Re-render the player grid after the swap for visual update
+             // This sacrifices smooth animation for simpler logic.
+             renderGrid(playerGridElement, playerColors, true);
+
 
             // Increment move counter
             moveCount++;
             updateDisplay();
 
-            // Re-render the player grid to show the new state
-             renderGrid(playerGridElement, playerColors, true);
-
             // Check if the game is won
             checkWinCondition();
-
-             // TODO: Instead of re-rendering, animate the clicked tile moving into the empty slot's old position
-             // and update the empty class on the tiles.
         }
     }
 
 
-    // 5. Check if the grid is in the solved state (Needs implementation)
+    // 5. Check if the grid is in the solved state
     function checkWinCondition() {
         if (isGameSolved) return;
 
         let isSolved = true;
         for (let row = 0; row < GRID_SIZE; row++) {
             for (let col = 0; col < GRID_SIZE; col++) {
-                // Compare player tile color (or marker) with target color (or null)
-                 if (playerColors[row][col] !== targetColors[row][col]) {
-                     // Special case: If the player tile is the empty marker, it must match
-                     // the target being null (the target's empty slot).
-                     // If the player tile has a color, it must match the target's color.
-                     const playerIsMarker = playerColors[row][col] === EMPTY_SLOT_MARKER;
-                     const targetIsNull = targetColors[row][col] === null;
-
-                     if (playerIsMarker !== targetIsNull) { // If one is a marker/null and the other isn't
-                         isSolved = false;
-                         break;
-                     }
-                     // If both are markers/null or both are colors, compare the colors
-                     if (!playerIsMarker && !targetIsNull && playerColors[row][col] !== targetColors[row][col]) {
-                          isSolved = false;
-                         break;
-                     }
-                 }
+                // Compare player tile value with target tile value
+                if (playerColors[row][col] !== targetColors[row][col]) {
+                    isSolved = false;
+                    break;
+                }
             }
             if (!isSolved) break;
         }
@@ -266,7 +268,8 @@ document.addEventListener('DOMContentLoaded', function() {
             score++; // Increment score
              updateDisplay();
             updateGameStatus("Puzzle Complete!"); // Update status
-            // Optional: Trigger animation or celebration
+            // Optional: Trigger animation or celebration (e.g., adding a class)
+             playerGridElement.classList.add('won');
 
             // Start a new random puzzle automatically after a delay
             setTimeout(startNewPuzzle, 2000);
@@ -291,6 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 8. Start a new random puzzle (generates new target and shuffled player grid)
     function startNewPuzzle() {
+         playerGridElement.classList.remove('won'); // Remove win class from previous game
         initializeGame(); // Re-run initialization to get a new puzzle
     }
 
