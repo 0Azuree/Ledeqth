@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ledeqth - Color Match Game</title>
-    <link rel="stylesheet" href="style.css">         <link rel="stylesheet" href="color-match-game.css"> <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+    <title>Ledeqth - Sliding Puzzle</title> <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="color-match-game.css"> <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 </head>
 <body>
     <div id="snow-container"></div>
@@ -20,23 +20,20 @@
                 </ul>
         </nav>
 
-        <h2>Color Match Puzzle</h2>
-        <p>Match the colors on the grid to the target image!</p>
+        <h2>Sliding Image Puzzle</h2> <p>Slide the tiles to recreate the target image!</p>
 
         <div class="game-container">
             <div class="target-image-container">
                 <h3>Target</h3>
-                <div id="target-grid" class="game-grid">
-                    </div>
-            </div>
+                <img id="target-image" src="puzzle-image.jpg" alt="Target Puzzle Image"> </div>
 
             <div class="player-game-area">
-                 <div class="game-info">
+                <div class="game-info">
                     <h3>Your Grid</h3>
-                    <p id="game-status"></p> </div>
-                 <div id="player-grid" class="game-grid">
+                    <p>Moves: <span id="move-counter">0</span></p> <p>Score: <span id="score">0</span></p>     <p id="game-status"></p> </div>
+                <div id="player-grid" class="game-grid">
                     </div>
-                 <button id="reset-button" class="game-link-button">Reset Game</button> </div>
+                <button id="reset-button" class="game-link-button">New Puzzle</button> </div>
 
         </div>
 
