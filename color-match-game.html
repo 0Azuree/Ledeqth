@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledeqth - Color Match Game</title>
+    <link rel="stylesheet" href="style.css">         <link rel="stylesheet" href="color-match-game.css"> <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+</head>
+<body>
+    <div id="snow-container"></div>
+
+    <main>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="nav-button">Home</a></li>
+                <li><a href="projects.html" class="nav-button">Projects</a></li>
+                <li><a href="games.html" class="nav-button">Games</a></li>
+                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
+                <li><a href="ai.html" class="nav-button">AI</a></li>
+                </ul>
+        </nav>
+
+        <h2>Color Match Puzzle</h2>
+        <p>Match the colors on the grid to the target image!</p>
+
+        <div class="game-container">
+            <div class="target-image-container">
+                <h3>Target</h3>
+                <div id="target-grid" class="game-grid">
+                    </div>
+            </div>
+
+            <div class="player-game-area">
+                 <div class="game-info">
+                    <h3>Your Grid</h3>
+                    <p id="game-status"></p> </div>
+                 <div id="player-grid" class="game-grid">
+                    </div>
+                 <button id="reset-button" class="game-link-button">Reset Game</button> </div>
+
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ledeqth</p>
+    </footer>
+
+    <script src="snow.js"></script>
+    <script src="color-match-game.js"></script> </body>
+</html>
