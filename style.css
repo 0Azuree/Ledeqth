@@ -292,34 +292,109 @@ footer {
 }
 
 
-/* --- Updated Styles for AI Page --- */
-/* ... (AI page styles are unchanged in this step, see previous full style.css) ... */
+/* --- Styles for AI Page --- */
 
 .ai-container {
-    background-color: #1a1a1a;
+    background-color: #1a1a1a; /* Dark background */
     padding: 25px;
     margin-top: 20px;
     margin-bottom: 25px;
-    border-radius: 10px;
+    border-radius: 10px; /* Rounded corners for the main container */
     border: 1px solid #333;
     width: 90%;
     max-width: 800px;
     display: flex;
-    flex-direction: column;
+    flex-direction: column; /* Stack response above input */
     align-items: center;
     min-height: 500px;
     /* Item Entry Animation */
      opacity: 0; /* Start hidden */
     animation: itemEntry 0.6s ease-out forwards;
+     gap: 20px; /* Space between response and input areas */
 }
 
-#ai-response { /* ... existing styles ... */ }
-#ai-response p { /* ... existing styles ... */ }
-#ai-response.loading { /* ... existing styles ... */ }
-.prompt-input-area { /* ... existing styles ... */ }
-#user-prompt { /* ... existing styles ... */ }
-#user-prompt::placeholder { /* ... existing styles ... */ }
-#send-prompt-button { /* ... existing styles ... */ }
+#ai-response {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #555;
+    border-radius: 8px; /* Rounded corners for response box */
+    background-color: #222; /* Dark background for response box */
+    color: #eee;
+    min-height: 150px;
+    overflow-y: auto;
+    text-align: left;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    flex-grow: 1; /* Allow response area to take available space */
+     box-sizing: border-box; /* Include padding and border in width */
+}
+
+#ai-response p {
+    margin: 0;
+    line-height: 1.6;
+    color: #bbb;
+}
+
+#ai-response.loading {
+    font-style: italic;
+    color: #888;
+     /* Add pulse glow for loading state */
+     animation: pulseGlow 1.5s infinite alternate;
+}
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 8px rgba(0, 170, 255, 0.3); }
+    100% { box-shadow: 0 0 15px rgba(0, 170, 255, 0.6); }
+}
+
+
+.prompt-input-area {
+    width: 100%; /* Make the wrapper fill the container width */
+    display: flex;
+    flex-direction: column; /* Stack prompt and button vertically */
+    align-items: flex-start; /* Align children (prompt/button) to the left */
+    /* Optional: Add some padding or margin if needed within the wrapper */
+     padding: 0;
+     margin: 0;
+}
+
+
+#user-prompt {
+    width: 100%; /* Make textarea fill the wrapper width */
+    padding: 10px;
+    margin-bottom: 15px; /* Space below prompt box */
+    border: 1px solid #555;
+    border-radius: 8px; /* Rounded corners for prompt box */
+    background-color: #222; /* Dark background for prompt box */
+    color: #eee;
+    font-size: 1em;
+    resize: vertical;
+    box-sizing: border-box;
+     /* Optional: Glow on focus */
+     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#user-prompt:focus {
+     outline: none;
+     border-color: #00aaff;
+     box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
+}
+
+
+#user-prompt::placeholder {
+    color: #888;
+}
+
+#send-prompt-button {
+    /* Using the existing .project-link-button style for base */
+    margin-top: 0; /* Already handled by textarea margin-bottom */
+     border-radius: 5px; /* Ensure button has rounded corners */
+      /* Optional: Glow on focus */
+     transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease; /* Ensure box-shadow transitions */
+}
+#send-prompt-button:focus {
+    outline: none;
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
+}
 
 
 /* --- Styles for Sliding Color Puzzle (color-match-game.css should contain these) --- */
@@ -342,22 +417,93 @@ footer {
 
 /* Media Queries for Responsiveness */
 @media (max-width: 768px) {
-    /* ... existing media queries ... */
-    /* Ensure new styles are adjusted in media queries if needed */
-    .game-item, .project-item, .ai-container {
-         /* Adjust animation-delay or properties if needed for small screens */
+    .main-title { font-size: 3.5rem; }
+    .description { font-size: 1.1em; max-width: 90%; margin-bottom: 30px; }
+    nav ul { gap: 15px; }
+    .nav-button { padding: 8px 18px; font-size: 1em; }
+    main h2 { font-size: 2.2em; }
+    main p:not(.description):not(.last-updated) { font-size: 1em; margin-bottom: 25px; }
+    .game-item, .project-item { width: 90%; padding: 20px; margin-bottom: 20px; }
+     .game-item h3, .project-item h3 { font-size: 1.3em; }
+    .game-link-button, .project-link-button { padding: 7px 12px; font-size: 0.9em; margin-top: 8px; }
+
+
+     /* AI page adjustments */
+    .ai-container {
+         width: 95%;
+         padding: 20px;
+         min-height: 400px;
+         gap: 15px; /* Reduce gap on small screens */
     }
+    #ai-response {
+        padding: 10px;
+        min-height: 100px;
+        margin-bottom: 0; /* Gap is handled by container */
+    }
+    .prompt-input-area {
+         align-items: center; /* Center button on small screens */
+     }
+    #user-prompt {
+        margin-bottom: 10px; /* Reduce margin below prompt */
+    }
+     #send-prompt-button {
+        margin-top: 0; /* Margin handled by prompt-input */
+        align-self: center; /* Explicitly center the button if align-items is center */
+       }
+
+     /* Item Entry Animation adjustments */
+      .game-item, .project-item, .ai-container {
+         animation-delay: 0.2s; /* Maybe reduce delay on smaller screens */
+       }
 }
 
 @media (max-width: 600px) {
-    /* ... existing media queries ... */
+    /* Adjust iframe height on smaller screens if needed */
+    .google-form-container iframe {
+        min-height: 500px;
+    }
+    nav ul {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+     .nav-button {
+         font-size: 0.9em;
+         padding: 6px 12px;
+     }
 }
 
 @media (max-width: 480px) {
-     /* ... existing media queries ... */
-      /* Ensure new styles are adjusted in media queries if needed */
+    .main-title { font-size: 2.8rem; }
+    .description { font-size: 1em; margin-bottom: 25px; }
+    nav { margin-bottom: 25px; }
+     main h2 { font-size: 2em; margin-bottom: 15px; }
+     main p:not(.description):not(.last-updated) { margin-bottom: 20px; }
+     .game-item, .project-item { padding: 15px; margin-bottom: 15px; }
+      .game-item h3, .project-item h3 { font-size: 1.2em; }
+     .game-link-button, .project-link-button { padding: 6px 10px; font-size: 0.8em; margin-top: 6px; }
+
+     /* AI page adjustments */
+    .ai-container {
+         padding: 15px;
+         min-height: 350px;
+         gap: 10px;
+    }
+    #ai-response {
+         padding: 8px;
+         min-height: 80px;
+    }
+     #user-prompt {
+        padding: 8px;
+        margin-bottom: 8px;
+      }
+       #send-prompt-button {
+        padding: 6px 10px;
+        font-size: 0.9em;
+       }
+
+     /* Item Entry Animation adjustments */
        .game-item, .project-item, .ai-container {
-         /* Adjust animation-delay or properties if needed for small screens */
          animation-delay: 0s; /* Maybe remove delay on small screens */
+         animation: fadeIn 0.6s ease-out forwards; /* Use simpler fadeIn if entry looks bad */
        }
 }
