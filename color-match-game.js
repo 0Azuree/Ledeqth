@@ -1,4 +1,4 @@
-// color-match-game.js - Complete Sliding Color Puzzle Logic
+// color-match-game.js - Complete Sliding Color Puzzle Logic with Animation
 
 document.addEventListener('DOMContentLoaded', function() {
 
@@ -34,6 +34,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let moveCount = 0;
     let score = 0;
     const EMPTY_SLOT_MARKER = 'EMPTY'; // Define a unique marker for the empty slot
+
+    // --- Animation/Rendering State ---
+    let currentTileSize = 0;
+    let currentGap = 0;
+    // We will get padding from CSS when rendering
+
+    const SLIDE_DURATION = 300; // Match this to the CSS transition duration in ms
 
 
     // --- Functions ---
@@ -127,22 +134,23 @@ document.addEventListener('DOMContentLoaded', function() {
     function renderGrid(gridElement, colorsState, isInteractive) {
         gridElement.innerHTML = ''; // Clear previous tiles
 
-        // Set grid dimensions in CSS based on size (assuming tiles are square)
-         // This needs to be responsive - calculate tile size based on container width
+        // Calculate tile size based on container width for responsiveness
          const containerWidth = gridElement.parentElement.clientWidth;
-         const gap = parseInt(getComputedStyle(gridElement).gap); // Get gap from CSS
-         const padding = parseInt(getComputedStyle(gridElement).padding) || 0; // Get padding from CSS, default to 0 if undefined
+         const computedStyles = getComputedStyle(gridElement);
+         currentGap = parseInt(computedStyles.gap); // Get gap from CSS
+         currentPadding = parseInt(computedStyles.padding) || 0; // Get padding from CSS, default to 0 if undefined
 
-         // Calculate tile size based on container width, gaps, and padding
-         const totalGapWidth = (GRID_SIZE - 1) * gap;
-         const totalPadding = padding * 2;
+         const totalGapWidth = (GRID_SIZE - 1) * currentGap;
+         const totalPadding = currentPadding * 2;
          const availableWidth = containerWidth - totalGapWidth - totalPadding;
-         const tileSize = availableWidth / GRID_SIZE;
+         currentTileSize = availableWidth / GRID_SIZE; // Store calculated tile size
 
-         gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${tileSize}px)`;
-         gridElement.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${tileSize}px)`;
+
+         gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${currentTileSize}px)`;
+         gridElement.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${currentTileSize}px)`;
          gridElement.style.width = `${containerWidth}px`; // Make grid fill its container width
          // gridElement.style.height = `auto`; // Height will adjust based on rows - handled by grid default
+
 
         for (let row = 0; row < GRID_SIZE; row++) {
             for (let col = 0; col < GRID_SIZE; col++) {
@@ -156,9 +164,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (colorOrMarker === EMPTY_SLOT_MARKER) {
                     // This is the empty tile slot
                     tileDiv.classList.add('empty');
+                     // Ensure the empty slot has correct grid positioning from the start
+                    tileDiv.style.gridRow = row + 1;
+                    tileDiv.style.gridColumn = col + 1;
                 } else {
                     // This is a color tile
                     tileDiv.style.backgroundColor = colorOrMarker;
+                     // Set initial grid positioning
+                    tileDiv.style.gridRow = row + 1;
+                    tileDiv.style.gridColumn = col + 1;
 
                     if (isInteractive) {
                         // Add click listener only to player tiles
@@ -173,9 +187,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 gridElement.appendChild(tileDiv);
             }
         }
-         // Note: For sliding animation, you would calculate the old and new positions
-         // and use CSS transforms on the individual DOM elements instead of re-rendering.
-         // This render just creates the correct grid state visually.
     }
 
     // 4. Handle a click on a player tile
@@ -193,56 +204,62 @@ document.addEventListener('DOMContentLoaded', function() {
         const isAdjacent = (rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1);
 
         if (isAdjacent) {
-            // --- Perform the slide (update state and DOM) ---
+            // --- Perform the slide (update state and animate DOM) ---
 
             // 1. Update the state (swap values in the playerColors array)
             const colorToMove = playerColors[clickedRow][clickedCol];
-            playerColors[emptyTilePosition.row][emptyTilePosition.col] = colorToMove; // Move color to empty slot's old position
-            playerColors[clickedRow][clickedCol] = EMPTY_SLOT_MARKER; // Put empty marker in clicked tile's original position
-
-            // 2. Update the empty tile's recorded position
-            emptyTilePosition = { row: clickedRow, col: clickedCol };
-
-            // 3. Update the DOM (instead of re-rendering the whole grid)
-            // Get the DOM elements for the clicked tile and the empty slot's old position
-            const emptySlotDomElement = playerGridElement.querySelector(`.game-tile[data-row="${emptyTilePosition.row}"][data-col="${emptyTilePosition.col}"]`);
-             const clickedTileDomElement = clickedTile; // The event target is the clicked tile DOM element
+            playerColors[emptyTilePosition.row][emptyTilePosition.col] = colorToMove; // Move color to empty slot's old position in state
+            playerColors[clickedRow][clickedCol] = EMPTY_SLOT_MARKER; // Put empty marker in clicked tile's original position in state
 
 
-            // Swap the class (empty/not empty) and background color
-             clickedTileDomElement.classList.add('empty');
-             clickedTileDomElement.style.backgroundColor = ''; // Clear background color
-             clickedTileDomElement.style.cursor = 'default';
-             clickedTileDomElement.style.pointerEvents = 'none'; // Make it non-interactive
+            // 2. Calculate the translation distance for the animation
+            let deltaX = (emptyTilePosition.col - clickedCol) * (currentTileSize + currentGap);
+            let deltaY = (emptyTilePosition.row - clickedRow) * (currentTileSize + currentGap);
 
-             emptySlotDomElement.classList.remove('empty');
-             emptySlotDomElement.style.backgroundColor = colorToMove; // Set the moved color
-             emptySlotDomElement.style.cursor = 'pointer';
-             emptySlotDomElement.style.pointerEvents = 'auto'; // Make it interactive
+            // 3. Get the DOM element for the empty slot's old position
+            // We need this to update its appearance after the clicked tile slides into it
+            const emptySlotDomElement = playerGridElement.querySelector('.game-tile.empty');
 
 
-             // Update the dataset on the DOM elements (important for handleTileClick)
-             // This is a bit tricky with just swapping styles/classes. A better approach
-             // for DOM manipulation and animation is to physically swap the DOM nodes
-             // or use CSS transforms. Let's stick to updating styles/classes for simplicity,
-             // but acknowledge this approach makes physical swap/transform animations harder.
-             // If physical DOM swap was used:
-             // const clickedOriginalSibling = clickedTileDomElement.nextSibling;
-             // emptySlotDomElement.parentNode.insertBefore(clickedTileDomElement, emptySlotDomElement);
-             // clickedTileDomElement.parentNode.insertBefore(emptySlotDomElement, clickedOriginalSibling);
-             // Need to re-assign data-row/col or rely on their physical position for lookup.
+            // 4. Apply transform to the clicked tile DOM element to start the animation
+            clickedTile.style.transform = `translate(${deltaX}px, ${deltaY}px)`;
 
-             // Simple approach: Re-render the player grid after the swap for visual update
-             // This sacrifices smooth animation for simpler logic.
-             renderGrid(playerGridElement, playerColors, true);
+            // 5. Use setTimeout to wait for the animation to finish before updating the DOM structure/classes
+            // This makes the animation smooth, then snaps to the final state
+            setTimeout(() => {
+                // Reset transform after animation
+                clickedTile.style.transform = '';
+
+                // Update DOM elements' grid positions to their new logical positions
+                // Get the new logical position of the clicked tile (which is where the empty slot was)
+                clickedTile.style.gridRow = emptyTilePosition.row + 1;
+                clickedTile.style.gridColumn = emptyTilePosition.col + 1;
+
+                // Get the new logical position of the empty slot (which is where the clicked tile was)
+                 emptySlotDomElement.style.gridRow = clickedRow + 1;
+                 emptySlotDomElement.style.gridColumn = clickedCol + 1;
 
 
-            // Increment move counter
-            moveCount++;
-            updateDisplay();
+                // Update classes and background color after the move
+                clickedTile.classList.remove('empty'); // The clicked tile is no longer empty
+                emptySlotDomElement.classList.add('empty'); // The old empty slot is now empty
+                 emptySlotDomElement.style.backgroundColor = ''; // Ensure the new empty slot looks empty
 
-            // Check if the game is won
-            checkWinCondition();
+                 // The clicked tile now has the color, set its background color
+                 clickedTile.style.backgroundColor = colorToMove;
+
+
+                // Update the empty tile's recorded position in state
+                emptyTilePosition = { row: clickedRow, col: clickedCol }; // The empty slot is now where the clicked tile was
+
+                // Increment move counter
+                moveCount++;
+                updateDisplay();
+
+                // Check if the game is won
+                checkWinCondition();
+
+            }, SLIDE_DURATION); // Match this duration to the CSS transition-duration
         }
     }
 
@@ -269,7 +286,8 @@ document.addEventListener('DOMContentLoaded', function() {
              updateDisplay();
             updateGameStatus("Puzzle Complete!"); // Update status
             // Optional: Trigger animation or celebration (e.g., adding a class)
-             playerGridElement.classList.add('won');
+             playerGridElement.classList.add('won'); // Add a class for visual feedback
+
 
             // Start a new random puzzle automatically after a delay
             setTimeout(startNewPuzzle, 2000);
@@ -306,5 +324,12 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Initial Game Setup ---
     initializeGame(); // Start the first game when the page loads
+
+     // Optional: Handle window resize to make the grid responsive
+    window.addEventListener('resize', () => {
+        // Re-render the grids on resize to adjust tile sizes
+        renderGrid(targetGridElement, targetColors, false);
+        renderGrid(playerGridElement, playerColors, true);
+    });
 
 });
