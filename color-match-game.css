@@ -1,0 +1,113 @@
+/* color-match-game.css */
+
+/* Style the main container for the game layout */
+.game-container {
+    display: flex; /* Use flexbox to arrange target and player areas */
+    flex-direction: column; /* Stack them vertically by default */
+    align-items: center; /* Center content horizontally */
+    margin-top: 20px;
+    padding: 20px;
+    background-color: #1a1a1a; /* Match item background */
+    border-radius: 8px;
+    border: 1px solid #333;
+    max-width: 800px; /* Limit width */
+    width: 90%; /* Responsive width */
+    gap: 30px; /* Space between sections */
+}
+
+/* Styles for the target image/color display area */
+.target-image-container {
+    text-align: center;
+    width: 100%;
+}
+
+.target-image-container h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #00aaff; /* Accent color */
+}
+
+/* Styles for the player's game area */
+.player-game-area {
+    text-align: center;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-info h3 {
+     margin-top: 0;
+    margin-bottom: 10px;
+    color: #00aaff; /* Accent color */
+}
+
+#game-status {
+    font-size: 1.1em;
+    min-height: 1.2em; /* Reserve space */
+    margin-bottom: 15px;
+}
+
+/* Style the grid container itself */
+.game-grid {
+    display: grid;
+    /* Grid columns and rows will be set by JavaScript based on image size */
+    /* Example for a 2x2 grid: */
+    /* grid-template-columns: repeat(2, 50px); */ /* 2 columns, 50px wide */
+    /* grid-template-rows: repeat(2, 50px); */    /* 2 rows, 50px tall */
+    gap: 5px; /* Space between tiles */
+    margin-bottom: 20px;
+    border: 2px solid #555; /* Border around the grid */
+    padding: 5px; /* Padding inside the grid border */
+    background-color: #222; /* Dark background inside grid */
+    border-radius: 5px;
+}
+
+/* Style individual grid tiles */
+.game-tile {
+    width: 50px; /* Default size, will be adjusted by JS */
+    height: 50px; /* Default size, will be adjusted by JS */
+    background-color: #555; /* Default tile color */
+    border: 1px solid #444;
+    border-radius: 3px;
+    cursor: pointer; /* Indicate it's clickable */
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* Optional: Hover effect for player tiles */
+#player-grid .game-tile:hover {
+     transform: scale(1.05);
+     border-color: #00aaff;
+}
+
+/* Optional: Style for won state */
+.won {
+    color: lightgreen;
+    font-weight: bold;
+}
+
+
+/* Media Queries for Responsiveness */
+@media (min-width: 600px) {
+    /* On wider screens, maybe arrange sections side-by-side */
+    .game-container {
+        flex-direction: row; /* Arrange side-by-side */
+        justify-content: space-around; /* Distribute space */
+        align-items: flex-start; /* Align items to the top */
+    }
+     .target-image-container,
+     .player-game-area {
+         width: 45%; /* Give each section roughly half the width */
+     }
+}
+
+@media (max-width: 480px) {
+    .game-tile {
+        width: 35px; /* Make tiles smaller on small screens */
+        height: 35px;
+    }
+     .game-grid {
+         gap: 3px; /* Reduce gap */
+         padding: 3px;
+     }
+}
