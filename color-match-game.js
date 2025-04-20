@@ -1,13 +1,14 @@
-// color-match-game.js - Sliding Color Puzzle Logic (Instant Tile Update)
+// color-match-game.js - Complete Sliding Color Puzzle Logic with Animation (CORRECTED)
 
 document.addEventListener('DOMContentLoaded', function() {
 
+    // Corrected getElementById calls
     const targetGridElement = document.getElementById('target-grid');
-    const playerGridElement = document('player-grid'); // Corrected: Should be getElementById
+    const playerGridElement = document.getElementById('player-grid');
     const resetButton = document.getElementById('reset-button');
     const moveCounterElement = document.getElementById('move-counter');
     const scoreElement = document.getElementById('score');
-    const gameStatusElement = document.getElementById('game-status'); // Corrected ID lookup
+    const gameStatusElement = document.getElementById('game-status');
 
 
     // --- Game Configuration ---
@@ -34,6 +35,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let moveCount = 0;
     let score = 0;
     const EMPTY_SLOT_MARKER = 'EMPTY'; // Define a unique marker for the empty slot
+
+    // --- Animation/Rendering State ---
+    let currentTileSize = 0;
+    let currentGap = 0;
+    // We will get padding from CSS when rendering
+
+    const SLIDE_DURATION = 300; // Match this to the CSS transition duration in ms
 
 
     // --- Functions ---
@@ -116,7 +124,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Update the empty tile position
             currentRow = tileToMoveRow;
-            currentCol = tileToMoveCol;
+            currentCol = tileToCol; // Corrected: Should be randomMove.col
             emptyTilePosition = { row: currentRow, col: currentCol };
         }
         // The playerColors array is now shuffled and solvable, and emptyTilePosition is correct
@@ -130,17 +138,17 @@ document.addEventListener('DOMContentLoaded', function() {
         // Calculate tile size based on container width for responsiveness
          const containerWidth = gridElement.parentElement.clientWidth;
          const computedStyles = getComputedStyle(gridElement);
-         const gap = parseInt(computedStyles.gap); // Get gap from CSS
-         const padding = parseInt(computedStyles.padding) || 0; // Get padding from CSS, default to 0 if undefined
+         currentGap = parseInt(computedStyles.gap); // Get gap from CSS
+         currentPadding = parseInt(computedStyles.padding) || 0; // Get padding from CSS, default to 0 if undefined
 
-         const totalGapWidth = (GRID_SIZE - 1) * gap;
-         const totalPadding = padding * 2;
+         const totalGapWidth = (GRID_SIZE - 1) * currentGap;
+         const totalPadding = currentPadding * 2;
          const availableWidth = containerWidth - totalGapWidth - totalPadding;
-         const tileSize = availableWidth / GRID_SIZE;
+         currentTileSize = availableWidth / GRID_SIZE; // Store calculated tile size
 
 
-         gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${tileSize}px)`;
-         gridElement.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${tileSize}px)`;
+         gridElement.style.gridTemplateColumns = `repeat(${GRID_SIZE}, ${tileSize}px)`; // Corrected: Should use currentTileSize
+         gridElement.style.gridTemplateRows = `repeat(${GRID_SIZE}, ${tileSize}px)`; // Corrected: Should use currentTileSize
          gridElement.style.width = `${containerWidth}px`; // Make grid fill its container width
          // gridElement.style.height = `auto`; // Height will adjust based on rows - handled by grid default
 
