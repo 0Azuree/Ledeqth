@@ -79,15 +79,18 @@
 /* Style individual grid tiles */
 .game-tile {
     /* Tile size will be set by JS based on grid size */
-    width: 60px; /* Example base size */
-    height: 60px; /* Example base size */
+    /* width: 60px; */ /* Example base size - JS sets this now */
+    /* height: 60px; */ /* Example base size - JS sets this now */
     background-color: #555; /* Default tile color */
     border: 1px solid #444;
     border-radius: 3px;
     cursor: pointer; /* Indicate it's clickable */
-    transition: background-color 0.2s ease, transform 0.3s ease-in-out; /* Smooth transition for color and slide */
-     box-sizing: border-box; /* Include border in tile dimensions */
-     position: relative; /* Needed for animations or pseudo-elements */
+    box-sizing: border-box; /* Include border in tile dimensions */
+
+    position: relative; /* Required for transform: translate() to work relative to grid cell */
+    /* Add smooth transition for sliding and background color */
+    transition: transform 300ms ease-in-out, background-color 200ms ease; /* Match JS SLIDE_DURATION */
+
 }
 
 /* Style for the empty tile */
@@ -106,10 +109,12 @@
      border-color: #00aaff;
 }
 
-/* Optional: Style for won state */
-.won {
-    color: lightgreen;
-    font-weight: bold;
+/* Optional: Style for won state visual feedback */
+.game-grid.won {
+    /* Example: Add a subtle glow or border animation when won */
+     box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
+     border-color: lightgreen;
+     transition: box-shadow 0.5s ease-in-out, border-color 0.5s ease-in-out;
 }
 
 
@@ -126,13 +131,13 @@
          max-width: 350px; /* Set a max width for the sections */
      }
        .game-grid {
-         /* JS will handle tile sizing based on container width and grid size */
-         width: 100%; /* Make grid fill its container */
+         width: 100%; /* Make grid fill its container width */
          height: auto; /* Height adjust automatically based on content */
      }
        .game-tile {
-           width: auto; /* Let grid determine width */
-           height: auto; /* Let grid determine height */
+           /* Size handled by JS and grid */
+           width: auto;
+           height: auto;
        }
 }
 
@@ -142,6 +147,8 @@
          padding: 3px;
      }
       .game-tile {
-          /* JS will handle tile sizing */
+          /* Size handled by JS and grid */
+          width: auto;
+          height: auto;
       }
 }
