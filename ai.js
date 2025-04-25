@@ -1,11 +1,14 @@
-// ai.js - Updated with History and Image Input
+// ai.js - Updated without History, with Image Input Logic
 
 document.addEventListener('DOMContentLoaded', function() {
     const promptTextarea = document.getElementById('user-prompt');
     const sendButton = document.getElementById('send-prompt-button');
     const responseDiv = document.getElementById('ai-response');
-    const historyListDiv = document.getElementById('history-list');
-    const clearHistoryButton = document.getElementById('clear-history-button');
+
+    // Removed history elements
+    // const historyListDiv = document.getElementById('history-list');
+    // const clearHistoryButton = document.getElementById('clear-history-button');
+
     const imageUploadInput = document.getElementById('image-upload-input');
     const uploadImageButton = document.getElementById('upload-image-button');
     const imagePreviewArea = document.getElementById('image-preview-area');
@@ -13,109 +16,14 @@ document.addEventListener('DOMContentLoaded', function() {
     const removeImageButton = document.getElementById('remove-image-button');
 
 
-    const HISTORY_STORAGE_KEY = 'aiHistory'; // Key for localStorage
+    // Removed history storage key
+    // const HISTORY_STORAGE_KEY = 'aiHistory';
+
     let currentImageFile = null; // To store the selected image file object
 
-    // --- History Functions ---
-
-    // Load history from localStorage
-    function loadHistory() {
-        const historyJson = localStorage.getItem(HISTORY_STORAGE_KEY);
-        if (historyJson) {
-            try {
-                // Ensure loaded history is an array
-                const history = JSON.parse(historyJson);
-                return Array.isArray(history) ? history : [];
-            } catch (e) {
-                console.error("Error parsing history from localStorage:", e);
-                return []; // Return empty array if parsing fails
-            }
-        }
-        return [];
-    }
-
-    // Save history to localStorage
-    function saveHistory(history) {
-        try {
-            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
-        } catch (e) {
-            console.error("Error saving history to localStorage:", e);
-            // Handle potential localStorage full error
-            if (e.name === 'QuotaExceededError') {
-                alert("History storage is full. Please clear history.");
-            }
-        }
-    }
-
-    // Display history in the UI
-    function displayHistory(history) {
-        historyListDiv.innerHTML = ''; // Clear current list
-
-        if (!history || history.length === 0) { // Check if history is null/undefined or empty
-            historyListDiv.innerHTML = '<p class="history-placeholder">No history yet.</p>';
-             clearHistoryButton.style.display = 'none'; // Hide clear button if no history
-            return;
-        }
-
-         clearHistoryButton.style.display = 'inline-block'; // Show clear button
-
-        // Display history items in reverse order (most recent first)
-        history.slice().reverse().forEach((item, index) => {
-            const historyItem = document.createElement('div');
-            historyItem.classList.add('history-item');
-
-            // Display a summary of the prompt
-            const promptSummary = item.prompt.substring(0, 50) + (item.prompt.length > 50 ? '...' : '');
-            const promptElement = document.createElement('p');
-            promptElement.classList.add('history-prompt-summary');
-            promptElement.textContent = `Prompt: "${promptSummary}"`;
-            historyItem.appendChild(promptElement);
-
-             // Optional: Display a summary of the response
-             const responseSummary = item.response.substring(0, 50) + (item.response.length > 50 ? '...' : '');
-             const responseElement = document.createElement('p');
-             responseElement.classList.add('history-response-summary');
-             responseElement.textContent = `Response: "${responseSummary}"`;
-             historyItem.appendChild(responseElement);
-
-
-            // Add click listener to load the full interaction (optional, or show details)
-            historyItem.addEventListener('click', () => {
-                // Display full interaction in the main response area
-                 responseDiv.innerHTML = `
-                     <p><strong>Prompt:</strong> ${item.prompt.replace(/\n/g, '<br>')}</p>
-                     <p><strong>Response:</strong> ${item.response.replace(/\n/g, '<br>')}</p>
-                 `;
-                 responseDiv.classList.remove('loading'); // Ensure loading state is off
-                 // Clear any image preview when loading history
-                 clearImagePreview();
-            });
-
-            historyListDiv.appendChild(historyItem);
-        });
-    }
-
-    // Add a new interaction (prompt and response) to history
-    function addHistoryItem(prompt, response) {
-        const history = loadHistory();
-        history.push({ prompt: prompt, response: response, timestamp: new Date().toISOString() });
-        // Optional: Limit history size
-        if (history.length > 50) { // Keep last 50 items
-            history.shift(); // Remove the oldest item
-        }
-        saveHistory(history);
-        displayHistory(history); // Update the display
-    }
-
-    // Clear all history
-    function clearHistory() {
-        if (confirm("Are you sure you want to clear all AI history?")) {
-            localStorage.removeItem(HISTORY_STORAGE_KEY);
-            displayHistory([]); // Update the display
-             responseDiv.innerHTML = '<p>Waiting for prompt...</p>'; // Reset main response area
-             clearImagePreview(); // Clear any image preview
-        }
-    }
+    // --- Removed History Functions ---
+    // loadHistory, saveHistory, displayHistory, addHistoryItem, clearHistory
+    // Removed clearHistoryButton event listener
 
 
     // --- Image Input Functions ---
@@ -260,8 +168,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 const aiResponseText = data.response;
                 responseDiv.innerHTML = `<p>${aiResponseText.replace(/\n/g, '<br>')}</p>`;
 
-                // Add interaction to history
-                addHistoryItem(requestBody.prompt, aiResponseText);
+                // Removed history add call
+                // addHistoryItem(requestBody.prompt, aiResponseText);
 
             } else {
                 responseDiv.innerHTML = '<p style="color: #ff6666;">Error: Invalid response format from backend.</p>';
@@ -291,9 +199,10 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     // --- Initial Setup ---
-    displayHistory(loadHistory()); // Load and display history when the page loads
+    // Removed history load and display on initial setup
+    // displayHistory(loadHistory()); // Load and display history when the page loads
 
-    // Event listener for the clear history button
-    clearHistoryButton.addEventListener('click', clearHistory);
+    // Removed event listener for the clear history button
+    // clearHistoryButton.addEventListener('click', clearHistory);
 
 });
