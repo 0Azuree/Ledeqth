@@ -60,7 +60,7 @@ exports.handler = async (event, context) => {
         const genAI = new GoogleGenerativeAI({ apiKey: API_KEY });
 
         // Get the generative model instance
-        // Use a model that supports multimodal input (like gemini-2.0-flash)
+        // Make sure that this model supports multimodal input, e.g., text + image
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         // Construct the 'parts' array for the multimodal content
@@ -97,20 +97,24 @@ exports.handler = async (event, context) => {
             headers: {
                 "Content-Type": "application/json",
                 // Add CORS headers if needed (Netlify usually handles this, but explicit headers can help)
-                // "Access-Control-Allow-Origin": "*", // Allow requests from any origin
-                // "Access-Control-Allow-Headers": "Content-Type",
-                // "Access-Control-Allow-Methods": "POST, OPTIONS"
+                "Access-Control-Allow-Origin": "*", // Allow requests from any origin
+                "Access-Control-Allow-Headers": "Content-Type",
+                "Access-Control-Allow-Methods": "POST, OPTIONS"
             },
             body: JSON.stringify({ response: responseText })
         };
 
     } catch (error) {
         console.error("Error calling Google AI API:", error);
-        // Return an error response to the frontend
+        // Return an error response to the frontend with more details
         return {
             statusCode: 500, // Internal Server Error
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: "Error processing AI request.", error: error.message })
+            body: JSON.stringify({
+                message: "Error processing AI request.",
+                error: error.message,
+                details: error.stack // This will help you debug the full error message
+            })
         };
     }
 };
