@@ -22,15 +22,32 @@
         </nav>
 
         <h2>AI Interaction</h2>
-        <p>Enter your prompt below and interact with the AI.</p>
+        <p>Enter your prompt and/or upload an image below to interact with the AI.</p>
 
         <div class="ai-container">
-            <div id="ai-response">
-                <p>Waiting for prompt...</p>
+            <div id="ai-history">
+                <h3>History</h3>
+                <div id="history-list">
+                    <p class="history-placeholder">No history yet.</p>
+                </div>
+                 <button id="clear-history-button" class="project-link-button">Clear History</button>
             </div>
-            <div class="prompt-input-area">
-                <textarea id="user-prompt" placeholder="Enter your prompt here..." rows="10"></textarea>
-                <button id="send-prompt-button" class="project-link-button">Send to AI</button>
+
+            <div class="ai-interaction-area">
+                 <div id="image-preview-area" class="image-preview-area">
+                     <img id="uploaded-image-preview" src="#" alt="Image Preview" style="display: none;">
+                     <button id="remove-image-button" class="remove-image-button" style="display: none;">&times;</button> </div>
+
+                <div id="ai-response">
+                    <p>Waiting for prompt...</p>
+                </div>
+
+                <div class="prompt-input-area">
+                    <textarea id="user-prompt" placeholder="Enter your prompt here..." rows="5"></textarea>
+                    <div class="input-controls">
+                         <input type="file" id="image-upload-input" accept="image/*" style="display: none;"> <button id="upload-image-button" class="project-link-button">Upload Image</button> <button id="send-prompt-button" class="project-link-button">Send to AI</button>
+                    </div>
+                </div>
             </div>
         </div>
 
