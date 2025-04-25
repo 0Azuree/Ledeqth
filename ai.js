@@ -1,71 +1,296 @@
-// ai.js
+// ai.js - Updated with History and Image Input
 
 document.addEventListener('DOMContentLoaded', function() {
     const promptTextarea = document.getElementById('user-prompt');
     const sendButton = document.getElementById('send-prompt-button');
     const responseDiv = document.getElementById('ai-response');
+    const historyListDiv = document.getElementById('history-list');
+    const clearHistoryButton = document.getElementById('clear-history-button');
+    const imageUploadInput = document.getElementById('image-upload-input');
+    const uploadImageButton = document.getElementById('upload-image-button');
+    const imagePreviewArea = document.getElementById('image-preview-area');
+    const uploadedImagePreview = document.getElementById('uploaded-image-preview');
+    const removeImageButton = document.getElementById('remove-image-button');
 
-    // Add event listener to the button
-    sendButton.addEventListener('click', async function() {
-        const prompt = promptTextarea.value.trim(); // Get user input and remove leading/trailing whitespace
 
-        if (prompt === '') {
-            responseDiv.innerHTML = '<p style="color: #ff6666;">Please enter a prompt.</p>'; // Display an error message
-            return; // Stop if prompt is empty
+    const HISTORY_STORAGE_KEY = 'aiHistory'; // Key for localStorage
+    let currentImageFile = null; // To store the selected image file object
+
+    // --- History Functions ---
+
+    // Load history from localStorage
+    function loadHistory() {
+        const historyJson = localStorage.getItem(HISTORY_STORAGE_KEY);
+        if (historyJson) {
+            try {
+                return JSON.parse(historyJson);
+            } catch (e) {
+                console.error("Error parsing history from localStorage:", e);
+                return []; // Return empty array if parsing fails
+            }
+        }
+        return [];
+    }
+
+    // Save history to localStorage
+    function saveHistory(history) {
+        try {
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history));
+        } catch (e) {
+            console.error("Error saving history to localStorage:", e);
+            // Handle potential localStorage full error
+            if (e.name === 'QuotaExceededError') {
+                alert("History storage is full. Please clear history.");
+            }
+        }
+    }
+
+    // Display history in the UI
+    function displayHistory(history) {
+        historyListDiv.innerHTML = ''; // Clear current list
+
+        if (history.length === 0) {
+            historyListDiv.innerHTML = '<p class="history-placeholder">No history yet.</p>';
+             clearHistoryButton.style.display = 'none'; // Hide clear button if no history
+            return;
         }
 
-        // Clear previous response and show loading message
+         clearHistoryButton.style.display = 'inline-block'; // Show clear button
+
+        // Display history items in reverse order (most recent first)
+        history.slice().reverse().forEach((item, index) => {
+            const historyItem = document.createElement('div');
+            historyItem.classList.add('history-item');
+
+            // Display a summary of the prompt
+            const promptSummary = item.prompt.substring(0, 50) + (item.prompt.length > 50 ? '...' : '');
+            const promptElement = document.createElement('p');
+            promptElement.classList.add('history-prompt-summary');
+            promptElement.textContent = `Prompt: "${promptSummary}"`;
+            historyItem.appendChild(promptElement);
+
+             // Optional: Display a summary of the response
+             const responseSummary = item.response.substring(0, 50) + (item.response.length > 50 ? '...' : '');
+             const responseElement = document.createElement('p');
+             responseElement.classList.add('history-response-summary');
+             responseElement.textContent = `Response: "${responseSummary}"`;
+             historyItem.appendChild(responseElement);
+
+
+            // Add click listener to load the full interaction (optional, or show details)
+            historyItem.addEventListener('click', () => {
+                // You could implement showing the full interaction details here
+                // For now, let's just log it or display in the main area
+                console.log("History Item Clicked:", item);
+                // Option 1: Load prompt into textarea
+                // promptTextarea.value = item.prompt;
+                // Option 2: Display full response in main response area
+                 responseDiv.innerHTML = `<p><strong>Prompt:</strong> ${item.prompt.replace(/\n/g, '<br>')}</p><p><strong>Response:</strong> ${item.response.replace(/\n/g, '<br>')}</p>`;
+                 responseDiv.classList.remove('loading'); // Ensure loading state is off
+                 // Clear any image preview when loading history
+                 clearImagePreview();
+            });
+
+            historyListDiv.appendChild(historyItem);
+        });
+    }
+
+    // Add a new interaction (prompt and response) to history
+    function addHistoryItem(prompt, response) {
+        const history = loadHistory();
+        history.push({ prompt: prompt, response: response, timestamp: new Date().toISOString() });
+        // Optional: Limit history size
+        if (history.length > 50) { // Keep last 50 items
+            history.shift(); // Remove the oldest item
+        }
+        saveHistory(history);
+        displayHistory(history); // Update the display
+    }
+
+    // Clear all history
+    function clearHistory() {
+        if (confirm("Are you sure you want to clear all AI history?")) {
+            localStorage.removeItem(HISTORY_STORAGE_KEY);
+            displayHistory([]); // Update the display
+             responseDiv.innerHTML = '<p>Waiting for prompt...</p>'; // Reset main response area
+             clearImagePreview(); // Clear any image preview
+        }
+    }
+
+
+    // --- Image Input Functions ---
+
+    // Trigger file input click when upload button is clicked
+    uploadImageButton.addEventListener('click', () => {
+        imageUploadInput.click();
+    });
+
+    // Handle file selection from the input
+    imageUploadInput.addEventListener('change', (event) => {
+        const file = event.target.files[0];
+        if (file && file.type.startsWith('image/')) {
+            currentImageFile = file; // Store the file object
+            displayImagePreview(file);
+        } else {
+            currentImageFile = null;
+            clearImagePreview();
+            if (file) {
+                 alert("Please select a valid image file.");
+            }
+        }
+         // Clear the input value so selecting the same file again triggers change
+         imageUploadInput.value = '';
+    });
+
+    // Handle image paste event
+    document.addEventListener('paste', (event) => {
+        const items = event.clipboardData.items;
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            if (item.type.startsWith('image/')) {
+                event.preventDefault(); // Prevent default paste behavior (like pasting into textarea)
+                const file = item.getAsFile();
+                currentImageFile = file; // Store the file object
+                displayImagePreview(file);
+                break; // Process only the first image found
+            }
+        }
+    });
+
+
+    // Display the selected/pasted image preview
+    function displayImagePreview(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            uploadedImagePreview.src = e.target.result; // Set the image source to the data URL
+            uploadedImagePreview.style.display = 'block'; // Show the image
+            removeImageButton.style.display = 'block'; // Show the remove button
+             imagePreviewArea.style.display = 'flex'; // Show the preview container
+             responseDiv.style.marginTop = '15px'; // Add space between preview and response
+        };
+        reader.readAsDataURL(file); // Read the file as a data URL (base64)
+        self.status_label.textContent = `Image selected: ${file.name}`; // Update status (if you had one)
+    }
+
+    // Clear the image preview
+    function clearImagePreview() {
+        currentImageFile = null;
+        uploadedImagePreview.src = '#'; // Reset image source
+        uploadedImagePreview.style.display = 'none'; // Hide the image
+        removeImageButton.style.display = 'none'; // Hide the remove button
+         imagePreviewArea.style.display = 'none'; // Hide the preview container
+         responseDiv.style.marginTop = '0'; // Remove the added space
+    }
+
+    // Handle remove image button click
+    removeImageButton.addEventListener('click', clearImagePreview);
+
+
+    // --- AI Interaction Function (Modified to include image) ---
+
+    sendButton.addEventListener('click', async function() {
+        const prompt = promptTextarea.value.trim();
+
+        // Check if either prompt text or an image is provided
+        if (prompt === '' && !currentImageFile) {
+            responseDiv.innerHTML = '<p style="color: #ff6666;">Please enter a prompt or upload/paste an image.</p>';
+            return;
+        }
+
         responseDiv.innerHTML = '<p>Loading...</p>';
-        responseDiv.classList.add('loading'); // Add loading class for styling
-        sendButton.disabled = true; // Disable button while loading
+        responseDiv.classList.add('loading');
+        sendButton.disabled = true;
+         uploadImageButton.disabled = true; // Disable upload button during request
+         removeImageButton.disabled = true; // Disable remove button during request
 
-        // *** THIS IS THE FETCH REQUEST TO YOUR NETLIFY FUNCTION ***
-        // The path /.netlify/functions/ai-handler is the standard way to access Netlify functions
-        const functionEndpoint = '/.netlify/functions/ai-handler';
 
-        try {
+        // Prepare the data to send to the backend
+        const requestBody = {
+            prompt: prompt // Always send the text prompt (can be empty)
+        };
+
+        if (currentImageFile) {
+            // Read the image file as a Data URL (Base64)
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                // Add image data to the request body
+                requestBody.image = e.target.result; // Base64 Data URL
+                requestBody.mimeType = currentImageFile.type; // Image MIME type
+
+                // Now send the request with image data
+                await sendToBackend(requestBody);
+            };
+            reader.onerror = (error) => {
+                 console.error("Error reading image file:", error);
+                 responseDiv.innerHTML = '<p style="color: #ff6666;">Error reading image file.</p>';
+                 responseDiv.classList.remove('loading');
+                 sendButton.disabled = false;
+                 uploadImageButton.disabled = false;
+                 removeImageButton.disabled = false;
+            };
+            reader.readAsDataURL(currentImageFile); // Start reading the file
+
+        } else {
+            // If no image, just send the text prompt
+            await sendToBackend(requestBody);
+        }
+    });
+
+    // Function to send the request to the backend
+    async function sendToBackend(requestBody) {
+         const functionEndpoint = '/.netlify/functions/ai-handler'; // Your Netlify Function endpoint
+
+         try {
             const response = await fetch(functionEndpoint, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt: prompt }) // Send the user's prompt to your backend function
+                body: JSON.stringify(requestBody) // Send the prepared body (text + optional image)
             });
 
             if (!response.ok) {
-                // Handle HTTP errors (e.g., 400, 500)
                 const errorBody = await response.json().catch(() => ({ message: `Error: ${response.status} ${response.statusText}` }));
                  throw new Error(errorBody.message || `HTTP error! status: ${response.status}`);
             }
 
-            const data = await response.json(); // Assuming your Netlify function sends back JSON { response: "AI text" }
+            const data = await response.json();
 
-            // Display the AI's response
             if (data && data.response) {
-                // Replace newlines with <br> for HTML display
-                responseDiv.innerHTML = `<p>${data.response.replace(/\n/g, '<br>')}</p>`;
+                const aiResponseText = data.response;
+                responseDiv.innerHTML = `<p>${aiResponseText.replace(/\n/g, '<br>')}</p>`;
+
+                // Add interaction to history
+                addHistoryItem(requestBody.prompt, aiResponseText);
+
             } else {
                 responseDiv.innerHTML = '<p style="color: #ff6666;">Error: Invalid response format from backend.</p>';
             }
 
         } catch (error) {
-            console.error('Error calling Netlify function:', error);
+            console.error('Error calling AI backend function:', error);
             responseDiv.innerHTML = `<p style="color: #ff6666;">Error: Could not get AI response. Details: ${error.message}</p>`;
         } finally {
-            responseDiv.classList.remove('loading'); // Remove loading class
-            sendButton.disabled = false; // Re-enable button
+            responseDiv.classList.remove('loading');
+            sendButton.disabled = false;
+            uploadImageButton.disabled = false;
+            removeImageButton.disabled = false;
+            // Clear the image preview after sending (optional, but often desired)
+            clearImagePreview();
+            promptTextarea.value = ''; // Clear prompt text area
         }
+    }
 
-        promptTextarea.value = ''; // Clear the textarea after sending
-    });
 
-    // Optional: Allow sending prompt with Enter key
+    // Allow sending prompt with Enter key (Shift+Enter for newline)
     promptTextarea.addEventListener('keypress', function(event) {
-        // Check for Enter key, but not Shift + Enter (which typically adds a newline)
         if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault(); // Prevent default newline behavior in textarea
-            sendButton.click(); // Trigger button click
+            event.preventDefault();
+            sendButton.click();
         }
     });
+
+    // --- Initial Setup ---
+    displayHistory(loadHistory()); // Load and display history when the page loads
 
 });
