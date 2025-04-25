@@ -23,7 +23,9 @@ document.addEventListener('DOMContentLoaded', function() {
         const historyJson = localStorage.getItem(HISTORY_STORAGE_KEY);
         if (historyJson) {
             try {
-                return JSON.parse(historyJson);
+                // Ensure loaded history is an array
+                const history = JSON.parse(historyJson);
+                return Array.isArray(history) ? history : [];
             } catch (e) {
                 console.error("Error parsing history from localStorage:", e);
                 return []; // Return empty array if parsing fails
@@ -49,7 +51,7 @@ document.addEventListener('DOMContentLoaded', function() {
     function displayHistory(history) {
         historyListDiv.innerHTML = ''; // Clear current list
 
-        if (history.length === 0) {
+        if (!history || history.length === 0) { // Check if history is null/undefined or empty
             historyListDiv.innerHTML = '<p class="history-placeholder">No history yet.</p>';
              clearHistoryButton.style.display = 'none'; // Hide clear button if no history
             return;
@@ -79,13 +81,11 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Add click listener to load the full interaction (optional, or show details)
             historyItem.addEventListener('click', () => {
-                // You could implement showing the full interaction details here
-                // For now, let's just log it or display in the main area
-                console.log("History Item Clicked:", item);
-                // Option 1: Load prompt into textarea
-                // promptTextarea.value = item.prompt;
-                // Option 2: Display full response in main response area
-                 responseDiv.innerHTML = `<p><strong>Prompt:</strong> ${item.prompt.replace(/\n/g, '<br>')}</p><p><strong>Response:</strong> ${item.response.replace(/\n/g, '<br>')}</p>`;
+                // Display full interaction in the main response area
+                 responseDiv.innerHTML = `
+                     <p><strong>Prompt:</strong> ${item.prompt.replace(/\n/g, '<br>')}</p>
+                     <p><strong>Response:</strong> ${item.response.replace(/\n/g, '<br>')}</p>
+                 `;
                  responseDiv.classList.remove('loading'); // Ensure loading state is off
                  // Clear any image preview when loading history
                  clearImagePreview();
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
              responseDiv.style.marginTop = '15px'; // Add space between preview and response
         };
         reader.readAsDataURL(file); // Read the file as a data URL (base64)
-        self.status_label.textContent = `Image selected: ${file.name}`; // Update status (if you had one)
+        // self.status_label.textContent = `Image selected: ${file.name}`; // Update status (if you had one)
     }
 
     // Clear the image preview
@@ -292,5 +292,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // --- Initial Setup ---
     displayHistory(loadHistory()); // Load and display history when the page loads
+
+    // Event listener for the clear history button
+    clearHistoryButton.addEventListener('click', clearHistory);
 
 });
