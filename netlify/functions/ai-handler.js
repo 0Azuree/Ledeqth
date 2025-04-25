@@ -4,14 +4,12 @@
 // Google Generative AI API.
 
 // Import the Google Generative AI library
-// Ensure this dependency is listed in your functions/package.json
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Netlify Functions handler function
 // event: Contains information about the request (headers, body, etc.)
 // context: Provides information about the execution environment
 exports.handler = async (event, context) => {
-
     // Only allow POST requests, as the frontend sends data via POST
     if (event.httpMethod !== 'POST') {
         return {
@@ -47,7 +45,6 @@ exports.handler = async (event, context) => {
     }
 
     // Get the Google AI API key from Netlify Environment Variables
-    // This variable must be set in your Netlify site settings under Environment variables
     const API_KEY = process.env.GOOGLE_API_KEY;
 
     if (!API_KEY) {
@@ -60,14 +57,13 @@ exports.handler = async (event, context) => {
 
     try {
         // Initialize the Google Generative AI client with the API key
-        const genAI = new GoogleGenerativeAI(API_KEY);
+        const genAI = new GoogleGenerativeAI({ apiKey: API_KEY });
 
         // Get the generative model instance
-        // Use a model that supports multimodal input (like gemini-1.5-flash-latest)
+        // Use a model that supports multimodal input (like gemini-2.0-flash)
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         // Construct the 'parts' array for the multimodal content
-        // The API expects an array of content parts (text, inlineData, etc.)
         const parts = [];
 
         // Add the text prompt part if it exists
@@ -88,12 +84,10 @@ exports.handler = async (event, context) => {
         }
 
         // Make the API call with the constructed multimodal content
-        // The content is wrapped in a 'contents' array, which itself contains a 'parts' array
-        const result = await model.generateContent({ contents: [{ parts: parts }] });
+        const result = await model.generateContent({ contents: [{ parts }] });
 
-        // Get the response text from the API result
-        const response = await result.response;
-        const text = response.text();
+        // Extract the response text from the result
+        const responseText = result.response?.text || "No response text returned.";
 
         console.log("Successfully received AI response.");
 
@@ -107,7 +101,7 @@ exports.handler = async (event, context) => {
                 // "Access-Control-Allow-Headers": "Content-Type",
                 // "Access-Control-Allow-Methods": "POST, OPTIONS"
             },
-            body: JSON.stringify({ response: text })
+            body: JSON.stringify({ response: responseText })
         };
 
     } catch (error) {
