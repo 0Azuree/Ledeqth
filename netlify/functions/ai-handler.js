@@ -4,12 +4,14 @@
 // Google Generative AI API.
 
 // Import the Google Generative AI library
+// Ensure this dependency is listed in your functions/package.json
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 // Netlify Functions handler function
 // event: Contains information about the request (headers, body, etc.)
 // context: Provides information about the execution environment
 exports.handler = async (event, context) => {
+
     // Only allow POST requests, as the frontend sends data via POST
     if (event.httpMethod !== 'POST') {
         return {
@@ -45,6 +47,7 @@ exports.handler = async (event, context) => {
     }
 
     // Get the Google AI API key from Netlify Environment Variables
+    // This variable must be set in your Netlify site settings under Environment variables
     const API_KEY = process.env.GOOGLE_API_KEY;
 
     if (!API_KEY) {
@@ -57,13 +60,14 @@ exports.handler = async (event, context) => {
 
     try {
         // Initialize the Google Generative AI client with the API key
-        const genAI = new GoogleGenerativeAI({ apiKey: API_KEY });
+        const genAI = new GoogleGenerativeAI(API_KEY);
 
         // Get the generative model instance
-        // Make sure that this model supports multimodal input, e.g., text + image
+        // Using 'gemini-2.0-flash' as requested
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
         // Construct the 'parts' array for the multimodal content
+        // The API expects an array of content parts (text, inlineData, etc.)
         const parts = [];
 
         // Add the text prompt part if it exists
@@ -84,10 +88,12 @@ exports.handler = async (event, context) => {
         }
 
         // Make the API call with the constructed multimodal content
-        const result = await model.generateContent({ contents: [{ parts }] });
+        // The content is wrapped in a 'contents' array, which itself contains a 'parts' array
+        const result = await model.generateContent({ contents: [{ parts: parts }] });
 
-        // Extract the response text from the result
-        const responseText = result.response?.text || "No response text returned.";
+        // Get the response text from the API result
+        const response = await result.response;
+        const text = response.text();
 
         console.log("Successfully received AI response.");
 
@@ -97,24 +103,20 @@ exports.handler = async (event, context) => {
             headers: {
                 "Content-Type": "application/json",
                 // Add CORS headers if needed (Netlify usually handles this, but explicit headers can help)
-                "Access-Control-Allow-Origin": "*", // Allow requests from any origin
-                "Access-Control-Allow-Headers": "Content-Type",
-                "Access-Control-Allow-Methods": "POST, OPTIONS"
+                // "Access-Control-Allow-Origin": "*", // Allow requests from any origin
+                // "Access-Control-Allow-Headers": "Content-Type",
+                // "Access-Control-Allow-Methods": "POST, OPTIONS"
             },
-            body: JSON.stringify({ response: responseText })
+            body: JSON.stringify({ response: text })
         };
 
     } catch (error) {
         console.error("Error calling Google AI API:", error);
-        // Return an error response to the frontend with more details
+        // Return an error response to the frontend
         return {
             statusCode: 500, // Internal Server Error
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                message: "Error processing AI request.",
-                error: error.message,
-                details: error.stack // This will help you debug the full error message
-            })
+            body: JSON.stringify({ message: "Error processing AI request.", error: error.message })
         };
     }
 };
