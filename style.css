@@ -304,14 +304,127 @@ footer {
     width: 90%;
     max-width: 800px;
     display: flex;
-    flex-direction: column; /* Stack response above input */
-    align-items: center;
+    flex-direction: row; /* Arrange history and interaction side-by-side */
+    align-items: flex-start; /* Align items to the top */
     min-height: 500px;
     /* Item Entry Animation */
      opacity: 0; /* Start hidden */
     animation: itemEntry 0.6s ease-out forwards;
-     gap: 20px; /* Space between response and input areas */
+     gap: 20px; /* Space between history and interaction areas */
 }
+
+/* History Area Styles */
+#ai-history {
+    width: 30%; /* Allocate space for history */
+    min-width: 150px; /* Minimum width for history */
+    background-color: #222; /* Darker background for history */
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between history elements */
+}
+#ai-history h3 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    color: #00aaff;
+    font-size: 1.2em;
+    text-align: center;
+}
+#history-list {
+    flex-grow: 1; /* Allow list to take available height */
+    overflow-y: auto; /* Add scrollbar if history overflows */
+    max-height: 400px; /* Max height before scrolling */
+}
+.history-placeholder {
+    font-style: italic;
+    color: #888;
+    text-align: center;
+}
+.history-item {
+    background-color: #333; /* Slightly lighter background for items */
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 8px; /* Space between items */
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border: 1px solid #444;
+}
+.history-item:hover {
+    background-color: #444;
+}
+.history-item p {
+    margin: 0;
+    font-size: 0.9em;
+    color: #bbb;
+    white-space: nowrap; /* Prevent text wrapping in summary */
+    overflow: hidden; /* Hide overflowing text */
+    text-overflow: ellipsis; /* Add ellipsis for overflow */
+}
+.history-prompt-summary {
+    font-weight: bold;
+    color: #eee;
+}
+.history-response-summary {
+    font-style: italic;
+    color: #ccc;
+}
+#clear-history-button {
+    /* Inherits project-link-button styles */
+    margin-top: 10px;
+    align-self: center; /* Center the button */
+}
+
+
+/* Main Interaction Area (Response + Input) */
+.ai-interaction-area {
+    flex-grow: 1; /* Allow interaction area to take remaining space */
+    display: flex;
+    flex-direction: column; /* Stack response above input */
+    gap: 15px; /* Space between preview, response, and input */
+    width: 70%; /* Allocate space for interaction */
+    box-sizing: border-box;
+}
+
+/* Image Preview Area */
+.image-preview-area {
+    display: flex; /* Use flex to align image and remove button */
+    flex-direction: column; /* Stack image above button */
+    align-items: center; /* Center the image/button */
+    background-color: #222;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    max-width: 100%; /* Ensure it doesn't overflow */
+    box-sizing: border-box;
+     /* Initially hidden, shown by JS when image is selected */
+     display: none;
+}
+#uploaded-image-preview {
+    max-width: 100%; /* Make image responsive within its container */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 5px;
+    margin-bottom: 10px; /* Space below image */
+}
+.remove-image-button {
+    background-color: #ff6666; /* Red color for remove button */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Make it round */
+    width: 25px; /* Size of the button */
+    height: 25px;
+    font-size: 1.2em;
+    line-height: 1; /* Center the 'x' */
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.remove-image-button:hover {
+    background-color: #cc0000;
+}
+
 
 #ai-response {
     width: 100%;
@@ -350,18 +463,15 @@ footer {
 .prompt-input-area {
     width: 100%; /* Make the wrapper fill the container width */
     display: flex;
-    flex-direction: column; /* Stack prompt and button vertically */
+    flex-direction: column; /* Stack prompt and controls vertically */
     align-items: flex-start; /* Align children (prompt/button) to the left */
-    /* Optional: Add some padding or margin if needed within the wrapper */
-     padding: 0;
-     margin: 0;
+    box-sizing: border-box;
 }
-
 
 #user-prompt {
     width: 100%; /* Make textarea fill the wrapper width */
     padding: 10px;
-    margin-bottom: 15px; /* Space below prompt box */
+    margin-bottom: 10px; /* Space below prompt box */
     border: 1px solid #555;
     border-radius: 8px; /* Rounded corners for prompt box */
     background-color: #222; /* Dark background for prompt box */
@@ -384,13 +494,22 @@ footer {
     color: #888;
 }
 
+.input-controls {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px; /* Space between buttons */
+}
+
+#upload-image-button,
 #send-prompt-button {
-    /* Using the existing .project-link-button style for base */
-    margin-top: 0; /* Already handled by textarea margin-bottom */
+    /* Inherits project-link-button styles */
+    margin-top: 0; /* Remove default margin-top */
      border-radius: 5px; /* Ensure button has rounded corners */
       /* Optional: Glow on focus */
      transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease; /* Ensure box-shadow transitions */
 }
+#upload-image-button:focus,
 #send-prompt-button:focus {
     outline: none;
     box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
@@ -430,10 +549,19 @@ footer {
 
      /* AI page adjustments */
     .ai-container {
+         flex-direction: column; /* Stack history and interaction vertically on smaller screens */
          width: 95%;
          padding: 20px;
          min-height: 400px;
-         gap: 15px; /* Reduce gap on small screens */
+         gap: 20px; /* Space between history and interaction areas */
+    }
+    #ai-history {
+        width: 100%; /* History takes full width */
+        min-width: auto;
+        max-height: 200px; /* Limit history height when stacked */
+    }
+    .ai-interaction-area {
+        width: 100%; /* Interaction area takes full width */
     }
     #ai-response {
         padding: 10px;
@@ -446,9 +574,12 @@ footer {
     #user-prompt {
         margin-bottom: 10px; /* Reduce margin below prompt */
     }
+     .input-controls {
+         justify-content: center; /* Center buttons when stacked */
+     }
+     #upload-image-button,
      #send-prompt-button {
         margin-top: 0; /* Margin handled by prompt-input */
-        align-self: center; /* Explicitly center the button if align-items is center */
        }
 
      /* Item Entry Animation adjustments */
@@ -486,7 +617,10 @@ footer {
     .ai-container {
          padding: 15px;
          min-height: 350px;
-         gap: 10px;
+         gap: 15px; /* Space between history and interaction areas */
+    }
+    #ai-history {
+         max-height: 150px; /* Further limit history height */
     }
     #ai-response {
          padding: 8px;
@@ -496,10 +630,17 @@ footer {
         padding: 8px;
         margin-bottom: 8px;
       }
-       #send-prompt-button {
-        padding: 6px 10px;
-        font-size: 0.9em;
+       .input-controls {
+           flex-direction: column; /* Stack buttons vertically */
+           gap: 8px; /* Space between stacked buttons */
+           align-items: stretch; /* Make buttons fill width */
        }
+       #upload-image-button,
+       #send-prompt-button {
+           width: 100%; /* Make buttons fill the container width */
+           text-align: center; /* Center text in buttons */
+       }
+
 
      /* Item Entry Animation adjustments */
        .game-item, .project-item, .ai-container {
