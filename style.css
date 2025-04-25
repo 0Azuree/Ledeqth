@@ -444,20 +444,20 @@ footer {
 /* Override the background color for AI page buttons */
 #upload-image-button,
 #send-prompt-button {
-    background-color: #A9A9A9; /* Dark Gray background */
+    background-color: #3A3B3C; /* Dark Gray background */
     /* Inherit other styles like color, border, border-radius, etc. from .nav-button */
 }
 
 /* Adjust hover and active states for the AI page buttons */
 #upload-image-button:hover,
 #send-prompt-button:hover {
-    background-color: #C0C0C0; /* Slightly lighter gray on hover */
+    background-color: #4A4B4C; /* Slightly lighter gray on hover */
     /* Inherit text-shadow from .nav-button:hover */
 }
 
 #upload-image-button:active,
 #send-prompt-button:active {
-    background-color: #909090; /* Slightly darker gray on active */
+    background-color: #2A2B2C; /* Slightly darker gray on active */
     /* Inherit transform and box-shadow from .nav-button:active */
 }
 
