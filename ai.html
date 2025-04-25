@@ -25,14 +25,6 @@
         <p>Enter your prompt and/or upload an image below to interact with the AI.</p>
 
         <div class="ai-container">
-            <div id="ai-history">
-                <h3>History</h3>
-                <div id="history-list">
-                    <p class="history-placeholder">No history yet.</p>
-                </div>
-                 <button id="clear-history-button" class="project-link-button">Clear History</button>
-            </div>
-
             <div class="ai-interaction-area">
                  <div id="image-preview-area" class="image-preview-area">
                      <img id="uploaded-image-preview" src="#" alt="Image Preview" style="display: none;">
@@ -45,7 +37,8 @@
                 <div class="prompt-input-area">
                     <textarea id="user-prompt" placeholder="Enter your prompt here..." rows="5"></textarea>
                     <div class="input-controls">
-                         <input type="file" id="image-upload-input" accept="image/*" style="display: none;"> <button id="upload-image-button" class="project-link-button">Upload Image</button> <button id="send-prompt-button" class="project-link-button">Send to AI</button>
+                         <input type="file" id="image-upload-input" accept="image/*" style="display: none;"> <button id="upload-image-button" class="nav-button">Upload Image</button>
+                         <button id="send-prompt-button" class="nav-button">Send to AI</button>
                     </div>
                 </div>
             </div>
