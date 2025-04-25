@@ -375,6 +375,23 @@ footer {
     /* Inherits project-link-button styles */
     margin-top: 10px;
     align-self: center; /* Center the button */
+     /* Make it look like other project/game buttons */
+    display: inline-block; /* Ensure it behaves like the other buttons */
+    padding: 8px 15px;
+    background-color: #007bff; /* Use the blue color */
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-weight: 500;
+    transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.1s ease;
+}
+#clear-history-button:hover {
+     background-color: #0056b3;
+}
+#clear-history-button:active {
+     transform: translateY(2px);
+     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5) inset;
+     background-color: #004080;
 }
 
 
@@ -501,14 +518,36 @@ footer {
     gap: 10px; /* Space between buttons */
 }
 
+/* Apply project-link-button styles directly to the specific buttons */
 #upload-image-button,
 #send-prompt-button {
-    /* Inherits project-link-button styles */
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: #007bff; /* Use the blue color */
+    color: white;
+    text-decoration: none; /* Ensure no underline if it was a link */
+    border: none; /* Ensure no default button border */
+    border-radius: 4px; /* Match project-link-button border-radius */
+    font-weight: 500;
+    cursor: pointer;
     margin-top: 0; /* Remove default margin-top */
-     border-radius: 5px; /* Ensure button has rounded corners */
-      /* Optional: Glow on focus */
-     transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease; /* Ensure box-shadow transitions */
+     /* Match project-link-button transitions */
+     transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.1s ease;
 }
+
+#upload-image-button:hover,
+#send-prompt-button:hover {
+    background-color: #0056b3; /* Match hover color */
+}
+
+#upload-image-button:active,
+#send-prompt-button:active {
+    transform: translateY(2px); /* Match active transform */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5) inset; /* Match active shadow */
+     background-color: #004080; /* Match active color */
+}
+
+/* Optional: Glow on focus */
 #upload-image-button:focus,
 #send-prompt-button:focus {
     outline: none;
@@ -576,11 +615,18 @@ footer {
     }
      .input-controls {
          justify-content: center; /* Center buttons when stacked */
+         gap: 10px; /* Space between buttons */
      }
      #upload-image-button,
      #send-prompt-button {
         margin-top: 0; /* Margin handled by prompt-input */
        }
+     #clear-history-button {
+        /* Adjust padding/font size for smaller screens if needed */
+         padding: 7px 12px;
+         font-size: 0.9em;
+     }
+
 
      /* Item Entry Animation adjustments */
       .game-item, .project-item, .ai-container {
@@ -639,6 +685,12 @@ footer {
        #send-prompt-button {
            width: 100%; /* Make buttons fill the container width */
            text-align: center; /* Center text in buttons */
+       }
+       #clear-history-button {
+           /* Adjust padding/font size for smaller screens if needed */
+            padding: 6px 10px;
+            font-size: 0.8em;
+            width: 100%; /* Make button fill width */
        }
 
 
