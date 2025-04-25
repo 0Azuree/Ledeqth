@@ -1,94 +1,122 @@
 // netlify/functions/ai-handler.js
+// This function handles incoming requests from the frontend AI page,
+// processes both text and optional image data, and interacts with the
+// Google Generative AI API.
 
-// --- IMPORTANT SECURITY NOTE ---
-// DO NOT PUT YOUR ACTUAL API KEY DIRECTLY IN THIS CODE FILE.
-// We will access it securely via Netlify Environment Variables.
+// Import the Google Generative AI library
+// Ensure this dependency is listed in your functions/package.json
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const { GoogleGenerativeAI } = require("@google/generative-ai"); // You might need to install this package
+// Netlify Functions handler function
+// event: Contains information about the request (headers, body, etc.)
+// context: Provides information about the execution environment
+exports.handler = async (event, context) => {
 
-// Get your API key from Netlify Environment Variables
-// The variable name 'GOOGLE_API_KEY' is just an example; you'll set this in Netlify settings.
-const API_KEY = process.env.GOOGLE_API_KEY;
-
-// Ensure the API key is set
-if (!API_KEY) {
-  console.error("GOOGLE_API_KEY environment variable not set!");
-  // This will cause the function to fail if the key isn't configured in Netlify
-  throw new Error("Server configuration error: API key not available.");
-}
-
-// Initialize the Google Generative AI client
-const genAI = new GoogleGenerativeAI(API_KEY);
-// Choose the model you want to use (e.g., 'gemini-pro', 'gemini-1.5-flash-latest')
-// Check Google's documentation for available models and pricing.
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }); // Changed the model name
-
-
-// This is the main function that Netlify runs
-exports.handler = async function(event, context) {
-    // Only allow POST requests
+    // Only allow POST requests, as the frontend sends data via POST
     if (event.httpMethod !== 'POST') {
         return {
             statusCode: 405, // Method Not Allowed
-            body: JSON.stringify({ message: "Method Not Allowed" }),
+            body: JSON.stringify({ message: "Method Not Allowed" })
         };
     }
 
-    let prompt;
+    let body;
     try {
-        // Parse the JSON body from the request sent by your frontend
-        const body = JSON.parse(event.body);
-        prompt = body.prompt;
-
-        if (!prompt || typeof prompt !== 'string') {
-             return {
-                statusCode: 400, // Bad Request
-                body: JSON.stringify({ message: "Missing or invalid 'prompt' in request body." }),
-            };
-        }
-
+        // Parse the JSON body sent from the frontend
+        body = JSON.parse(event.body);
     } catch (error) {
         console.error("Error parsing request body:", error);
         return {
             statusCode: 400, // Bad Request
-            body: JSON.stringify({ message: "Invalid JSON body." }),
+            body: JSON.stringify({ message: "Invalid JSON body." })
         };
     }
 
-    console.log("Received prompt:", prompt); // Log the prompt (optional)
+    // Extract prompt text, base64 image data, and image MIME type from the body
+    const prompt = body.prompt || ""; // Prompt text (can be empty)
+    const imageData = body.image; // Base64 image data (optional)
+    const mimeType = body.mimeType; // Image MIME type (optional)
+
+    // Ensure at least text or image data is provided
+    if (!prompt && !imageData) {
+        console.warn("Received request with no prompt or image data.");
+        return {
+            statusCode: 400, // Bad Request
+            body: JSON.stringify({ message: "Please provide text or an image." })
+        };
+    }
+
+    // Get the Google AI API key from Netlify Environment Variables
+    // This variable must be set in your Netlify site settings under Environment variables
+    const API_KEY = process.env.GOOGLE_API_KEY;
+
+    if (!API_KEY) {
+        console.error("GOOGLE_API_KEY environment variable not set in Netlify!");
+        return {
+            statusCode: 500, // Internal Server Error
+            body: JSON.stringify({ message: "Server configuration error: API key not available." })
+        };
+    }
 
     try {
-        // *** THIS IS WHERE THE ACTUAL AI API CALL HAPPENS ***
-        // Use the Google AI SDK to send the prompt to the model
-        const result = await model.generateContent(prompt);
+        // Initialize the Google Generative AI client with the API key
+        const genAI = new GoogleGenerativeAI(API_KEY);
+
+        // Get the generative model instance
+        // Use a model that supports multimodal input (like gemini-1.5-flash-latest)
+        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest" });
+
+        // Construct the 'parts' array for the multimodal content
+        // The API expects an array of content parts (text, inlineData, etc.)
+        const parts = [];
+
+        // Add the text prompt part if it exists
+        if (prompt) {
+            parts.push({ text: prompt });
+        }
+
+        // Add the image data part if it exists
+        if (imageData && mimeType) {
+            // The inlineData format requires only the base64 string, not the "data:image/...;base64," prefix
+            const base64DataOnly = imageData.split(',')[1];
+            parts.push({
+                inlineData: {
+                    data: base64DataOnly, // The base64 string
+                    mimeType: mimeType // The image MIME type (e.g., "image/jpeg", "image/png")
+                }
+            });
+        }
+
+        // Make the API call with the constructed multimodal content
+        // The content is wrapped in a 'contents' array, which itself contains a 'parts' array
+        const result = await model.generateContent({ contents: [{ parts: parts }] });
+
+        // Get the response text from the API result
         const response = await result.response;
-        const text = response.text(); // Get the plain text response from the AI
+        const text = response.text();
 
-        console.log("AI response:", text); // Log the response (optional)
+        console.log("Successfully received AI response.");
 
-        // Send the AI's response back to your frontend
+        // Return the AI's response text to the frontend
         return {
             statusCode: 200, // OK
             headers: {
                 "Content-Type": "application/json",
-                // You might need CORS headers if your Netlify function domain is different from your GitHub Pages domain
-                // For simple cases, Netlify often handles this, but you might need:
-                // "Access-Control-Allow-Origin": "*", // Allows requests from any domain
+                // Add CORS headers if needed (Netlify usually handles this, but explicit headers can help)
+                // "Access-Control-Allow-Origin": "*", // Allow requests from any origin
                 // "Access-Control-Allow-Headers": "Content-Type",
                 // "Access-Control-Allow-Methods": "POST, OPTIONS"
             },
-            body: JSON.stringify({ response: text }), // Send the AI text back in a JSON object
+            body: JSON.stringify({ response: text })
         };
 
     } catch (error) {
-        console.error("Error calling AI API:", error);
+        console.error("Error calling Google AI API:", error);
         // Return an error response to the frontend
         return {
             statusCode: 500, // Internal Server Error
-            body: JSON.stringify({ message: "Error processing AI request.", error: error.message }),
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: "Error processing AI request.", error: error.message })
         };
     }
 };
-
-// Note: You will also need a package.json file in the netlify/functions folder
-// that declares "@google/generative-ai" as a dependency. See Step 2b.
