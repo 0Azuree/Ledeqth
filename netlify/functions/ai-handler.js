@@ -64,7 +64,7 @@ exports.handler = async (event, context) => {
 
         // Get the generative model instance
         // Using 'gemini-2.0-flash' as requested
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-04-17" });
 
         // Construct the 'parts' array for the multimodal content
         // The API expects an array of content parts (text, inlineData, etc.)
