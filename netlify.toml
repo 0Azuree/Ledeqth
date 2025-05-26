@@ -1,0 +1,6 @@
+# netlify.toml
+[build]
+  functions = "netlify/functions" # Tells Netlify where your functions are
+
+[functions]
+  node_bundler = "esbuild" # Modern bundler for faster builds
