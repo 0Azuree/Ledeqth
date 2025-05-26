@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     const targetElement = document.getElementById('animated-title');
-    const textToAnimate = "Ledeqth";
+    const textToAnimate = "Welcome to Ledeqth"; // Changed text
     const animationDelay = 100; // Milliseconds between each letter
     const pauseBeforeStart = 1000; // Milliseconds to wait before starting animation
 
