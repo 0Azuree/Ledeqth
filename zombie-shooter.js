@@ -373,7 +373,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.equippedGun = { ...targetGunDefinition };
             // Load specific state for this gun
             this.equippedGun.ammo = ownedGunState.currentAmmo;
-            this.equippedGun.damage = targetGunDefinition.baseDamage + ownedGunState.damageUpgrades * 15; // 15 damage per upgrade level
+            this.equippedGun.damage = targetGunDefinition.baseDamage + ownedState.damageUpgrades * 15; // 15 damage per upgrade level
 
             // Clear any active reload timer for the old gun
             if (reloadTimer) {
@@ -506,11 +506,19 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.takeDamage = function(amount) {
+            if (invincible) return;
+
             this.health -= amount;
+            this.lastHitTime = Date.now();
+            damageOverlay.classList.add('active');
+            setTimeout(() => {
+                damageOverlay.classList.remove('active');
+            }, 100);
+
             if (this.health <= 0) {
-                return true; // Zombie is dead
+                this.health = 0;
+                gameOver();
             }
-            return false; // Zombie is still alive
         };
     }
 
