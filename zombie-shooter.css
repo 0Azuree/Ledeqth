@@ -15,7 +15,7 @@
     border: 1px solid #333;
     box-shadow: 0 0 20px rgba(0, 0, 0, 0.4);
     animation: itemEntry 0.6s ease-out forwards;
-    position: relative; /* For game-over-screen positioning */
+    position: relative; /* For game-over-screen positioning and inventory */
 }
 
 #gameCanvas {
@@ -228,14 +228,21 @@
 }
 
 /* Round Countdown specific */
+#roundCountdownOverlay {
+    /* Styles to match sketch */
+    background-color: rgba(0, 0, 0, 0.95); /* Slightly darker */
+    z-index: 10;
+}
 #roundCountdownOverlay h3 {
     color: #ffcc00; /* Yellow for countdown */
-    font-size: 3em;
-    margin-bottom: 10px;
+    font-size: 4em; /* Larger as per sketch */
+    margin-bottom: 20px;
+    text-shadow: 0 0 10px rgba(255, 255, 0, 0.6); /* Glow effect */
 }
 #roundCountdownOverlay p {
-    font-size: 1.2em;
+    font-size: 1.8em; /* Larger "Press Tab" text */
     margin-bottom: 0;
+    color: #aaffaa; /* Greenish for clarity */
 }
 
 
@@ -342,6 +349,58 @@
     padding: 8px 15px;
 }
 
+/* Inventory Panel */
+#inventoryPanel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 800px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.inventory-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 5px;
+    background-color: #333;
+    color: #eee;
+    font-size: 0.9em;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.2s ease;
+    user-select: none; /* Prevent text selection */
+}
+
+.inventory-item:hover {
+    background-color: #444;
+    border-color: #555;
+}
+
+.inventory-item.equipped {
+    border-color: #00aaff; /* Highlight equipped gun */
+    background-color: #00aaff;
+    color: #1a1a1a; /* Dark text on highlight */
+    font-weight: bold;
+    transform: translateY(-2px);
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.5);
+}
+
+.inventory-item span.key-number {
+    font-weight: bold;
+    font-size: 1.2em;
+    color: #ffd700; /* Gold for number keys */
+    margin-bottom: 5px;
+}
+
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -362,8 +421,26 @@
     .game-overlay p {
         font-size: 1.2em;
     }
+    #roundCountdownOverlay h3 {
+        font-size: 3em;
+    }
+    #roundCountdownOverlay p {
+        font-size: 1.4em;
+    }
     .dev-options .shop-button {
         min-width: 100px; /* Slightly smaller for mobile */
+    }
+    #inventoryPanel {
+        flex-wrap: wrap; /* Allow inventory items to wrap */
+        gap: 10px;
+        padding: 10px;
+    }
+    .inventory-item {
+        padding: 6px 10px;
+        font-size: 0.85em;
+    }
+    .inventory-item span.key-number {
+        font-size: 1.1em;
     }
 }
 
@@ -373,6 +450,12 @@
     }
     .game-overlay p {
         font-size: 1em;
+    }
+    #roundCountdownOverlay h3 {
+        font-size: 2.5em;
+    }
+    #roundCountdownOverlay p {
+        font-size: 1.2em;
     }
     #pauseIndicator {
         font-size: 1.5em;
