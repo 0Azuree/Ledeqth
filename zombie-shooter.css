@@ -78,6 +78,24 @@
     text-align: center;
 }
 
+.shop-section {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px dashed #444;
+}
+.shop-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+.shop-section h4 {
+    color: #00aaff;
+    margin-top: 0;
+    margin-bottom: 10px;
+    text-align: center;
+    font-size: 1.3em;
+}
+
 .shop-button {
     display: block;
     width: 100%;
@@ -106,6 +124,26 @@
     cursor: not-allowed;
     opacity: 0.7;
 }
+
+.shop-button.small-button {
+    font-size: 0.8em;
+    padding: 6px 10px;
+    width: auto; /* Allow it to be smaller */
+    margin-left: 10px;
+    display: inline-block; /* For side-by-side with gun button */
+    vertical-align: middle;
+}
+
+.gun-options .gun-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* Space out button and upgrade button */
+    margin-bottom: 10px;
+}
+.gun-options .shop-button {
+    margin-bottom: 0; /* Override default margin */
+}
+
 
 #shopMessage {
     text-align: center;
@@ -146,7 +184,7 @@
 }
 
 
-/* Game Over / Start Screen Overlays */
+/* Game Over / Start Screen / Round Countdown Overlays */
 .game-overlay {
     position: absolute;
     top: 0;
@@ -187,6 +225,17 @@
 }
 #start-screen p {
     font-size: 1.2em;
+}
+
+/* Round Countdown specific */
+#roundCountdownOverlay h3 {
+    color: #ffcc00; /* Yellow for countdown */
+    font-size: 3em;
+    margin-bottom: 10px;
+}
+#roundCountdownOverlay p {
+    font-size: 1.2em;
+    margin-bottom: 0;
 }
 
 
