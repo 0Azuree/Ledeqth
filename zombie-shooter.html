@@ -73,17 +73,21 @@
                         <h4>Guns</h4>
                         <div class="gun-options">
                             <div class="gun-item">
+                                <button id="buyPistol" class="shop-button" data-gun="Pistol" data-cost="0">Pistol (Owned)</button>
+                                <button id="upgradePistolDamage" class="shop-button small-button" data-cost="50" style="display: none;">+Damage ($50)</button>
+                            </div>
+                            <div class="gun-item">
                                 <button id="buyM4" class="shop-button" data-gun="M4" data-cost="500">Buy M4 ($500)</button>
                                 <button id="upgradeM4Damage" class="shop-button small-button" data-cost="100" style="display: none;">+Damage ($100)</button>
                             </div>
                             <div class="gun-item">
                                 <button id="buyMac11" class="shop-button" data-gun="Mac11" data-cost="750">Buy Mac11 ($750)</button>
+                                <button id="upgradeMac11Damage" class="shop-button small-button" data-cost="120" style="display: none;">+Damage ($120)</button>
                             </div>
                         </div>
                     </div>
                     <div class="shop-section">
                         <h4>Upgrades</h4>
-                        <button id="buyDamageUpgrade" class="shop-button" data-cost="50">Upgrade Damage ($50)</button> 
                         <button id="buyHealthUpgrade" class="shop-button" data-cost="100">Upgrade Max Health ($100)</button>
                         <button id="buyFireRateUpgrade" class="shop-button" data-cost="75">Upgrade Fire Rate ($75)</button>
                         <button id="buyMaxAmmoUpgrade" class="shop-button" data-cost="75">Upgrade Max Ammo ($75)</button>
@@ -102,6 +106,9 @@
                     <p><strong>Tab</strong>: Quick Start Round</p>
                 </div>
             </div>
+
+            <div id="inventoryPanel">
+                </div>
 
             <div class="dev-console">
                 <input type="text" id="devConsoleInput" placeholder="Enter dev code...">
