@@ -1,4 +1,4 @@
-// zombie-shooter.js - Enhanced 2D Zombie Shooter Game
+// zombie-shooter.js - Advanced 2D Zombie Shooter Game
 
 document.addEventListener('DOMContentLoaded', () => {
     const canvas = document.getElementById('gameCanvas');
@@ -26,6 +26,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const restartGameButton = document.getElementById('restartGameButton');
     const damageOverlay = document.getElementById('damageOverlay');
 
+    const devConsoleInput = document.getElementById('devConsoleInput');
+    const devOptions = document.getElementById('devOptions');
+    const moneySetValueInput = document.getElementById('moneySetValue');
+
     // Game State Variables
     let gameRunning = false;
     let paused = false;
@@ -43,11 +47,19 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     let keys = {}; // To track pressed keys for movement
     let mouseDown = false; // To track mouse button for auto-fire
+    let mouseX = 0; // Current mouse X position relative to canvas
+    let mouseY = 0; // Current mouse Y position relative to canvas
     let lastBulletTime = 0; // For fire rate control
     let gameLoopInterval; // To control game loop
     let isReloading = false;
-    let reloadTimer = 0;
-    const RELOAD_TIME = 2000; // 2 seconds
+    let reloadTimer = null; // Use null for timer ID
+    const RELOAD_TIME = 800; // 0.8 seconds
+
+    // Cheat Flags
+    let infiniteAmmo = false;
+    let infiniteHealth = false;
+    let invincible = false;
+    let oneDollarEverything = false;
 
     // Game Constants
     const GRAVITY = 0.5;
@@ -56,17 +68,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const PLAYER_SPEED = 5;
     const JUMP_POWER = 10;
     const BULLET_RADIUS = 3;
-    const BULLET_SPEED = 15; // Faster bullets
-    const BASE_FIRE_RATE = 150; // ms between shots for auto-fire
+    const BULLET_SPEED = 15;
+    const BASE_FIRE_RATE = 150;
     const ZOMBIE_WIDTH = 35;
     const ZOMBIE_HEIGHT = 50;
-    const ZOMBIE_SPEED = 1; // Base zombie speed
+    const ZOMBIE_SPEED = 1;
 
     // --- Game Objects ---
 
     function Player() {
         this.x = canvas.width / 4;
-        this.y = canvas.height - PLAYER_HEIGHT - 10; // Start on ground
+        this.y = canvas.height - PLAYER_HEIGHT - 10;
         this.width = PLAYER_WIDTH;
         this.height = PLAYER_HEIGHT;
         this.color = 'white'; // Player is white
@@ -77,39 +89,55 @@ document.addEventListener('DOMContentLoaded', () => {
         this.cash = 0;
         this.damage = 30; // M4 default damage
         this.fireRate = BASE_FIRE_RATE;
-        this.facingDirection = 1; // 1 for right, -1 for left
-        this.ammo = 30; // M4 magazine size
+        this.bodyDirection = 1; // 1 for right, -1 for left (body direction)
+        this.gunAngle = 0; // Angle for the gun based on mouse position
+        this.ammo = 30;
         this.maxAmmo = 30;
-        this.lastHitTime = 0; // For damage tint
+        this.lastHitTime = 0;
 
         this.draw = function() {
-            // Draw player body
+            // Draw player body (pixel art style)
             ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+            // Example of very basic pixel art:
+            // Head
+            ctx.fillRect(this.x + this.width * 0.25, this.y, this.width * 0.5, this.height * 0.2);
+            // Body
+            ctx.fillRect(this.x + this.width * 0.1, this.y + this.height * 0.2, this.width * 0.8, this.height * 0.5);
+            // Legs
+            ctx.fillRect(this.x + this.width * 0.1, this.y + this.height * 0.7, this.width * 0.35, this.height * 0.3);
+            ctx.fillRect(this.x + this.width * 0.55, this.y + this.height * 0.7, this.width * 0.35, this.height * 0.3);
 
-            // Draw M4-like gun (simplified)
-            ctx.fillStyle = '#444'; // Gun color
-            const gunBarrelLength = 35;
-            const gunStockLength = 15;
+
+            // Calculate gun angle based on mouse position
+            const playerCenterX = this.x + this.width / 2;
+            const playerCenterY = this.y + this.height / 2;
+            this.gunAngle = Math.atan2(mouseY - playerCenterY, mouseX - playerCenterX);
+
+            ctx.save();
+            ctx.translate(playerCenterX, playerCenterY);
+            ctx.rotate(this.gunAngle);
+
+            // Draw M4-like gun (more detailed programmatic drawing)
+            ctx.fillStyle = '#444'; // Gun body color
+            const gunBarrelLength = 40;
+            const gunStockLength = 20;
             const gunHeight = 8;
-            const gunYOffset = this.y + this.height * 0.4; // Mid-body height
+            const gunYOffset = -gunHeight / 2; // Centered vertically at player's center
 
-            if (this.facingDirection === 1) { // Facing right
-                // Main body of gun
-                ctx.fillRect(this.x + this.width * 0.6, gunYOffset, gunBarrelLength, gunHeight);
-                // Stock
-                ctx.fillRect(this.x + this.width * 0.6 - gunStockLength, gunYOffset + gunHeight / 2, gunStockLength, gunHeight / 2);
-                // Small sight on top
-                ctx.fillRect(this.x + this.width * 0.6 + gunBarrelLength * 0.5, gunYOffset - 5, 5, 5);
+            // Main body/receiver
+            ctx.fillRect(-10, gunYOffset, 30, gunHeight); // Receiver part
+            // Barrel
+            ctx.fillRect(20, gunYOffset + gunHeight * 0.2, gunBarrelLength, gunHeight * 0.6);
+            // Stock
+            ctx.fillRect(-10 - gunStockLength, gunYOffset + gunHeight * 0.5, gunStockLength, gunHeight * 0.5);
+            // Handle/grip
+            ctx.fillRect(5, gunYOffset + gunHeight, 8, 15);
+            // Muzzle flash hint
+            // ctx.fillStyle = 'orange';
+            // ctx.fillRect(20 + gunBarrelLength, gunYOffset + gunHeight * 0.3, 5, gunHeight * 0.4);
 
-            } else { // Facing left
-                // Main body of gun
-                ctx.fillRect(this.x + this.width * 0.4 - gunBarrelLength, gunYOffset, gunBarrelLength, gunHeight);
-                // Stock
-                ctx.fillRect(this.x + this.width * 0.4, gunYOffset + gunHeight / 2, gunStockLength, gunHeight / 2);
-                // Small sight on top
-                ctx.fillRect(this.x + this.width * 0.4 - gunBarrelLength * 0.5 - 5, gunYOffset - 5, 5, 5);
-            }
+            ctx.restore();
+
 
             // Draw health bar above player
             const healthBarWidth = this.width + 10;
@@ -142,27 +170,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 this.isJumping = false;
             }
 
-            // Horizontal movement
+            // Horizontal movement (body direction)
             if (keys['a'] || keys['ArrowLeft']) {
                 this.x -= PLAYER_SPEED;
-                this.facingDirection = -1;
+                this.bodyDirection = -1;
             }
             if (keys['d'] || keys['ArrowRight']) {
                 this.x += PLAYER_SPEED;
-                this.facingDirection = 1;
+                this.bodyDirection = 1;
             }
 
             // Keep player within canvas bounds
             if (this.x < 0) this.x = 0;
             if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
 
-            // Handle auto-fire if mouse is down and not reloading
-            if (mouseDown && !isReloading && this.ammo > 0) {
+            // Handle auto-fire if mouse is down and not reloading, and has ammo
+            if (mouseDown && !isReloading && (this.ammo > 0 || infiniteAmmo)) {
                 const currentTime = Date.now();
                 if (currentTime - lastBulletTime > this.fireRate) {
                     this.shoot();
                     lastBulletTime = currentTime;
                 }
+            } else if (this.ammo <= 0 && !isReloading && !infiniteAmmo) {
+                this.reload(); // Automatic reload if out of ammo
             }
         };
 
@@ -174,18 +204,28 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.shoot = function() {
-            if (this.ammo > 0) {
-                const bulletX = this.x + (this.facingDirection === 1 ? this.width * 0.9 : this.width * 0.1);
-                const bulletY = this.y + this.height * 0.4 + 4; // Align with gun barrel
-                bullets.push(new Bullet(bulletX, bulletY, this.facingDirection, this.damage));
-                this.ammo--;
-                updateUI();
-            } else if (!isReloading) {
-                showShopMessage('Out of ammo! Press R to reload.', 'red');
+            if (isReloading || (this.ammo <= 0 && !infiniteAmmo)) {
+                showShopMessage('Out of ammo or reloading!', 'red');
+                return;
             }
+
+            const playerCenterX = this.x + this.width / 2;
+            const playerCenterY = this.y + this.height / 2;
+
+            // Calculate bullet start position based on gun angle
+            const barrelTipX = playerCenterX + Math.cos(this.gunAngle) * 45; // 45 is roughly barrel length from center
+            const barrelTipY = playerCenterY + Math.sin(this.gunAngle) * 45;
+
+            bullets.push(new Bullet(barrelTipX, barrelTipY, this.gunAngle, this.damage));
+            if (!infiniteAmmo) {
+                this.ammo--;
+            }
+            updateUI();
         };
 
         this.takeDamage = function(amount) {
+            if (invincible) return; // Ignore damage if invincible
+
             this.health -= amount;
             this.lastHitTime = Date.now(); // Record hit time
             damageOverlay.classList.add('active');
@@ -207,11 +247,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.reload = function() {
-            if (!isReloading && this.ammo < this.maxAmmo) {
+            if (!isReloading && this.ammo < this.maxAmmo && !infiniteAmmo) {
                 isReloading = true;
                 reloadText.style.display = 'block'; // Show reloading text
-                reloadTimer = Date.now(); // Start timer
-                setTimeout(() => {
+                reloadTimer = setTimeout(() => {
                     this.ammo = this.maxAmmo;
                     isReloading = false;
                     reloadText.style.display = 'none'; // Hide reloading text
@@ -221,13 +260,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    function Bullet(x, y, direction, damage) {
+    function Bullet(x, y, angle, damage) {
         this.x = x;
         this.y = y;
         this.radius = BULLET_RADIUS;
         this.color = 'yellow';
-        this.speed = BULLET_SPEED;
-        this.direction = direction; // 1 for right, -1 for left
+        this.speedX = BULLET_SPEED * Math.cos(angle);
+        this.speedY = BULLET_SPEED * Math.sin(angle);
         this.damage = damage;
 
         this.draw = function() {
@@ -238,7 +277,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.update = function() {
-            this.x += this.speed * this.direction;
+            this.x += this.speedX;
+            this.y += this.speedY;
         };
     }
 
@@ -247,17 +287,31 @@ document.addEventListener('DOMContentLoaded', () => {
         this.y = y;
         this.width = ZOMBIE_WIDTH;
         this.height = ZOMBIE_HEIGHT;
-        this.color = 'green';
+        this.color = 'darkgreen'; // Darker green for zombie
         this.health = health;
         this.maxHealth = health;
         this.speed = speed;
-        this.damage = 10; // Damage zombie deals to player
-        this.attackCooldown = 60; // Frames between attacks
+        this.damage = 10;
+        this.attackCooldown = 60;
         this.currentAttackCooldown = 0;
 
         this.draw = function() {
+            // Draw zombie body (pixel art style with bones/blood hints)
             ctx.fillStyle = this.color;
-            ctx.fillRect(this.x, this.y, this.width, this.height);
+            // Body
+            ctx.fillRect(this.x + this.width * 0.1, this.y + this.height * 0.2, this.width * 0.8, this.height * 0.7);
+            // Head
+            ctx.fillRect(this.x + this.width * 0.25, this.y, this.width * 0.5, this.height * 0.2);
+
+            // Add pixelated bones/blood hints
+            ctx.fillStyle = '#8B4513'; // Brown for bones
+            ctx.fillRect(this.x + this.width * 0.2, this.y + this.height * 0.4, 5, 10);
+            ctx.fillRect(this.x + this.width * 0.7, this.y + this.height * 0.5, 5, 10);
+            ctx.fillStyle = '#8B0000'; // Dark red for blood
+            ctx.fillRect(this.x + this.width * 0.3, this.y + this.height * 0.3, 7, 7);
+            ctx.fillRect(this.x + this.width * 0.6, this.y + this.height * 0.6, 6, 6);
+
+
             // Draw health bar
             const healthBarWidth = this.width;
             const healthBarHeight = 5;
@@ -302,13 +356,32 @@ document.addEventListener('DOMContentLoaded', () => {
         roundData.current = 0;
         roundData.initialZombieHealth = 10;
         roundData.zombieHealthIncreasePerRound = 5;
-        player.health = player.maxHealth; // Reset player health
-        player.cash = 0; // Reset cash
+        player.health = player.maxHealth;
+        player.cash = 0;
         player.damage = 30; // M4 default damage
-        player.fireRate = BASE_FIRE_RATE; // Reset fire rate
-        player.ammo = player.maxAmmo; // Full ammo
+        player.fireRate = BASE_FIRE_RATE;
+        player.ammo = player.maxAmmo;
+        player.maxAmmo = 30; // Reset max ammo for new game
         isReloading = false;
+        if (reloadTimer) clearTimeout(reloadTimer);
         reloadText.style.display = 'none';
+
+        // Reset shop costs
+        buyDamageUpgradeBtn.dataset.cost = 50;
+        buyDamageUpgradeBtn.textContent = `Upgrade Damage ($50)`;
+        buyHealthUpgradeBtn.dataset.cost = 100;
+        buyHealthUpgradeBtn.textContent = `Upgrade Max Health ($100)`;
+        buyFireRateUpgradeBtn.dataset.cost = 75;
+        buyFireRateUpgradeBtn.textContent = `Upgrade Fire Rate ($75)`;
+        buyMaxAmmoUpgradeBtn.dataset.cost = 75;
+        buyMaxAmmoUpgradeBtn.textContent = `Upgrade Max Ammo ($75)`;
+
+        // Reset cheat flags
+        infiniteAmmo = false;
+        infiniteHealth = false;
+        invincible = false;
+        oneDollarEverything = false;
+        devOptions.style.display = 'none'; // Hide dev options
 
         gameOverScreen.style.display = 'none';
         startScreen.style.display = 'flex'; // Show start screen initially
@@ -325,7 +398,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startGameLoop() {
-        // Clear any existing loop to prevent duplicates
         if (gameLoopInterval) {
             clearInterval(gameLoopInterval);
         }
@@ -345,7 +417,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update and remove bullets
         for (let i = bullets.length - 1; i >= 0; i--) {
             bullets[i].update();
-            if (bullets[i].x < 0 || bullets[i].x > canvas.width) {
+            // Remove bullets that go off-screen
+            if (bullets[i].x < -BULLET_RADIUS || bullets[i].x > canvas.width + BULLET_RADIUS ||
+                bullets[i].y < -BULLET_RADIUS || bullets[i].y > canvas.height + BULLET_RADIUS) {
                 bullets.splice(i, 1);
             }
         }
@@ -372,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Check for round completion
         if (zombies.length === 0 && roundData.zombieCount === 0) {
-            if (gameRunning) { // Only start next round if game is still active
+            if (gameRunning) {
                 startNextRound();
             }
         }
@@ -397,7 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Draw pause indicator if paused
         const pauseIndicator = document.getElementById('pauseIndicator');
         if (paused) {
-            if (!pauseIndicator) { // Create if not exists
+            if (!pauseIndicator) {
                 const newPauseIndicator = document.createElement('div');
                 newPauseIndicator.id = 'pauseIndicator';
                 newPauseIndicator.textContent = 'PAUSED';
@@ -435,33 +509,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startNextRound() {
-        roundData.current++;
-        currentRoundSpan.textContent = roundData.current;
-        player.health = player.maxHealth; // Regenerate health each round
-        player.ammo = player.maxAmmo; // Refill ammo at start of round
+        roundData.current++; //
+        currentRoundSpan.textContent = roundData.current; //
+        player.health = infiniteHealth ? player.maxHealth : player.maxHealth; // Regenerate health each round (or stay inf)
+        player.ammo = infiniteAmmo ? player.maxAmmo : player.maxAmmo; // Refill ammo at start of round (or stay inf)
 
-        let numZombiesToSpawn = roundData.current * 2; // More zombies each round
-        if (roundData.current > 10) numZombiesToSpawn += (roundData.current - 10) * 0.5; // Scale faster after round 10
+        let numZombiesToSpawn = roundData.current * 2;
+        if (roundData.current > 10) numZombiesToSpawn += (roundData.current - 10) * 0.5;
         numZombiesToSpawn = Math.floor(numZombiesToSpawn);
         if (numZombiesToSpawn < 1) numZombiesToSpawn = 1;
 
         roundData.zombieCount = numZombiesToSpawn;
 
+        const currentZombieHealth = roundData.initialZombieHealth + (roundData.current - 1) * roundData.zombieHealthIncreasePerRound; //
+
         for (let i = 0; i < numZombiesToSpawn; i++) {
-            // Spawn zombies off-screen, randomly left or right
             const spawnSide = Math.random() < 0.5 ? -1 : 1;
             const spawnX = spawnSide === -1 ? -ZOMBIE_WIDTH - Math.random() * 100 : canvas.width + Math.random() * 100;
-            const spawnY = canvas.height - ZOMBIE_HEIGHT - 10; // On ground
+            const spawnY = canvas.height - ZOMBIE_HEIGHT - 10;
 
-            const zombieHealth = roundData.initialZombieHealth + (roundData.current - 1) * roundData.zombieHealthIncreasePerRound;
-            const zombieSpeed = ZOMBIE_SPEED + (roundData.current * 0.05); // Zombies get slightly faster
+            const zombieSpeed = ZOMBIE_SPEED + (roundData.current * 0.05);
 
-            zombies.push(new Zombie(spawnX, spawnY, zombieHealth, zombieSpeed));
+            zombies.push(new Zombie(spawnX, spawnY, currentZombieHealth, zombieSpeed));
         }
-        updateUI(); // Update UI after spawning
+        updateUI();
     }
 
-    function getRandomCashPerKill() {
+    function getRandomCashPerKill() { //
         if (roundData.current >= roundData.highRoundThreshold) {
             return Math.floor(Math.random() * (roundData.highRoundCashPerKill.max - roundData.highRoundCashPerKill.min + 1)) + roundData.highRoundCashPerKill.min;
         } else {
@@ -470,12 +544,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateUI() {
-        playerHealthSpan.textContent = player.health;
-        playerCashSpan.textContent = player.cash;
-        currentRoundSpan.textContent = roundData.current;
+        playerHealthSpan.textContent = infiniteHealth ? 'INF' : player.health;
+        playerCashSpan.textContent = player.cash; //
+        currentRoundSpan.textContent = roundData.current; //
         zombiesRemainingSpan.textContent = zombies.length;
-        playerAmmoSpan.textContent = player.ammo;
-        playerMaxAmmoSpan.textContent = player.maxAmmo;
+        playerAmmoSpan.textContent = infiniteAmmo ? 'INF' : player.ammo;
+        playerMaxAmmoSpan.textContent = infiniteAmmo ? 'INF' : player.maxAmmo;
     }
 
     function showShopMessage(message, color = 'yellow') {
@@ -491,7 +565,6 @@ document.addEventListener('DOMContentLoaded', () => {
         clearInterval(gameLoopInterval);
         finalRoundSpan.textContent = roundData.current;
         gameOverScreen.style.display = 'flex';
-        // Hide pause indicator if visible
         const existingPauseIndicator = document.getElementById('pauseIndicator');
         if (existingPauseIndicator) {
             existingPauseIndicator.style.display = 'none';
@@ -501,11 +574,11 @@ document.addEventListener('DOMContentLoaded', () => {
     function togglePause() {
         paused = !paused;
         if (paused) {
-            clearInterval(gameLoopInterval); // Stop game loop
+            clearInterval(gameLoopInterval);
         } else {
-            startGameLoop(); // Resume game loop
+            startGameLoop();
         }
-        draw(); // Redraw to show/hide pause indicator immediately
+        draw();
     }
 
 
@@ -514,18 +587,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keyboard controls
     document.addEventListener('keydown', (e) => {
         keys[e.key.toLowerCase()] = true;
-        if (e.key === ' ' || e.key === 'ArrowUp') { // Space or Up Arrow for jump
-            e.preventDefault(); // Prevent page scrolling
+        if (e.key === ' ' || e.key === 'ArrowUp') {
+            e.preventDefault();
             player.jump();
         }
-        if (e.key.toLowerCase() === 'p') { // P for pause
+        if (e.key.toLowerCase() === 'p') {
             togglePause();
         }
-        if (e.key.toLowerCase() === 'r') { // R for reload
+        if (e.key.toLowerCase() === 'r') {
             player.reload();
         }
-        if (e.key === 'Enter') { // Enter key to shoot (alternate to click)
-            if (!gameRunning || paused || isReloading || player.ammo <= 0) return;
+        // Enter key for shooting (if not mouse-controlled)
+        if (e.key === 'Enter') {
+            if (!gameRunning || paused || isReloading || (player.ammo <= 0 && !infiniteAmmo)) return;
             const currentTime = Date.now();
             if (currentTime - lastBulletTime > player.fireRate) {
                 player.shoot();
@@ -538,15 +612,24 @@ document.addEventListener('DOMContentLoaded', () => {
         keys[e.key.toLowerCase()] = false;
     });
 
+    // Mouse movement to determine gun angle
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        mouseX = e.clientX - rect.left;
+        mouseY = e.clientY - rect.top;
+    });
+
     // Mouse click for auto-fire
     canvas.addEventListener('mousedown', (e) => {
-        if (!gameRunning || paused || isReloading || player.ammo <= 0) return;
+        if (!gameRunning || paused) return; // Allow shooting even if reloading for auto-reload to kick in after first empty click
         mouseDown = true;
-        // Initial shot on mousedown
-        const currentTime = Date.now();
-        if (currentTime - lastBulletTime > player.fireRate) {
-            player.shoot();
-            lastBulletTime = currentTime;
+        // Initial shot on mousedown if conditions met
+        if (!isReloading && (player.ammo > 0 || infiniteAmmo)) {
+            const currentTime = Date.now();
+            if (currentTime - lastBulletTime > player.fireRate) {
+                player.shoot();
+                lastBulletTime = currentTime;
+            }
         }
     });
 
@@ -556,11 +639,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Shop Buttons
     buyDamageUpgradeBtn.addEventListener('click', () => {
-        const cost = parseInt(buyDamageUpgradeBtn.dataset.cost);
+        let cost = parseInt(buyDamageUpgradeBtn.dataset.cost);
+        if (oneDollarEverything) cost = 1;
+
         if (player.cash >= cost) {
             player.cash -= cost;
-            player.damage += 10; // Increase damage by more
-            buyDamageUpgradeBtn.dataset.cost = parseInt(buyDamageUpgradeBtn.dataset.cost) * 1.5; // Increase cost
+            player.damage += 15; // Increase damage by a good amount
+            if (!oneDollarEverything) {
+                buyDamageUpgradeBtn.dataset.cost = cost + 20; // Increase cost by $20 per round
+            }
             buyDamageUpgradeBtn.textContent = `Upgrade Damage ($${Math.ceil(buyDamageUpgradeBtn.dataset.cost)})`;
             showShopMessage('Damage upgraded!', 'lime');
             updateUI();
@@ -570,12 +657,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     buyHealthUpgradeBtn.addEventListener('click', () => {
-        const cost = parseInt(buyHealthUpgradeBtn.dataset.cost);
+        let cost = parseInt(buyHealthUpgradeBtn.dataset.cost);
+        if (oneDollarEverything) cost = 1;
+
         if (player.cash >= cost) {
             player.cash -= cost;
             player.maxHealth += 50; // Increase max health by more
-            player.health += 50; // Also heal for the amount increased
-            buyHealthUpgradeBtn.dataset.cost = parseInt(buyHealthUpgradeBtn.dataset.cost) * 1.5; // Increase cost
+            player.health = player.maxHealth; // Also heal for the amount increased
+            if (!oneDollarEverything) {
+                buyHealthUpgradeBtn.dataset.cost = cost * 1.5; // Continue compounding health cost
+            }
             buyHealthUpgradeBtn.textContent = `Upgrade Max Health ($${Math.ceil(buyHealthUpgradeBtn.dataset.cost)})`;
             showShopMessage('Max Health upgraded!', 'lime');
             updateUI();
@@ -585,11 +676,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     buyFireRateUpgradeBtn.addEventListener('click', () => {
-        const cost = parseInt(buyFireRateUpgradeBtn.dataset.cost);
+        let cost = parseInt(buyFireRateUpgradeBtn.dataset.cost);
+        if (oneDollarEverything) cost = 1;
+
         if (player.cash >= cost) {
             player.cash -= cost;
-            player.fireRate = Math.max(50, player.fireRate - 25); // Decrease fire rate (make it faster), with a minimum of 50ms
-            buyFireRateUpgradeBtn.dataset.cost = parseInt(buyFireRateUpgradeBtn.dataset.cost) * 1.5; // Increase cost
+            player.fireRate = Math.max(30, player.fireRate - 15); // Decrease fire rate by more (make it faster), with a minimum of 30ms
+            if (!oneDollarEverything) {
+                buyFireRateUpgradeBtn.dataset.cost = cost * 1.5; // Continue compounding fire rate cost
+            }
             buyFireRateUpgradeBtn.textContent = `Upgrade Fire Rate ($${Math.ceil(buyFireRateUpgradeBtn.dataset.cost)})`;
             showShopMessage('Fire Rate upgraded!', 'lime');
             updateUI();
@@ -599,11 +694,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     buyMaxAmmoUpgradeBtn.addEventListener('click', () => {
-        const cost = parseInt(buyMaxAmmoUpgradeBtn.dataset.cost);
+        let cost = parseInt(buyMaxAmmoUpgradeBtn.dataset.cost);
+        if (oneDollarEverything) cost = 1;
+
         if (player.cash >= cost) {
             player.cash -= cost;
-            player.maxAmmo += 15; // Increase max ammo
-            buyMaxAmmoUpgradeBtn.dataset.cost = parseInt(buyMaxAmmoUpgradeBtn.dataset.cost) * 1.5; // Increase cost
+            player.maxAmmo += 6; // Increase max ammo by 6
+            player.ammo = player.maxAmmo; // Refill ammo
+            if (!oneDollarEverything) {
+                buyMaxAmmoUpgradeBtn.dataset.cost = cost + 10; // Increase cost by $10
+            }
             buyMaxAmmoUpgradeBtn.textContent = `Upgrade Max Ammo ($${Math.ceil(buyMaxAmmoUpgradeBtn.dataset.cost)})`;
             showShopMessage('Max Ammo upgraded!', 'lime');
             updateUI();
@@ -612,9 +712,65 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
-    startGameButton.addEventListener('click', startGame);
+    startGameButton.addEventListener('click', startGame); //
     restartGameButton.addEventListener('click', initGame);
+
+    // Dev Console Logic
+    devConsoleInput.addEventListener('input', () => {
+        if (devConsoleInput.value.toLowerCase() === 'dev&') {
+            devOptions.style.display = 'flex'; // Show dev options
+        } else {
+            devOptions.style.display = 'none'; // Hide if code is removed or incorrect
+        }
+    });
+
+    devOptions.addEventListener('click', (e) => {
+        const cheatType = e.target.dataset.cheat;
+        if (cheatType) {
+            switch (cheatType) {
+                case 'maxAmmo':
+                    infiniteAmmo = !infiniteAmmo;
+                    e.target.textContent = infiniteAmmo ? 'Infinite Ammo ON' : 'Max Ammo/Inf';
+                    if (infiniteAmmo) player.ammo = player.maxAmmo; // Fill up if turned on
+                    break;
+                case 'maxHealth':
+                    infiniteHealth = !infiniteHealth;
+                    e.target.textContent = infiniteHealth ? 'Infinite Health ON' : 'Max Health/Inf';
+                    if (infiniteHealth) player.health = player.maxHealth; // Fill up if turned on
+                    break;
+                case 'maxDamage':
+                    player.damage = 9999; // Set to very high damage
+                    showShopMessage('Max Damage Activated!', 'cyan');
+                    break;
+                case 'oneDollar':
+                    oneDollarEverything = !oneDollarEverything;
+                    e.target.textContent = oneDollarEverything ? '1$ Everything ON' : '1$ Everything';
+                    showShopMessage(oneDollarEverything ? 'Shop prices are $1!' : 'Shop prices are normal.', 'cyan');
+                    // Update shop buttons to reflect new prices
+                    buyDamageUpgradeBtn.textContent = `Upgrade Damage ($${oneDollarEverything ? 1 : Math.ceil(buyDamageUpgradeBtn.dataset.cost)})`;
+                    buyHealthUpgradeBtn.textContent = `Upgrade Max Health ($${oneDollarEverything ? 1 : Math.ceil(buyHealthUpgradeBtn.dataset.cost)})`;
+                    buyFireRateUpgradeBtn.textContent = `Upgrade Fire Rate ($${oneDollarEverything ? 1 : Math.ceil(buyFireRateUpgradeBtn.dataset.cost)})`;
+                    buyMaxAmmoUpgradeBtn.textContent = `Upgrade Max Ammo ($${oneDollarEverything ? 1 : Math.ceil(buyMaxAmmoUpgradeBtn.dataset.cost)})`;
+                    break;
+                case 'invincible':
+                    invincible = !invincible;
+                    e.target.textContent = invincible ? 'Invincible ON' : 'Invincible';
+                    showShopMessage(invincible ? 'Invincibility ON!' : 'Invincibility OFF!', 'cyan');
+                    break;
+                case 'setMoney':
+                    const amount = parseInt(moneySetValueInput.value);
+                    if (!isNaN(amount) && amount >= 0) {
+                        player.cash = amount;
+                        showShopMessage(`Cash set to $${amount}!`, 'cyan');
+                    } else {
+                        showShopMessage('Invalid money amount!', 'red');
+                    }
+                    break;
+            }
+            updateUI(); // Refresh UI for cheat changes
+        }
+    });
+
 
     // Initial game setup (shows start screen)
     initGame();
