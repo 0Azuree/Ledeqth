@@ -521,6 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function startGame() {
+        console.log("startGame function called!"); // Add this
         startScreen.style.display = 'none';
         gameRunning = true;
         startGameLoop();
