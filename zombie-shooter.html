@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledeqth - Zombie Shooter</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="zombie-shooter.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+</head>
+<body>
+    <div id="snow-container"></div>
+
+    <main>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="nav-button">Home</a></li>
+                <li><a href="projects.html" class="nav-button">Projects</a></li>
+                <li><a href="games.html" class="nav-button">Games</a></li>
+                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
+                <li><a href="ai.html" class="nav-button">AI</a></li>
+            </ul>
+        </nav>
+
+        <h2>Zombie Shooter</h2>
+        <p>Survive the zombie horde! Shoot zombies to earn cash, and buy upgrades in the shop.</p>
+
+        <div class="game-wrapper">
+            <canvas id="gameCanvas" width="800" height="400"></canvas>
+            <div class="game-ui">
+                <div class="stats-panel">
+                    <p>Health: <span id="playerHealth">100</span></p>
+                    <p>Cash: $<span id="playerCash">0</span></p>
+                    <p>Round: <span id="currentRound">1</span></p>
+                    <p>Zombies Left: <span id="zombiesRemaining">0</span></p>
+                </div>
+
+                <div class="shop-panel">
+                    <h3>Shop</h3>
+                    <button id="buyDamageUpgrade" class="shop-button" data-cost="50">Upgrade Damage ($50)</button>
+                    <button id="buyHealthUpgrade" class="shop-button" data-cost="100">Upgrade Max Health ($100)</button>
+                    <button id="buyFireRateUpgrade" class="shop-button" data-cost="75">Upgrade Fire Rate ($75)</button>
+                    <p id="shopMessage"></p>
+                </div>
+
+                <div class="game-controls">
+                    <h3>Controls:</h3>
+                    <p><strong>A / Left Arrow</strong>: Move Left</p>
+                    <p><strong>D / Right Arrow</strong>: Move Right</p>
+                    <p><strong>Space / Up Arrow</strong>: Jump</p>
+                    <p><strong>Click / Enter</strong>: Shoot</p>
+                    <p><strong>P</strong>: Pause</p>
+                </div>
+            </div>
+            <div id="game-over-screen" class="game-over-screen" style="display: none;">
+                <h3>Game Over!</h3>
+                <p>You survived <span id="finalRound">0</span> rounds.</p>
+                <button id="restartGameButton" class="nav-button">Restart Game</button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ledeqth</p>
+    </footer>
+
+    <script src="snow.js"></script>
+    <script src="zombie-shooter.js"></script>
+</body>
+</html>
