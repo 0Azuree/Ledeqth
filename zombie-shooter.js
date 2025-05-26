@@ -13,15 +13,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const playerMaxAmmoSpan = document.getElementById('playerMaxAmmo');
     const reloadText = document.getElementById('reloadText');
 
-    const buyDamageUpgradeBtn = document.getElementById('buyDamageUpgrade'); // General damage upgrade
+    // Shop Buttons
+    const buyPistolBtn = document.getElementById('buyPistol');
+    const upgradePistolDamageBtn = document.getElementById('upgradePistolDamage');
+    const buyM4Btn = document.getElementById('buyM4');
+    const upgradeM4DamageBtn = document.getElementById('upgradeM4Damage');
+    const buyMac11Btn = document.getElementById('buyMac11');
+    const upgradeMac11DamageBtn = document.getElementById('upgradeMac11Damage');
+
     const buyHealthUpgradeBtn = document.getElementById('buyHealthUpgrade');
     const buyFireRateUpgradeBtn = document.getElementById('buyFireRateUpgrade');
     const buyMaxAmmoUpgradeBtn = document.getElementById('buyMaxAmmoUpgrade');
     const shopMessageDiv = document.getElementById('shopMessage');
-
-    const buyM4Btn = document.getElementById('buyM4');
-    const upgradeM4DamageBtn = document.getElementById('upgradeM4Damage');
-    const buyMac11Btn = document.getElementById('buyMac11');
 
     const startScreen = document.getElementById('start-screen');
     const startGameButton = document.getElementById('startGameButton');
@@ -31,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const damageOverlay = document.getElementById('damageOverlay');
     const roundCountdownOverlay = document.getElementById('roundCountdownOverlay');
     const roundCountdownText = document.getElementById('roundCountdownText');
+    const inventoryPanel = document.getElementById('inventoryPanel'); // New inventory panel
 
     const devConsoleInput = document.getElementById('devConsoleInput');
     const devOptions = document.getElementById('devOptions');
@@ -83,36 +87,35 @@ document.addEventListener('DOMContentLoaded', () => {
     const ZOMBIE_SPEED = 1;
 
     // --- Gun Definitions ---
+    // baseDamage is the starting damage for the gun
+    // damage is the CURRENT calculated damage (base + upgrades)
     const guns = {
         Pistol: {
             name: "Pistol",
-            damage: 15,
-            fireRate: 300, // slower
+            baseDamage: 15,
+            fireRate: 300,
             magazineSize: 10,
             bulletSpeed: 12,
             cost: 0, // Starting gun
-            owned: true,
-            upgradeCost: 50 // Base cost for upgrading pistol damage
+            upgradeDamageCost: 50 // Cost for one damage upgrade level for Pistol
         },
         M4: {
             name: "M4",
-            damage: 30,
-            fireRate: 150, // faster
+            baseDamage: 30,
+            fireRate: 150,
             magazineSize: 30,
             bulletSpeed: 15,
             cost: 500,
-            owned: false,
-            upgradeCost: 100 // Base cost for upgrading M4 damage
+            upgradeDamageCost: 100 // Cost for one damage upgrade level for M4
         },
         Mac11: {
             name: "Mac11",
-            damage: 20, // Lower damage per shot than M4
+            baseDamage: 20, // Lower damage per shot than M4
             fireRate: 80, // Very fast fire rate
             magazineSize: 40,
             bulletSpeed: 13,
             cost: 750,
-            owned: false,
-            upgradeCost: 120 // Base cost for upgrading Mac11 damage
+            upgradeDamageCost: 120 // Cost for one damage upgrade level for Mac11
         }
     };
 
@@ -130,15 +133,21 @@ document.addEventListener('DOMContentLoaded', () => {
         this.cash = 0;
         this.bodyDirection = 1; // 1 for right, -1 for left (body direction)
         this.gunAngle = 0; // Angle for the gun based on mouse position
-        this.equippedGun = guns.Pistol; // Start with Pistol
-        this.gunsOwned = {
-            Pistol: { damageUpgrades: 0 },
-            M4: { damageUpgrades: 0 },
-            Mac11: { damageUpgrades: 0 }
-        };
+        this.equippedGun = null; // Will be set in initGame
         this.animationFrame = 0;
         this.animationTimer = 0;
         this.isWalking = false;
+
+        // Inventory of owned guns with their state (upgrades, current ammo)
+        this.gunsOwned = {};
+        for (const gunName in guns) {
+            this.gunsOwned[gunName] = {
+                owned: (gunName === 'Pistol'), // Pistol is owned by default
+                damageUpgrades: 0,
+                currentAmmo: guns[gunName].magazineSize,
+                currentDamage: guns[gunName].baseDamage // Store current damage (base + upgrades)
+            };
+        }
 
         this.draw = function() {
             ctx.save();
@@ -181,21 +190,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const gun = this.equippedGun;
             ctx.fillStyle = '#444'; // Gun color
 
-            if (gun.name === "Pistol") {
-                // Pistol: small block with a handle
-                ctx.fillRect(0, -4, 20, 8); // Body
-                ctx.fillRect(5, 4, 5, 10); // Handle
-            } else if (gun.name === "M4") {
-                // M4: longer barrel, stock, sight
-                ctx.fillRect(0, -4, 30, 8); // Receiver
-                ctx.fillRect(30, -2, 40, 4); // Barrel
-                ctx.fillRect(-15, 0, 15, 6); // Stock
-                ctx.fillRect(20, -8, 5, 5); // Sight
-            } else if (gun.name === "Mac11") {
-                // Mac11: compact, wide body, short barrel
-                ctx.fillRect(0, -6, 25, 12); // Wide body
-                ctx.fillRect(25, -4, 10, 4); // Short barrel
-                ctx.fillRect(5, 6, 5, 10); // Handle
+            if (gun) { // Ensure a gun is equipped before drawing
+                if (gun.name === "Pistol") {
+                    // Pistol: small block with a handle
+                    ctx.fillRect(0, -4, 20, 8); // Body
+                    ctx.fillRect(5, 4, 5, 10); // Handle
+                } else if (gun.name === "M4") {
+                    // M4: longer barrel, stock, sight
+                    ctx.fillRect(0, -4, 30, 8); // Receiver
+                    ctx.fillRect(30, -2, 40, 4); // Barrel
+                    ctx.fillRect(-15, 0, 15, 6); // Stock
+                    ctx.fillRect(20, -8, 5, 5); // Sight
+                } else if (gun.name === "Mac11") {
+                    // Mac11: compact, wide body, short barrel
+                    ctx.fillRect(0, -6, 25, 12); // Wide body
+                    ctx.fillRect(25, -4, 10, 4); // Short barrel
+                    ctx.fillRect(5, 6, 5, 10); // Handle
+                }
             }
 
             ctx.restore(); // Restore canvas state
@@ -278,6 +289,9 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.shoot = function() {
+            if (!this.equippedGun) { // Don't shoot if no gun is equipped (shouldn't happen)
+                return;
+            }
             if (isReloading || (this.equippedGun.ammo <= 0 && !infiniteAmmo)) {
                 showShopMessage('Out of ammo or reloading!', 'red');
                 return;
@@ -292,6 +306,8 @@ document.addEventListener('DOMContentLoaded', () => {
             bullets.push(new Bullet(barrelTipX, barrelTipY, this.gunAngle, this.equippedGun.damage, this.equippedGun.bulletSpeed));
             if (!infiniteAmmo) {
                 this.equippedGun.ammo--;
+                // Also update the stored ammo in gunsOwned for the current gun
+                this.gunsOwned[this.equippedGun.name].currentAmmo = this.equippedGun.ammo;
             }
             updateUI();
         };
@@ -320,11 +336,13 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.reload = function() {
+            if (!this.equippedGun) return; // Cannot reload if no gun
             if (!isReloading && this.equippedGun.ammo < this.equippedGun.magazineSize && !infiniteAmmo) {
                 isReloading = true;
                 reloadText.style.display = 'block';
                 reloadTimer = setTimeout(() => {
                     this.equippedGun.ammo = this.equippedGun.magazineSize;
+                    this.gunsOwned[this.equippedGun.name].currentAmmo = this.equippedGun.magazineSize; // Update stored ammo
                     isReloading = false;
                     reloadText.style.display = 'none';
                     updateUI();
@@ -333,16 +351,40 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.equipGun = function(gunName) {
-            if (guns[gunName].owned) {
-                this.equippedGun = guns[gunName];
-                // Apply damage upgrades that were previously purchased for THIS gun
-                this.equippedGun.damage = guns[gunName].damage + this.gunsOwned[gunName].damageUpgrades * 15; // 15 damage per upgrade level
-                this.equippedGun.ammo = this.equippedGun.magazineSize; // Refill ammo on equip
-                updateUI();
-                showShopMessage(`${gunName} equipped!`, 'lightblue');
-            } else {
+            const targetGunDefinition = guns[gunName];
+            const ownedGunState = this.gunsOwned[gunName];
+
+            if (!targetGunDefinition || !ownedGunState.owned) {
                 showShopMessage(`You don't own the ${gunName}!`, 'red');
+                return false;
             }
+
+            if (this.equippedGun && this.equippedGun.name === gunName) {
+                showShopMessage(`${gunName} is already equipped!`, 'grey');
+                return true; // Already equipped
+            }
+
+            // Save state of currently equipped gun before switching
+            if (this.equippedGun) {
+                this.gunsOwned[this.equippedGun.name].currentAmmo = this.equippedGun.ammo;
+            }
+
+            // Create a new object for equippedGun to avoid modifying gun definitions directly
+            this.equippedGun = { ...targetGunDefinition };
+            // Load specific state for this gun
+            this.equippedGun.ammo = ownedGunState.currentAmmo;
+            this.equippedGun.damage = targetGunDefinition.baseDamage + ownedGunState.damageUpgrades * 15; // 15 damage per upgrade level
+
+            // Clear any active reload timer for the old gun
+            if (reloadTimer) {
+                clearTimeout(reloadTimer);
+                isReloading = false;
+                reloadText.style.display = 'none';
+            }
+
+            updateUI();
+            showShopMessage(`${gunName} equipped!`, 'lightblue');
+            return true;
         };
     }
 
@@ -483,24 +525,22 @@ document.addEventListener('DOMContentLoaded', () => {
         roundData.zombieHealthIncreasePerRound = 5;
         player.health = player.maxHealth;
         player.cash = 0;
-        player.equippedGun = guns.Pistol; // Reset to pistol
-        player.equippedGun.ammo = player.equippedGun.magazineSize; // Fill pistol ammo
         isReloading = false;
         if (reloadTimer) clearTimeout(reloadTimer);
         reloadText.style.display = 'none';
 
         // Reset gun ownership and upgrades
         for (const gunName in guns) {
-            guns[gunName].owned = (gunName === 'Pistol');
-            player.gunsOwned[gunName] = { damageUpgrades: 0 };
+            player.gunsOwned[gunName] = {
+                owned: (gunName === 'Pistol'),
+                damageUpgrades: 0,
+                currentAmmo: guns[gunName].magazineSize,
+                currentDamage: guns[gunName].baseDamage
+            };
         }
+        player.equipGun('Pistol'); // Equip Pistol at start
 
-        // Reset shop costs (only for general upgrades, gun costs are fixed)
-        // Reset general damage upgrade cost
-        if (buyDamageUpgradeBtn) { // Check if element exists before accessing
-            buyDamageUpgradeBtn.dataset.cost = 50;
-            buyDamageUpgradeBtn.textContent = `Upgrade Damage ($50)`;
-        }
+        // Reset shop costs and button texts for upgrades
         buyHealthUpgradeBtn.dataset.cost = 100;
         buyHealthUpgradeBtn.textContent = `Upgrade Max Health ($100)`;
         buyFireRateUpgradeBtn.dataset.cost = 75;
@@ -508,12 +548,18 @@ document.addEventListener('DOMContentLoaded', () => {
         buyMaxAmmoUpgradeBtn.dataset.cost = 75;
         buyMaxAmmoUpgradeBtn.textContent = `Upgrade Max Ammo ($75)`;
 
-        // Reset M4 specific upgrade button
-        if (upgradeM4DamageBtn) { // Check if element exists before accessing
-            upgradeM4DamageBtn.dataset.cost = 100;
-            upgradeM4DamageBtn.textContent = `+Damage ($100)`;
-            upgradeM4DamageBtn.style.display = 'none'; // Hide initially
-        }
+        // Reset gun specific damage upgrade buttons and costs
+        upgradePistolDamageBtn.dataset.cost = guns.Pistol.upgradeDamageCost;
+        upgradePistolDamageBtn.textContent = `+Damage ($${guns.Pistol.upgradeDamageCost})`;
+        upgradePistolDamageBtn.style.display = 'none';
+
+        upgradeM4DamageBtn.dataset.cost = guns.M4.upgradeDamageCost;
+        upgradeM4DamageBtn.textContent = `+Damage ($${guns.M4.upgradeDamageCost})`;
+        upgradeM4DamageBtn.style.display = 'none';
+
+        upgradeMac11DamageBtn.dataset.cost = guns.Mac11.upgradeDamageCost;
+        upgradeMac11DamageBtn.textContent = `+Damage ($${guns.Mac11.upgradeDamageCost})`;
+        upgradeMac11DamageBtn.style.display = 'none';
         
         // Reset cheat flags
         infiniteAmmo = false;
@@ -548,7 +594,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function gameLoop() {
-        if (!gameRunning || paused || isRoundStarting) return; // Pause game logic during countdown
+        // Game logic (movement, shooting, zombie AI) is paused during round start countdown
+        if (!gameRunning || paused || isRoundStarting) return;
 
         update();
         draw();
@@ -620,7 +667,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function checkCollision(obj1, obj2) {
-        if (obj1.radius && obj2.width) {
+        if (obj1.radius && obj2.width) { // Bullet-Zombie collision
             const distX = Math.abs(obj1.x - obj2.x - obj2.width / 2);
             const distY = Math.abs(obj1.y - obj2.y - obj2.height / 2);
 
@@ -633,7 +680,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const dx = distX - obj2.width / 2;
             const dy = distY - obj2.height / 2;
             return (dx * dx + dy * dy <= (obj1.radius * obj1.radius));
-        } else {
+        } else { // Player-Zombie collision (AABB)
             return obj1.x < obj2.x + obj2.width &&
                    obj1.x + obj1.width > obj2.x &&
                    obj1.y < obj2.y + obj2.height &&
@@ -674,8 +721,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentRoundSpan.textContent = roundData.current;
         player.health = infiniteHealth ? player.maxHealth : player.maxHealth; // Heal to full or stay infinite
 
-        // Ammo does NOT refill automatically
-        // player.equippedGun.ammo = player.equippedGun.magazineSize; // Removed this line
+        // Ammo does NOT refill automatically (players must reload or buy ammo)
 
         let numNormalZombiesToSpawn = roundData.current * 2;
         if (roundData.current > 10) numNormalZombiesToSpawn += (roundData.current - 10) * 0.5;
@@ -737,55 +783,73 @@ document.addEventListener('DOMContentLoaded', () => {
         playerCashSpan.textContent = player.cash;
         currentRoundSpan.textContent = roundData.current;
         zombiesRemainingSpan.textContent = zombies.length;
-        playerAmmoSpan.textContent = infiniteAmmo ? 'INF' : player.equippedGun.ammo;
-        playerMaxAmmoSpan.textContent = infiniteAmmo ? 'INF' : player.equippedGun.magazineSize;
+        playerAmmoSpan.textContent = infiniteAmmo ? 'INF' : (player.equippedGun ? player.equippedGun.ammo : 0);
+        playerMaxAmmoSpan.textContent = infiniteAmmo ? 'INF' : (player.equippedGun ? player.equippedGun.magazineSize : 0);
 
-        // Update gun purchase buttons
-        buyM4Btn.disabled = guns.M4.owned || player.cash < guns.M4.cost;
-        buyMac11Btn.disabled = guns.Mac11.owned || player.cash < guns.Mac11.cost;
+        // Update gun purchase/equip buttons and their upgrade buttons
+        const updateGunButton = (gunName, button, upgradeButton) => {
+            const gunDef = guns[gunName];
+            const ownedState = player.gunsOwned[gunName];
+            let cost = gunDef.cost;
+            if (oneDollarEverything) cost = 1;
 
-        // Show/hide M4 specific upgrade button
-        if (upgradeM4DamageBtn) { // Safety check
-            if (player.equippedGun.name === 'M4' && guns.M4.owned) {
-                upgradeM4DamageBtn.style.display = 'inline-block';
-                upgradeM4DamageBtn.disabled = player.cash < parseInt(upgradeM4DamageBtn.dataset.cost) && !oneDollarEverything;
+            if (ownedState.owned) {
+                button.textContent = `${gunDef.name} (Equip)`;
+                button.disabled = player.equippedGun.name === gunName; // Disable if already equipped
+                if (upgradeButton) {
+                    upgradeButton.style.display = 'inline-block';
+                    let upgradeCost = gunDef.upgradeDamageCost + (ownedState.damageUpgrades * 20); // Each upgrade costs more
+                    if (oneDollarEverything) upgradeCost = 1;
+                    upgradeButton.textContent = `+Damage ($${Math.ceil(upgradeCost)})`;
+                    upgradeButton.dataset.cost = upgradeCost; // Update dataset cost for logic
+                    upgradeButton.disabled = player.cash < upgradeCost && !oneDollarEverything;
+                }
             } else {
-                upgradeM4DamageBtn.style.display = 'none';
+                button.textContent = `Buy ${gunDef.name} ($${gunDef.cost})`;
+                button.disabled = player.cash < gunDef.cost && !oneDollarEverything;
+                if (upgradeButton) {
+                    upgradeButton.style.display = 'none'; // Hide upgrade if gun not owned
+                }
             }
-        }
+        };
 
-        // Update general upgrade buttons (they are always visible)
-        if (buyDamageUpgradeBtn) { // Safety check
-            buyDamageUpgradeBtn.disabled = player.cash < parseInt(buyDamageUpgradeBtn.dataset.cost) && !oneDollarEverything;
-        }
-        if (buyHealthUpgradeBtn) { // Safety check
-            buyHealthUpgradeBtn.disabled = player.cash < parseInt(buyHealthUpgradeBtn.dataset.cost) && !oneDollarEverything;
-        }
-        if (buyFireRateUpgradeBtn) { // Safety check
-            buyFireRateUpgradeBtn.disabled = player.cash < parseInt(buyFireRateUpgradeBtn.dataset.cost) && !oneDollarEverything;
-        }
-        if (buyMaxAmmoUpgradeBtn) { // Safety check
-            buyMaxAmmoUpgradeBtn.disabled = player.cash < parseInt(buyMaxAmmoUpgradeBtn.dataset.cost) && !oneDollarEverything;
-        }
+        updateGunButton('Pistol', buyPistolBtn, upgradePistolDamageBtn);
+        updateGunButton('M4', buyM4Btn, upgradeM4DamageBtn);
+        updateGunButton('Mac11', buyMac11Btn, upgradeMac11DamageBtn);
 
-        // Update button texts for 1$ everything cheat
-        if (oneDollarEverything) {
-             if (buyDamageUpgradeBtn) buyDamageUpgradeBtn.textContent = `Upgrade Damage ($1)`;
-             if (buyHealthUpgradeBtn) buyHealthUpgradeBtn.textContent = `Upgrade Max Health ($1)`;
-             if (buyFireRateUpgradeBtn) buyFireRateUpgradeBtn.textContent = `Upgrade Fire Rate ($1)`;
-             if (buyMaxAmmoUpgradeBtn) buyMaxAmmoUpgradeBtn.textContent = `Upgrade Max Ammo ($1)`;
-             if (buyM4Btn) buyM4Btn.textContent = `Buy M4 ($1)`;
-             if (buyMac11Btn) buyMac11Btn.textContent = `Buy Mac11 ($1)`;
-             if (upgradeM4DamageBtn && upgradeM4DamageBtn.style.display !== 'none') upgradeM4DamageBtn.textContent = `+Damage ($1)`;
-        } else {
-            // Restore actual costs if cheat is off
-            if (buyDamageUpgradeBtn) buyDamageUpgradeBtn.textContent = `Upgrade Damage ($${Math.ceil(buyDamageUpgradeBtn.dataset.cost)})`;
-            if (buyHealthUpgradeBtn) buyHealthUpgradeBtn.textContent = `Upgrade Max Health ($${Math.ceil(buyHealthUpgradeBtn.dataset.cost)})`;
-            if (buyFireRateUpgradeBtn) buyFireRateUpgradeBtn.textContent = `Upgrade Fire Rate ($${Math.ceil(buyFireRateUpgradeBtn.dataset.cost)})`;
-            if (buyMaxAmmoUpgradeBtn) buyMaxAmmoUpgradeBtn.textContent = `Upgrade Max Ammo ($${Math.ceil(buyMaxAmmoUpgradeBtn.dataset.cost)})`;
-            if (buyM4Btn) buyM4Btn.textContent = `Buy M4 ($${guns.M4.cost})`;
-            if (buyMac11Btn) buyMac11Btn.textContent = `Buy Mac11 ($${guns.Mac11.cost})`;
-            if (upgradeM4DamageBtn && upgradeM4DamageBtn.style.display !== 'none') upgradeM4DamageBtn.textContent = `+Damage ($${Math.ceil(upgradeM4DamageBtn.dataset.cost)})`;
+        // Update general upgrade buttons
+        const updateGeneralUpgradeButton = (button, baseCostMultiplier, increment) => {
+            let cost = parseInt(button.dataset.cost);
+            if (oneDollarEverything) cost = 1;
+            button.disabled = player.cash < cost && !oneDollarEverything;
+
+            if (oneDollarEverything) {
+                button.textContent = `${button.textContent.split('(')[0].trim()} ($1)`;
+            } else {
+                button.textContent = `${button.textContent.split('(')[0].trim()} ($${Math.ceil(button.dataset.cost)})`;
+            }
+        };
+
+        updateGeneralUpgradeButton(buyHealthUpgradeBtn, 1.5, 0); // Cost increases by 1.5 multiplier
+        updateGeneralUpgradeButton(buyFireRateUpgradeBtn, 1.5, 0); // Cost increases by 1.5 multiplier
+        updateGeneralUpgradeButton(buyMaxAmmoUpgradeBtn, 0, 10); // Cost increases by 10 linear
+
+        // Update inventory display
+        inventoryPanel.innerHTML = ''; // Clear existing
+        let keyNumber = 1;
+        for (const gunName in player.gunsOwned) {
+            const ownedState = player.gunsOwned[gunName];
+            if (ownedState.owned) {
+                const itemDiv = document.createElement('div');
+                itemDiv.classList.add('inventory-item');
+                if (player.equippedGun && player.equippedGun.name === gunName) {
+                    itemDiv.classList.add('equipped');
+                }
+                itemDiv.dataset.gunName = gunName; // For click handler
+                itemDiv.innerHTML = `<span class="key-number">${keyNumber}</span>${gunName}`;
+                inventoryPanel.appendChild(itemDiv);
+                keyNumber++;
+            }
         }
     }
 
@@ -852,6 +916,14 @@ document.addEventListener('DOMContentLoaded', () => {
             e.preventDefault(); // Prevent browser tab behavior
             quickStartRound();
         }
+        // Gun switching by number keys
+        if (e.key === '1') {
+            player.equipGun('Pistol');
+        } else if (e.key === '2') {
+            player.equipGun('M4');
+        } else if (e.key === '3') {
+            player.equipGun('Mac11');
+        }
     });
 
     document.addEventListener('keyup', (e) => {
@@ -880,28 +952,7 @@ document.addEventListener('DOMContentLoaded', () => {
         mouseDown = false;
     });
 
-    // Shop Buttons
-    if (buyDamageUpgradeBtn) { // Safety check for the element
-        buyDamageUpgradeBtn.addEventListener('click', () => { // This is for current equipped gun
-            let cost = parseInt(buyDamageUpgradeBtn.dataset.cost);
-            if (oneDollarEverything) cost = 1;
-
-            if (player.cash >= cost) {
-                player.cash -= cost;
-                player.equippedGun.damage += 15; // General damage increase
-                player.gunsOwned[player.equippedGun.name].damageUpgrades++; // Track upgrades per gun
-                if (!oneDollarEverything) {
-                    buyDamageUpgradeBtn.dataset.cost = cost + 20; // Increase cost by $20
-                }
-                buyDamageUpgradeBtn.textContent = `Upgrade Damage ($${Math.ceil(buyDamageUpgradeBtn.dataset.cost)})`;
-                showShopMessage(`${player.equippedGun.name} Damage upgraded!`, 'lime');
-                updateUI();
-            } else {
-                showShopMessage('Not enough cash!', 'red');
-            }
-        });
-    }
-
+    // Shop Buttons (General Upgrades)
     buyHealthUpgradeBtn.addEventListener('click', () => {
         let cost = parseInt(buyHealthUpgradeBtn.dataset.cost);
         if (oneDollarEverything) cost = 1;
@@ -945,8 +996,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (player.cash >= cost) {
             player.cash -= cost;
-            player.equippedGun.magazineSize += 6; // Increase magazine size by 6
+            // Update equipped gun's magazine size
+            player.equippedGun.magazineSize += 6;
+            // Update the base magazine size in the gun definition (for all future equips)
+            guns[player.equippedGun.name].magazineSize = player.equippedGun.magazineSize;
+            
             player.equippedGun.ammo = player.equippedGun.magazineSize; // Refill ammo
+            // Update the stored currentAmmo for this gun in gunsOwned
+            player.gunsOwned[player.equippedGun.name].currentAmmo = player.equippedGun.ammo;
+
             if (!oneDollarEverything) {
                 buyMaxAmmoUpgradeBtn.dataset.cost = cost + 10; // Increase cost by $10
             }
@@ -958,70 +1016,73 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Gun Purchase Buttons
-    buyM4Btn.addEventListener('click', () => {
-        let cost = guns.M4.cost;
-        if (oneDollarEverything) cost = 1;
+    // Gun Purchase and Specific Damage Upgrade Buttons
+    const handleGunAction = (gunName, actionType) => {
+        const gunDef = guns[gunName];
+        const ownedState = player.gunsOwned[gunName];
 
-        if (player.cash >= cost && !guns.M4.owned) {
-            player.cash -= cost;
-            guns.M4.owned = true;
-            player.equipGun('M4');
-            showShopMessage('M4 purchased and equipped!', 'lime');
-            updateUI();
-        } else if (guns.M4.owned) {
-            player.equipGun('M4'); // Equip if already owned
-        } else {
-            showShopMessage('Not enough cash to buy M4!', 'red');
-        }
-    });
+        if (actionType === 'buy') {
+            let cost = gunDef.cost;
+            if (oneDollarEverything) cost = 1;
 
-    if (upgradeM4DamageBtn) { // Safety check for the element
-        upgradeM4DamageBtn.addEventListener('click', () => {
-            let cost = parseInt(upgradeM4DamageBtn.dataset.cost);
+            if (player.cash >= cost && !ownedState.owned) {
+                player.cash -= cost;
+                ownedState.owned = true;
+                player.equipGun(gunName);
+                showShopMessage(`${gunName} purchased and equipped!`, 'lime');
+                updateUI();
+            } else if (ownedState.owned) {
+                player.equipGun(gunName); // Equip if already owned
+            } else {
+                showShopMessage(`Not enough cash to buy ${gunName}!`, 'red');
+            }
+        } else if (actionType === 'upgradeDamage') {
+            let cost = parseInt(document.getElementById(`upgrade${gunName}Damage`).dataset.cost);
             if (oneDollarEverything) cost = 1;
 
             if (player.cash >= cost) {
                 player.cash -= cost;
-                // Directly modify the base damage of the M4 definition
-                guns.M4.damage += 15; 
-                player.gunsOwned.M4.damageUpgrades++;
-                // If M4 is currently equipped, update its damage immediately
-                if (player.equippedGun.name === 'M4') {
-                     player.equippedGun.damage = guns.M4.damage;
+                ownedState.damageUpgrades++;
+                // Update the current gun's damage if it's the one equipped
+                if (player.equippedGun.name === gunName) {
+                    player.equippedGun.damage = gunDef.baseDamage + ownedState.damageUpgrades * 15;
                 }
+                // Update the stored damage in gunsOwned
+                ownedState.currentDamage = gunDef.baseDamage + ownedState.damageUpgrades * 15;
+
                 if (!oneDollarEverything) {
-                    upgradeM4DamageBtn.dataset.cost = cost + 100; // M4 damage upgrade cost increases by $100
+                    // Cost increases for next upgrade
+                    document.getElementById(`upgrade${gunName}Damage`).dataset.cost = cost + (gunDef.upgradeDamageCost / 5); // Example: increase by 20% of base upgrade cost
                 }
-                upgradeM4DamageBtn.textContent = `+Damage ($${Math.ceil(upgradeM4DamageBtn.dataset.cost)})`;
-                showShopMessage('M4 Damage upgraded!', 'lime');
+                showShopMessage(`${gunName} Damage upgraded!`, 'lime');
                 updateUI();
             } else {
                 showShopMessage('Not enough cash!', 'red');
             }
-        });
-    }
-
-    buyMac11Btn.addEventListener('click', () => {
-        let cost = guns.Mac11.cost;
-        if (oneDollarEverything) cost = 1;
-
-        if (player.cash >= cost && !guns.Mac11.owned) {
-            player.cash -= cost;
-            guns.Mac11.owned = true;
-            player.equipGun('Mac11');
-            showShopMessage('Mac11 purchased and equipped!', 'lime');
-            updateUI();
-        } else if (guns.Mac11.owned) {
-            player.equipGun('Mac11'); // Equip if already owned
-        } else {
-            showShopMessage('Not enough cash to buy Mac11!', 'red');
         }
-    });
+    };
+
+    buyPistolBtn.addEventListener('click', () => handleGunAction('Pistol', 'buy'));
+    upgradePistolDamageBtn.addEventListener('click', () => handleGunAction('Pistol', 'upgradeDamage'));
+
+    buyM4Btn.addEventListener('click', () => handleGunAction('M4', 'buy'));
+    upgradeM4DamageBtn.addEventListener('click', () => handleGunAction('M4', 'upgradeDamage'));
+
+    buyMac11Btn.addEventListener('click', () => handleGunAction('Mac11', 'buy'));
+    upgradeMac11DamageBtn.addEventListener('click', () => handleGunAction('Mac11', 'upgradeDamage'));
 
 
     startGameButton.addEventListener('click', startGame);
     restartGameButton.addEventListener('click', initGame);
+
+    // Inventory Panel Click Listener (for equipping by clicking)
+    inventoryPanel.addEventListener('click', (e) => {
+        const itemDiv = e.target.closest('.inventory-item');
+        if (itemDiv) {
+            const gunName = itemDiv.dataset.gunName;
+            player.equipGun(gunName);
+        }
+    });
 
     // Dev Console Logic
     devConsoleInput.addEventListener('input', () => {
@@ -1039,7 +1100,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 case 'maxAmmo':
                     infiniteAmmo = !infiniteAmmo;
                     e.target.textContent = infiniteAmmo ? 'Infinite Ammo ON' : 'Max Ammo/Inf';
-                    if (infiniteAmmo) player.equippedGun.ammo = player.equippedGun.magazineSize;
+                    if (infiniteAmmo && player.equippedGun) player.equippedGun.ammo = player.equippedGun.magazineSize;
                     break;
                 case 'maxHealth':
                     infiniteHealth = !infiniteHealth;
@@ -1048,8 +1109,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
                 case 'maxDamage':
                     // Sets current equipped gun's damage to max
-                    player.equippedGun.damage = 9999;
-                    showShopMessage('Max Damage Activated!', 'cyan');
+                    if (player.equippedGun) {
+                        player.equippedGun.damage = 9999;
+                        player.gunsOwned[player.equippedGun.name].currentDamage = 9999; // Store high damage
+                        showShopMessage('Max Damage Activated!', 'cyan');
+                    }
                     break;
                 case 'oneDollar':
                     oneDollarEverything = !oneDollarEverything;
