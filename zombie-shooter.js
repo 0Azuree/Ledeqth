@@ -956,7 +956,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-
+    console.log("Attaching start game button listener."); // Add this
     startGameButton.addEventListener('click', startGame);
     restartGameButton.addEventListener('click', initGame);
 
