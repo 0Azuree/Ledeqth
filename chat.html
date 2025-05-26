@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledeqth - Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="zombie-shooter.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+</head>
+<body>
+    <div id="snow-container"></div>
+
+    <main>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="nav-button">Home</a></li>
+                <li><a href="projects.html" class="nav-button">Projects</a></li>
+                <li><a href="games.html" class="nav-button">Games</a></li>
+                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
+                <li><a href="ai.html" class="nav-button">AI</a></li>
+                <li><a href="chat.html" class="nav-button">Chat</a></li>
+            </ul>
+        </nav>
+
+        <h2>Ledeqth Chat</h2>
+        <p>Connect with other players!</p>
+
+        <div class="chat-wrapper game-wrapper">
+            <div id="username-screen" class="chat-screen">
+                <h3>Enter Your Username</h3>
+                <input type="text" id="usernameInput" placeholder="Your Username (max 12 chars)">
+                <button id="setUsernameButton" class="nav-button">Done</button>
+                <p id="usernameError" class="error-message" style="display: none;"></p>
+            </div>
+
+            <div id="room-selection-screen" class="chat-screen" style="display: none;">
+                <h3>Choose an Option</h3>
+                <button id="createRoomButton" class="nav-button">Create Room</button>
+                <button id="joinRoomButton" class="nav-button">Join Room</button>
+            </div>
+
+            <div id="join-room-input-screen" class="chat-screen" style="display: none;">
+                <h3>Join Room</h3>
+                <input type="text" id="roomCodeInput" placeholder="Enter 5-letter code">
+                <button id="submitJoinRoomButton" class="nav-button">Join</button>
+                <p id="roomJoinError" class="error-message" style="display: none;"></p>
+                <button id="backToRoomSelection" class="nav-button small-button">Back</button>
+            </div>
+
+            <div id="chat-room-screen" class="chat-screen" style="display: none;">
+                <h3 id="roomTitle">Room: CODE</h3>
+                <div id="messages" class="chat-messages">
+                    </div>
+                <div class="chat-input-area">
+                    <input type="text" id="messageInput" placeholder="Type your message...">
+                    <button id="sendMessageButton" class="nav-button">Send</button>
+                </div>
+                <button id="leaveRoomButton" class="nav-button small-button">Leave Room</button>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ledeqth</p>
+    </footer>
+
+    <script src="https://js.pusher.com/8.0/pusher.min.js"></script>
+    <script src="snow.js"></script>
+    <script src="chat.js"></script>
+</body>
+</html>
