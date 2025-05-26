@@ -149,6 +149,7 @@ nav ul {
     padding: 0;
     margin: 0;
     display: inline-flex;
+    flex-wrap: wrap; /* Added for responsiveness */
     gap: 20px;
     justify-content: center;
 }
@@ -255,7 +256,7 @@ main p:not(.description):not(.last-updated) { /* Exclude description and last-up
 .project-link-button:active {
     transform: translateY(2px); /* Push down slightly */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5) inset; /* Add a subtle inner shadow */
-     background-color: #004080; /* A slightly darker blue */
+    background-color: #004080; /* A slightly darker blue */
 }
 
 
@@ -309,9 +310,9 @@ footer {
     align-items: center;
     min-height: 500px;
     /* Item Entry Animation */
-     opacity: 0; /* Start hidden */
+    opacity: 0; /* Start hidden */
     animation: itemEntry 0.6s ease-out forwards;
-     gap: 20px; /* Space between sections */
+    gap: 20px; /* Space between sections */
 }
 
 /* History area styles removed */
@@ -338,8 +339,8 @@ footer {
     border: 1px solid #333;
     max-width: 100%; /* Ensure it doesn't overflow */
     box-sizing: border-box;
-     /* Initially hidden, shown by JS when image is selected */
-     display: none; /* Use display: none to hide when empty */
+    /* Initially hidden, shown by JS when image is selected */
+    display: none; /* Use display: none to hide when empty */
 }
 #uploaded-image-preview {
     max-width: 100%; /* Make image responsive within its container */
@@ -378,7 +379,7 @@ footer {
     white-space: pre-wrap;
     word-wrap: break-word;
     flex-grow: 1; /* Allow response area to take available space */
-     box-sizing: border-box; /* Include padding and border in width */
+    box-sizing: border-box; /* Include padding and border in width */
 }
 
 #ai-response p {
@@ -390,8 +391,8 @@ footer {
 #ai-response.loading {
     font-style: italic;
     color: #888;
-     /* Add pulse glow for loading state */
-     animation: pulseGlow 1.5s infinite alternate;
+    /* Add pulse glow for loading state */
+    animation: pulseGlow 1.5s infinite alternate;
 }
 @keyframes pulseGlow {
     0% { box-shadow: 0 0 8px rgba(0, 170, 255, 0.3); }
@@ -418,14 +419,14 @@ footer {
     font-size: 1em;
     resize: vertical;
     box-sizing: border-box;
-     /* Optional: Glow on focus */
-     transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    /* Optional: Glow on focus */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #user-prompt:focus {
-     outline: none;
-     border-color: #00aaff;
-     box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
+    outline: none;
+    border-color: #00aaff;
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
 }
 
 
@@ -479,8 +480,158 @@ footer {
 .won { ... }
 */
 
+/* --- NEW CHAT STYLES (Added to the end of your existing CSS) --- */
+/* General Wrapper for Chat */
+.chat-wrapper {
+    /* Most styles can be inherited from .game-wrapper which is similar */
+    background-color: #2a2a2a; /* Dark background */
+    border: 1px solid #444; /* Border color */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+    padding: 20px;
+    margin: 20px 0; /* Vertical margin */
+    width: 100%;
+    max-width: 800px; /* Max width for consistency with other content */
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center horizontally */
+    min-height: 400px; /* Give it some minimum height */
+    justify-content: center; /* Center content vertically initially */
+    /* Inherit entry animation from .game-item or .ai-container for consistency */
+    opacity: 0;
+    animation: itemEntry 0.6s ease-out forwards;
+}
 
-/* Media Queries for Responsiveness */
+/* Individual Chat Screens (Username, Room Selection, Join Room, Chat Room) */
+.chat-screen {
+    background-color: #2a2a2a; /* Same as wrapper or slightly different */
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    color: #eee;
+    text-align: center;
+    width: 100%;
+    max-width: 400px; /* Max width for these smaller screens */
+    margin-bottom: 20px; /* Space between screens if multiple are visible */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    display: flex; /* For internal layout */
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* Space between elements inside the screen */
+}
+
+.chat-screen h3 {
+    color: #00ffaa; /* Vibrant green, consistent with titles */
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.chat-screen input[type="text"] {
+    width: calc(100% - 20px); /* Full width minus padding */
+    padding: 10px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #eee;
+    border-radius: 5px;
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chat-screen input[type="text"]:focus {
+    border-color: #00aaff; /* Blue glow on focus, consistent with AI input */
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
+}
+
+/* Small buttons within chat screens (e.g., Back button) */
+.chat-screen .nav-button.small-button {
+    width: auto; /* Override full width of regular nav-button */
+    max-width: fit-content; /* Adjust to content */
+    padding: 5px 10px;
+    font-size: 0.8em;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    background-color: #555; /* Slightly different background for sub-buttons */
+}
+
+.chat-screen .nav-button.small-button:hover {
+    background-color: #777;
+}
+
+.error-message {
+    color: #ff6347; /* Red for errors */
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+/* Chat Room Specific Styles */
+#chat-room-screen {
+    max-width: 600px; /* Wider for chat content */
+    min-height: 450px;
+    justify-content: space-between; /* Push input to bottom */
+}
+
+#messages {
+    width: 100%;
+    flex-grow: 1; /* Take available vertical space */
+    background-color: #1a1a1a; /* Darker background for message area */
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 10px;
+    overflow-y: auto; /* Scroll for messages */
+    max-height: 300px; /* Max height for message area */
+    display: flex;
+    flex-direction: column; /* Stack messages */
+    gap: 5px; /* Space between messages */
+    margin-bottom: 10px;
+    text-align: left; /* Message text aligns left */
+}
+
+.chat-message {
+    font-size: 0.95em;
+    line-height: 1.4;
+    word-wrap: break-word; /* Wrap long words */
+}
+
+.chat-message .username {
+    font-weight: bold;
+    color: #00aaff; /* Blue for usernames, consistent with hover glows */
+    margin-right: 5px;
+}
+
+.chat-message .server-message {
+    color: #ffcc00; /* Yellow for server messages */
+    font-style: italic;
+    font-weight: normal;
+}
+
+.chat-message .timestamp {
+    font-size: 0.7em;
+    color: #888;
+    margin-left: 8px;
+}
+
+.chat-input-area {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.chat-input-area input {
+    flex-grow: 1; /* Input takes most space */
+    width: auto; /* Override default width */
+}
+
+.chat-input-area button {
+    flex-shrink: 0; /* Button doesn't shrink */
+    width: auto; /* Auto width */
+    max-width: 100px;
+    margin: 0; /* Remove top/bottom margin inherited from .nav-button */
+}
+
+
+/* Media Queries for Responsiveness - Merged Chat Specifics */
 @media (max-width: 768px) {
     .main-title { font-size: 3.5rem; }
     .description { font-size: 1.1em; max-width: 90%; margin-bottom: 30px; }
@@ -489,20 +640,18 @@ footer {
     main h2 { font-size: 2.2em; }
     main p:not(.description):not(.last-updated) { font-size: 1em; margin-bottom: 25px; }
     .game-item, .project-item { width: 90%; padding: 20px; margin-bottom: 20px; }
-     .game-item h3, .project-item h3 { font-size: 1.3em; }
+    .game-item h3, .project-item h3 { font-size: 1.3em; }
     .game-link-button, .project-link-button { padding: 7px 12px; font-size: 0.9em; margin-top: 8px; }
 
 
-     /* AI page adjustments */
+    /* AI page adjustments */
     .ai-container {
-         flex-direction: column; /* Stack history and interaction vertically on smaller screens */
-         width: 95%;
-         padding: 20px;
-         min-height: 400px;
-         gap: 20px; /* Space between areas */
+        flex-direction: column; /* Stack history and interaction vertically on smaller screens */
+        width: 95%;
+        padding: 20px;
+        min-height: 400px;
+        gap: 20px; /* Space between areas */
     }
-    /* History area styles removed for small screens */
-    /* #ai-history { ... } */
     .ai-interaction-area {
         width: 100%; /* Interaction area takes full width */
     }
@@ -512,26 +661,42 @@ footer {
         margin-bottom: 0; /* Gap is handled by container */
     }
     .prompt-input-area {
-         align-items: center; /* Center button on small screens */
-     }
+        align-items: center; /* Center button on small screens */
+    }
     #user-prompt {
         margin-bottom: 10px; /* Reduce margin below prompt */
     }
-     .input-controls {
-         justify-content: center; /* Center buttons when stacked */
-         gap: 10px; /* Space between buttons */
-     }
-     /* AI Buttons inherit .nav-button, adjust padding/font size if needed for small screens */
-      .nav-button { /* Applies to all .nav-button */
-         padding: 8px 18px;
-         font-size: 1em;
-      }
+    .input-controls {
+        justify-content: center; /* Center buttons when stacked */
+        gap: 10px; /* Space between buttons */
+    }
+    .nav-button { /* Applies to all .nav-button */
+        padding: 8px 18px;
+        font-size: 1em;
+    }
 
 
-     /* Item Entry Animation adjustments */
-      .game-item, .project-item, .ai-container {
-         animation-delay: 0.2s; /* Maybe reduce delay on smaller screens */
-       }
+    /* Item Entry Animation adjustments */
+    .game-item, .project-item, .ai-container, .chat-wrapper { /* Added .chat-wrapper here */
+        animation-delay: 0.2s; /* Maybe reduce delay on smaller screens */
+    }
+
+    /* Chat specific adjustments for 768px breakpoint */
+    .chat-screen {
+        max-width: 350px;
+        padding: 20px;
+        gap: 10px;
+    }
+    #chat-room-screen {
+        max-width: 95%;
+        min-height: 400px;
+    }
+    #messages {
+        max-height: 250px;
+    }
+    .chat-message {
+        font-size: 0.9em;
+    }
 }
 
 @media (max-width: 600px) {
@@ -543,57 +708,79 @@ footer {
         flex-wrap: wrap;
         gap: 10px;
     }
-     .nav-button {
-         font-size: 0.9em;
-         padding: 6px 12px;
-     }
-      .nav-button { /* Applies to all .nav-button */
-         padding: 6px 12px;
-         font-size: 0.9em;
-      }
+    .nav-button {
+        font-size: 0.9em;
+        padding: 6px 12px;
+    }
+    .nav-button { /* Applies to all .nav-button */
+        padding: 6px 12px;
+        font-size: 0.9em;
+    }
 }
 
 @media (max-width: 480px) {
     .main-title { font-size: 2.8rem; }
     .description { font-size: 1em; margin-bottom: 25px; }
     nav { margin-bottom: 25px; }
-     main h2 { font-size: 2em; margin-bottom: 15px; }
-     main p:not(.description):not(.last-updated) { margin-bottom: 20px; }
-     .game-item, .project-item { padding: 15px; margin-bottom: 15px; }
-      .game-item h3, .project-item h3 { font-size: 1.2em; }
-     .game-link-button, .project-link-button { padding: 6px 10px; font-size: 0.8em; margin-top: 6px; }
+    main h2 { font-size: 2em; margin-bottom: 15px; }
+    main p:not(.description):not(.last-updated) { margin-bottom: 20px; }
+    .game-item, .project-item { padding: 15px; margin-bottom: 15px; }
+    .game-item h3, .project-item h3 { font-size: 1.2em; }
+    .game-link-button, .project-link-button { padding: 6px 10px; font-size: 0.8em; margin-top: 6px; }
 
-     /* AI page adjustments */
+    /* AI page adjustments */
     .ai-container {
-         padding: 15px;
-         min-height: 350px;
-         gap: 15px; /* Space between areas */
+        padding: 15px;
+        min-height: 350px;
+        gap: 15px; /* Space between areas */
     }
     #ai-response {
-         padding: 8px;
-         min-height: 80px;
+        padding: 8px;
+        min-height: 80px;
     }
-     #user-prompt {
+    #user-prompt {
         padding: 8px;
         margin-bottom: 8px;
-      }
-       .input-controls {
-           flex-direction: column; /* Stack buttons vertically */
-           gap: 8px; /* Space between stacked buttons */
-           align-items: stretch; /* Make buttons fill width */
-       }
-        /* AI Buttons inherit .nav-button, adjust padding/font size for smaller screens if needed */
-        .nav-button { /* Applies to all .nav-button */
-            padding: 6px 10px;
-            font-size: 0.8em;
-            width: 100%; /* Make buttons fill the container width */
-            text-align: center; /* Center text in buttons */
-        }
+    }
+    .input-controls {
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 8px; /* Space between stacked buttons */
+        align-items: stretch; /* Make buttons fill width */
+    }
+    .nav-button { /* Applies to all .nav-button */
+        padding: 6px 10px;
+        font-size: 0.8em;
+        width: 100%; /* Make buttons fill the container width */
+        text-align: center; /* Center text in buttons */
+    }
 
 
-     /* Item Entry Animation adjustments */
-       .game-item, .project-item, .ai-container {
-         animation-delay: 0s; /* Maybe remove delay on small screens */
-         animation: fadeIn 0.6s ease-out forwards; /* Use simpler fadeIn if entry looks bad */
-       }
+    /* Item Entry Animation adjustments */
+    .game-item, .project-item, .ai-container, .chat-wrapper { /* Added .chat-wrapper here */
+        animation-delay: 0s; /* Maybe remove delay on small screens */
+        animation: fadeIn 0.6s ease-out forwards; /* Use simpler fadeIn if entry looks bad */
+    }
+
+    /* Chat specific adjustments for 480px breakpoint */
+    .chat-screen {
+        max-width: 95%;
+        padding: 15px;
+        gap: 8px;
+    }
+    #chat-room-screen {
+        min-height: 350px;
+    }
+    #messages {
+        max-height: 200px;
+    }
+    .chat-message {
+        font-size: 0.85em;
+    }
+    .chat-input-area {
+        flex-direction: column; /* Stack input and button on very small screens */
+    }
+    .chat-input-area button {
+        width: 100%;
+        max-width: unset;
+    }
 }
