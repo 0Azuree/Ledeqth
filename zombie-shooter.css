@@ -187,6 +187,7 @@
 /* Game Over / Start Screen / Round Countdown Overlays */
 .game-overlay {
     position: absolute;
+    /* Default full screen overlay styles, overridden by specific IDs */
     top: 0;
     left: 0;
     width: 100%;
@@ -219,13 +220,56 @@
     color: #aaffaa;
 }
 
-/* Start Screen specific */
+/* Start Screen specific - NOW TOP RIGHT */
+#start-screen {
+    position: absolute; /* Already absolute from .game-overlay */
+    top: 10px; /* Position from top */
+    right: 10px; /* Position from right */
+    width: 300px; /* Fixed width */
+    height: auto; /* Height adapts to content */
+    padding: 15px;
+    background-color: rgba(0, 0, 0, 0.95); /* Slightly darker for distinctness */
+    border: 2px solid #00aaff; /* A small border to make it pop */
+    box-shadow: 0 0 15px rgba(0, 170, 255, 0.7); /* Light blue glow */
+    justify-content: flex-start; /* Align content to the top */
+    align-items: center; /* Center horizontally */
+    font-size: 1em; /* Overall smaller font size for overlay */
+}
+
 #start-screen h3 {
     color: #00aaff;
+    font-size: 1.5em; /* Smaller title */
+    margin-bottom: 10px;
 }
 #start-screen p {
-    font-size: 1.2em;
+    font-size: 0.9em; /* Smaller general text */
+    margin-bottom: 10px;
+    line-height: 1.3;
 }
+#start-screen .nav-button {
+    margin-top: 10px;
+    font-size: 1em;
+    padding: 8px 15px;
+}
+
+#start-screen .game-controls.small-controls {
+    margin-top: 15px; /* Slightly more space */
+    padding: 8px;
+    background-color: #1a1a1a;
+    border: 1px solid #222;
+    text-align: left; /* Align text within controls to left */
+    width: 100%; /* Take full width of parent */
+}
+#start-screen .game-controls.small-controls h3 {
+    font-size: 1.1em; /* Smaller control title */
+    margin-bottom: 8px;
+    text-align: center; /* Keep control title centered */
+}
+#start-screen .game-controls.small-controls p {
+    font-size: 0.8em; /* Smallest control text */
+    margin: 3px 0;
+}
+
 
 /* Round Countdown specific */
 #roundCountdownOverlay {
@@ -427,6 +471,26 @@
     #roundCountdownOverlay p {
         font-size: 1.4em;
     }
+
+    #start-screen {
+        top: 10px;
+        right: 10px;
+        width: 250px; /* Smaller width on tablets */
+        padding: 10px;
+    }
+    #start-screen h3 {
+        font-size: 1.3em;
+    }
+    #start-screen p {
+        font-size: 0.8em;
+    }
+    #start-screen .game-controls.small-controls h3 {
+        font-size: 1em;
+    }
+    #start-screen .game-controls.small-controls p {
+        font-size: 0.75em;
+    }
+
     .dev-options .shop-button {
         min-width: 100px; /* Slightly smaller for mobile */
     }
@@ -473,5 +537,24 @@
     }
     .money-set-container input[type="number"] {
         max-width: unset;
+    }
+
+    #start-screen {
+        top: 5px; /* Even smaller top margin */
+        right: 5px; /* Even smaller right margin */
+        width: 200px; /* Even smaller width on phones */
+        padding: 8px;
+    }
+    #start-screen h3 {
+        font-size: 1.1em;
+    }
+    #start-screen p {
+        font-size: 0.7em;
+    }
+    #start-screen .game-controls.small-controls h3 {
+        font-size: 0.9em;
+    }
+    #start-screen .game-controls.small-controls p {
+        font-size: 0.65em;
     }
 }
