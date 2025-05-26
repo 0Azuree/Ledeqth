@@ -53,6 +53,21 @@
     color: #00aaff;
 }
 
+#playerAmmo {
+    color: #ffcc00; /* Yellow for ammo count */
+}
+#playerMaxAmmo {
+    color: #aaa;
+}
+
+#reloadText {
+    color: #ff6347; /* Tomato red for reloading text */
+    font-weight: bold;
+    font-size: 1.2em;
+    text-align: center;
+    margin-top: 10px;
+}
+
 .shop-panel h3 {
     color: #00ffaa;
     margin-top: 0;
@@ -112,9 +127,24 @@
     color: #aaffaa;
 }
 
+.game-controls.small-controls {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #1a1a1a;
+    border: 1px solid #222;
+}
+.game-controls.small-controls h3 {
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+.game-controls.small-controls p {
+    font-size: 0.85em;
+    margin: 5px 0;
+}
 
-/* Game Over Screen */
-.game-over-screen {
+
+/* Game Over / Start Screen Overlays */
+.game-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -132,21 +162,30 @@
     z-index: 10; /* Ensure it's above the canvas */
 }
 
-.game-over-screen h3 {
+.game-overlay h3 {
     color: #ff0000;
     font-size: 2.5em;
     margin-bottom: 20px;
 }
 
-.game-over-screen p {
+.game-overlay p {
     margin-bottom: 30px;
     font-size: 1.5em;
 }
 
-.game-over-screen span {
+.game-overlay span {
     font-weight: bold;
     color: #aaffaa;
 }
+
+/* Start Screen specific */
+#start-screen h3 {
+    color: #00aaff;
+}
+#start-screen p {
+    font-size: 1.2em;
+}
+
 
 /* Pause indicator */
 #pauseIndicator {
@@ -164,6 +203,25 @@
     z-index: 11;
 }
 
+/* Damage Overlay (Red Tint) */
+.damage-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 0, 0, 0); /* Start transparent */
+    pointer-events: none; /* Allow clicks to pass through */
+    transition: background-color 0.1s ease-out; /* For fade out effect */
+    z-index: 9; /* Below game over/start screen */
+    border-radius: 10px; /* Match wrapper */
+}
+
+.damage-overlay.active {
+    background-color: rgba(255, 0, 0, 0.3); /* Red tint on hit */
+}
+
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .game-wrapper {
@@ -177,17 +235,26 @@
         min-width: unset; /* Remove min-width to allow full flexibility */
         width: 100%; /* Take full width */
     }
+    .game-overlay h3 {
+        font-size: 2em;
+    }
+    .game-overlay p {
+        font-size: 1.2em;
+    }
 }
 
 @media (max-width: 480px) {
-    .game-over-screen h3 {
-        font-size: 2em;
+    .game-overlay h3 {
+        font-size: 1.8em;
     }
-    .game-over-screen p {
-        font-size: 1.2em;
+    .game-overlay p {
+        font-size: 1em;
     }
     #pauseIndicator {
         font-size: 1.5em;
         padding: 15px 30px;
+    }
+    .game-controls.small-controls {
+        font-size: 0.8em;
     }
 }
