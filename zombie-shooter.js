@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Game State Variables
     let gameRunning = false;
-    let paused = false;
+    let paused = false; // Player can move even when paused
     let player = {};
     let bullets = [];
     let zombies = [];
@@ -268,13 +268,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             // Handle auto-fire if mouse is down and not reloading, and has ammo
-            if (mouseDown && !isReloading && (this.equippedGun.ammo > 0 || infiniteAmmo)) {
+            // Only allow shooting if game is not paused AND not in round starting phase
+            if (mouseDown && !isReloading && (this.equippedGun.ammo > 0 || infiniteAmmo) && !paused && !isRoundStarting) {
                 const currentTime = Date.now();
                 if (currentTime - lastBulletTime > this.equippedGun.fireRate) {
                     this.shoot();
                     lastBulletTime = currentTime;
                 }
-            } else if (this.equippedGun.ammo <= 0 && !isReloading && !infiniteAmmo) {
+            } else if (this.equippedGun.ammo <= 0 && !isReloading && !infiniteAmmo && !paused && !isRoundStarting) {
                 this.reload(); // Automatic reload if out of ammo
             }
         };
@@ -487,19 +488,22 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.update = function() {
-            // Move towards player
-            if (player.x < this.x) {
-                this.x -= this.speed;
-            } else if (player.x > this.x) {
-                this.x += this.speed;
-            }
+            // Only move zombies if game is not paused AND not in round starting phase
+            if (!paused && !isRoundStarting) {
+                // Move towards player
+                if (player.x < this.x) {
+                    this.x -= this.speed;
+                } else if (player.x > this.x) {
+                    this.x += this.speed;
+                }
 
-            // Attack player if close enough
-            if (checkCollision(this, player) && this.currentAttackCooldown <= 0) {
-                player.takeDamage(this.damage);
-                this.currentAttackCooldown = this.attackCooldown;
-            } else {
-                this.currentAttackCooldown--;
+                // Attack player if close enough
+                if (checkCollision(this, player) && this.currentAttackCooldown <= 0) {
+                    player.takeDamage(this.damage);
+                    this.currentAttackCooldown = this.attackCooldown;
+                } else {
+                    this.currentAttackCooldown--;
+                }
             }
         };
 
@@ -514,7 +518,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game Logic Functions ---
 
-    // UPDATED checkCollision function for more reliable bullet-zombie hits
     function checkCollision(obj1, obj2) {
         if (obj1.radius && obj2.width) { // Bullet (circle) - Zombie (rectangle) collision
             // Find the closest point on the rectangle to the circle's center
@@ -630,16 +633,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function gameLoop() {
-        // Game logic (movement, shooting, zombie AI) is paused during round start countdown
-        if (!gameRunning || paused || isRoundStarting) return;
-
-        update();
-        draw();
-    }
-
-    function update() {
+        // Player update always runs if game is running
+        if (!gameRunning) return;
         player.update();
 
+        // Other game logic (zombies, bullets) only runs if not paused and not round starting
+        if (!paused && !isRoundStarting) {
+            update(); // This now only updates zombies and bullets
+        }
+        draw(); // Drawing always happens
+    }
+
+    // This update function now only contains logic that should pause
+    function update() {
         for (let i = bullets.length - 1; i >= 0; i--) {
             bullets[i].update();
             // Remove bullets that go off-screen
@@ -662,11 +668,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         zombies.splice(i, 1); // Remove the zombie
                         roundData.zombieCount--; // Decrement overall zombie count for the round
                         updateUI();
-                        // Important: If a zombie dies, the outer loop's index 'i' might become invalid
-                        // because we just removed an element. We need to break from the inner loop
-                        // and let the outer loop re-evaluate its index in the next iteration.
-                        // Or, handle the splicing carefully if not breaking.
-                        // For simplicity and correctness with splice, breaking here is fine.
                         break; // Exit inner bullet loop, go to next zombie
                     }
                 }
@@ -713,12 +714,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startNextRoundCountdown() {
         isRoundStarting = true;
-        // roundCountdownOverlay.style.display = 'flex'; // No longer showing overlay
-        // roundCountdownText.textContent = `Round Starting...`; // No longer showing text
-
         if (roundStartTimeout) clearTimeout(roundStartTimeout); // Clear any existing timeout
         roundStartTimeout = setTimeout(() => {
-            // roundCountdownOverlay.style.display = 'none'; // No longer showing overlay
             startNextRound(); // Start the actual round after 2 seconds
         }, 2000); // 2 seconds delay
     }
@@ -726,7 +723,6 @@ document.addEventListener('DOMContentLoaded', () => {
     function quickStartRound() {
         if (isRoundStarting) {
             if (roundStartTimeout) clearTimeout(roundStartTimeout);
-            // roundCountdownOverlay.style.display = 'none'; // No longer showing overlay
             startNextRound();
         }
     }
@@ -736,8 +732,6 @@ document.addEventListener('DOMContentLoaded', () => {
         roundData.current++;
         currentRoundSpan.textContent = roundData.current;
         player.health = infiniteHealth ? player.maxHealth : player.maxHealth; // Heal to full or stay infinite
-
-        // Ammo does NOT refill automatically (players must reload or buy ammo)
 
         let numNormalZombiesToSpawn = roundData.current * 2;
         if (roundData.current > 10) numNormalZombiesToSpawn += (roundData.current - 10) * 0.5;
@@ -892,16 +886,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function togglePause() {
         paused = !paused;
-        if (paused) {
-            clearInterval(gameLoopInterval);
-            if (isRoundStarting) clearTimeout(roundStartTimeout); // Pause countdown too
-        } else {
-            startGameLoop();
-            if (isRoundStarting) { // Resume countdown if it was active
-                startNextRoundCountdown(); // Re-initiate the timeout
+        // The gameLoop continues to run, but its internal 'update' call is conditional on !paused
+        // No need to clear/set gameLoopInterval here, it runs continuously.
+        // Only need to manage the roundStartTimeout if it's active.
+        if (isRoundStarting) {
+            if (paused) {
+                if (roundStartTimeout) clearTimeout(roundStartTimeout); // Pause countdown
+            } else {
+                startNextRoundCountdown(); // Resume countdown
             }
         }
-        draw();
+        draw(); // Redraw immediately to show/hide pause indicator
     }
 
 
@@ -917,7 +912,12 @@ document.addEventListener('DOMContentLoaded', () => {
             togglePause();
         }
         if (e.key.toLowerCase() === 'r') {
-            player.reload();
+            // Allow reload only if not paused and not round starting
+            if (!paused && !isRoundStarting) {
+                player.reload();
+            } else {
+                showShopMessage('Cannot reload while paused or round is starting!', 'grey');
+            }
         }
         if (e.key.toLowerCase() === 'tab') { // Tab for quick start
             e.preventDefault(); // Prevent browser tab behavior
@@ -944,6 +944,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     canvas.addEventListener('mousedown', (e) => {
+        // Allow shooting only if game is running, not paused, and not round starting
         if (!gameRunning || paused || isRoundStarting) return;
         mouseDown = true;
         if (!isReloading && (player.equippedGun.ammo > 0 || infiniteAmmo)) {
