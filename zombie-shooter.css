@@ -266,7 +266,7 @@
     text-align: center; /* Keep control title centered */
 }
 #start-screen .game-controls.small-controls p {
-    font-size: 0.8em; /* Smallest control text */
+    font-size: 0.8em;
     margin: 3px 0;
 }
 
