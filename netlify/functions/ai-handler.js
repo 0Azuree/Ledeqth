@@ -23,28 +23,27 @@ exports.handler = async function(event, context) {
       };
     }
 
-    let selectedApiKeys = [];
-    let modelToUse = model;
+    let apiKeysToTry = [];
+    const targetModel = "gemini-2.0-flash"; // Force all requests to use gemini-2.0-flash
 
     if (model === 'gemini-2.0-flash') {
-      // For AI-1 (gemini-2.0-flash), try both keys if available
-      selectedApiKeys.push(primaryApiKey);
+      // If AI-1 is selected, try primary then secondary key
+      apiKeysToTry.push(primaryApiKey);
       if (secondaryApiKey) {
-        selectedApiKeys.push(secondaryApiKey);
+        apiKeysToTry.push(secondaryApiKey);
       }
-    } else if (model === 'gemini-2.0-flash') {
-      // For AI-2 (gemini 2.0-flash), only use the primary key
-      selectedApiKeys.push(primaryApiKey);
+    } else if (model === 'gemini-1.5-pro') { // This value now means "AI-2"
+      // If AI-2 is selected, only use the primary key
+      apiKeysToTry.push(primaryApiKey);
     } else {
-      // Fallback if model is not specified or unrecognized, use primary key with default model
-      selectedApiKeys.push(primaryApiKey);
-      modelToUse = "gemini-2.0-flash"; // Default model
+      // Fallback: if model is not specified or unrecognized, use primary key
+      apiKeysToTry.push(primaryApiKey);
     }
 
-    if (selectedApiKeys.length === 0) {
+    if (apiKeysToTry.length === 0) {
         return {
             statusCode: 500,
-            body: JSON.stringify({ message: 'No valid API keys configured for the selected model.' })
+            body: JSON.stringify({ message: 'No valid API keys configured for the selected AI option.' })
         };
     }
 
@@ -52,10 +51,10 @@ exports.handler = async function(event, context) {
     let lastError = null;
 
     // Try each API key until a successful response is received
-    for (const apiKey of selectedApiKeys) {
+    for (const apiKey of apiKeysToTry) {
         try {
             const genAI = new GoogleGenerativeAI(apiKey);
-            const generativeModel = genAI.getGenerativeModel({ model: modelToUse });
+            const generativeModel = genAI.getGenerativeModel({ model: targetModel }); // Use targetModel here
 
             let parts = [];
             if (prompt) {
@@ -82,7 +81,7 @@ exports.handler = async function(event, context) {
             aiResponseText = response.text();
             break; // Exit loop on first successful response
         } catch (error) {
-            console.warn(`Attempt with API key failed. Trying next if available. Error: ${error.message}`);
+            console.warn(`Attempt with API key failed for model ${targetModel}. Trying next if available. Error: ${error.message}`);
             lastError = error; // Store the last error
         }
     }
