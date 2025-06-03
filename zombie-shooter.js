@@ -304,6 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const barrelTipY = playerCenterY + Math.sin(this.gunAngle) * 45;
 
             bullets.push(new Bullet(barrelTipX, barrelTipY, this.gunAngle, this.equippedGun.damage, this.equippedGun.bulletSpeed));
+            console.log(`Bullet fired! Damage: ${this.equippedGun.damage}, Speed: ${this.equippedGun.bulletSpeed}`); // DEBUG LOG
             if (!infiniteAmmo) {
                 this.equippedGun.ammo--;
                 // Also update the stored ammo in gunsOwned for the current gun
@@ -373,7 +374,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.equippedGun = { ...targetGunDefinition };
             // Load specific state for this gun
             this.equippedGun.ammo = ownedGunState.currentAmmo;
-            this.equippedGun.damage = targetGunDefinition.baseDamage + ownedState.damageUpgrades * 15; // 15 damage per upgrade level
+            this.equippedGun.damage = targetGunDefinition.baseDamage + ownedGunState.damageUpgrades * 15; // 15 damage per upgrade level
 
             // Clear any active reload timer for the old gun
             if (reloadTimer) {
@@ -506,8 +507,10 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.takeDamage = function(amount) {
+            console.log(`Zombie health before: ${this.health}, taking damage: ${amount}`); // DEBUG LOG
             this.health -= amount;
             if (this.health <= 0) {
+                console.log('Zombie died!'); // DEBUG LOG
                 return true; // Zombie is dead
             }
             return false; // Zombie is still alive
@@ -542,7 +545,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let distance = Math.sqrt((distX * distX) + (distY * distY));
 
             // If the distance is less than the circle's radius, there's a collision
-            return distance <= obj1.radius;
+            const collision = distance <= obj1.radius;
+            if (collision) {
+                console.log('Collision detected between bullet and zombie!'); // DEBUG LOG
+            }
+            return collision;
 
         } else { // Player-Zombie collision (AABB) - keep existing logic
             return obj1.x < obj2.x + obj2.width &&
