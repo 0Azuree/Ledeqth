@@ -13,8 +13,8 @@ exports.handler = async function(event, context) {
     const { prompt, imageData, model } = JSON.parse(event.body);
 
     // Retrieve API keys from environment variables
-    const primaryApiKey = process.env.GEMINI_API_KEY;
-    const secondaryApiKey = process.env.GEMINI_API_KEY_2; // New secondary key
+    const primaryApiKey = process.env.GEMINI_API_KEY; // This name must match Netlify
+    const secondaryApiKey = process.env.GEMINI_API_KEY_2; // This name must match Netlify
 
     // Check if primary key is missing (this causes the first error you saw)
     if (!primaryApiKey) {
@@ -32,6 +32,9 @@ exports.handler = async function(event, context) {
       apiKeysToTry.push(primaryApiKey);
       if (secondaryApiKey) { // Only add secondary key if it exists
         apiKeysToTry.push(secondaryApiKey);
+      } else {
+        // This log will help debug if GEMINI_API_KEY_2 is missing but expected
+        console.warn('GEMINI_API_KEY_2 is not set, only using primary key for AI-1 fallback.');
       }
     } else if (model === 'gemini-1.5-pro') { // This value now means "AI-2"
       // If AI-2 is selected, only use the primary key
