@@ -1,135 +1,109 @@
-// ai.js
+// netlify/functions/ai-handler.js
+const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-document.addEventListener('DOMContentLoaded', () => {
-    const userPromptInput = document.getElementById('user-prompt');
-    const sendPromptButton = document.getElementById('send-prompt-button');
-    const aiResponseDiv = document.getElementById('ai-response');
-    const imageUploadInput = document.getElementById('image-upload');
-    const uploadImageButton = document.getElementById('upload-image-button');
-    const uploadedImagePreview = document.getElementById('uploaded-image-preview');
-    const imagePreviewArea = document.getElementById('image-preview-area');
-    const removeImageButton = document.getElementById('remove-image-button');
-    const aiModelSelect = document.getElementById('aiModelSelect'); // New: AI model dropdown
+exports.handler = async function(event, context) {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ message: 'Method Not Allowed' })
+    };
+  }
 
-    let uploadedImageBase64 = null;
-    // API Key (provided by user)
-    const apiKey = "AIzaSyDK1zFOQKQGm_htraELnA9lQRBxtLlgdcE";
+  try {
+    const { prompt, imageData, model } = JSON.parse(event.body);
 
-    // Default to the first option in the dropdown
-    let selectedAIModel = aiModelSelect.value;
+    // Retrieve API keys from environment variables
+    const primaryApiKey = process.env.GEMINI_API_KEY;
+    const secondaryApiKey = process.env.GEMINI_API_KEY_2; // New secondary key
 
-    // Event listener for AI model selection change
-    aiModelSelect.addEventListener('change', (event) => {
-        selectedAIModel = event.target.value;
-        console.log('Selected AI Model:', selectedAIModel);
-        // You might want to clear the response or give a message here
-        aiResponseDiv.innerHTML = '<p>AI model changed. Enter a new prompt!</p>';
-        aiResponseDiv.classList.remove('loading');
-    });
+    if (!primaryApiKey) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: 'Server configuration error: Primary Gemini API key not found.' })
+      };
+    }
 
+    let apiKeysToTry = [];
+    const targetModel = "gemini-2.0-flash"; // Force all requests to use gemini-2.0-flash
 
-    sendPromptButton.addEventListener('click', sendPrompt);
-    userPromptInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for new line
-            e.preventDefault();
-            sendPrompt();
-        }
-    });
+    if (model === 'gemini-2.0-flash') {
+      // If AI-1 is selected, try primary then secondary key
+      apiKeysToTry.push(primaryApiKey);
+      if (secondaryApiKey) {
+        apiKeysToTry.push(secondaryApiKey);
+      }
+    } else if (model === 'gemini-1.5-pro') { // This value now means "AI-2"
+      // If AI-2 is selected, only use the primary key
+      apiKeysToTry.push(primaryApiKey);
+    } else {
+      // Fallback: if model is not specified or unrecognized, use primary key
+      apiKeysToTry.push(primaryApiKey);
+    }
 
-    uploadImageButton.addEventListener('click', () => {
-        imageUploadInput.click(); // Trigger the hidden file input
-    });
+    if (apiKeysToTry.length === 0) {
+        return {
+            statusCode: 500,
+            body: JSON.stringify({ message: 'No valid API keys configured for the selected AI option.' })
+        };
+    }
 
-    imageUploadInput.addEventListener('change', (event) => {
-        const file = event.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                uploadedImageBase64 = e.target.result.split(',')[1]; // Get base64 part
-                uploadedImagePreview.src = e.target.result;
-                uploadedImagePreview.style.display = 'block';
-                imagePreviewArea.style.display = 'flex'; // Show the preview area
-                removeImageButton.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
-        }
-    });
+    let aiResponseText = null;
+    let lastError = null;
 
-    removeImageButton.addEventListener('click', () => {
-        uploadedImageBase64 = null;
-        uploadedImagePreview.src = '#';
-        uploadedImagePreview.style.display = 'none';
-        imagePreviewArea.style.display = 'none'; // Hide the preview area
-        removeImageButton.style.display = 'none';
-        imageUploadInput.value = ''; // Clear the file input value
-    });
-
-    async function sendPrompt() {
-        const prompt = userPromptInput.value.trim();
-        if (!prompt && !uploadedImageBase64) {
-            aiResponseDiv.innerHTML = '<p style="color: red;">Please enter a prompt or upload an image.</p>';
-            return;
-        }
-
-        aiResponseDiv.innerHTML = '<p>Generating response...</p>';
-        aiResponseDiv.classList.add('loading');
-        sendPromptButton.disabled = true;
-        userPromptInput.disabled = true;
-        uploadImageButton.disabled = true;
-        removeImageButton.disabled = true;
-        aiModelSelect.disabled = true; // Disable dropdown during generation
-
+    // Try each API key until a successful response is received
+    for (const apiKey of apiKeysToTry) {
         try {
-            let chatHistory = [];
-            let parts = [{ text: prompt }];
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const generativeModel = genAI.getGenerativeModel({ model: targetModel }); // Use targetModel here
 
-            if (uploadedImageBase64) {
+            let parts = [];
+            if (prompt) {
+                parts.push({ text: prompt });
+            }
+            if (imageData && imageData.data && imageData.mimeType) {
                 parts.push({
                     inlineData: {
-                        mimeType: "image/png", // Assuming PNG, adjust if needed
-                        data: uploadedImageBase64
+                        mimeType: imageData.mimeType,
+                        data: imageData.data
                     }
                 });
             }
-            chatHistory.push({ role: "user", parts: parts });
 
-            const payload = { contents: chatHistory };
-
-            // Determine the model to use based on selection
-            const modelToUse = selectedAIModel;
-
-            // Construct the API URL
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${apiKey}`;
-
-            const response = await fetch(apiUrl, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-
-            const result = await response.json();
-
-            if (result.candidates && result.candidates.length > 0 &&
-                result.candidates[0].content && result.candidates[0].content.parts &&
-                result.candidates[0].content.parts.length > 0) {
-                const text = result.candidates[0].content.parts[0].text;
-                aiResponseDiv.innerHTML = `<p>${text}</p>`;
-            } else {
-                aiResponseDiv.innerHTML = '<p style="color: red;">No response or unexpected format from AI. Please try again.</p>';
-                console.error("AI response structure unexpected:", result);
+            if (parts.length === 0) {
+                return {
+                    statusCode: 400,
+                    body: JSON.stringify({ message: 'No prompt or image data provided.' })
+                };
             }
+
+            const result = await generativeModel.generateContent({ contents: [{ role: "user", parts: parts }] });
+            const response = await result.response;
+            aiResponseText = response.text();
+            break; // Exit loop on first successful response
         } catch (error) {
-            aiResponseDiv.innerHTML = `<p style="color: red;">Error: ${error.message}. Please try again.</p>`;
-            console.error("Error calling Gemini API:", error);
-        } finally {
-            aiResponseDiv.classList.remove('loading');
-            sendPromptButton.disabled = false;
-            userPromptInput.disabled = false;
-            uploadImageButton.disabled = false;
-            removeImageButton.disabled = false;
-            aiModelSelect.disabled = false; // Re-enable dropdown
-            userPromptInput.value = ''; // Clear prompt input
-            removeImageButton.click(); // Clear image preview
+            console.warn(`Attempt with API key failed for model ${targetModel}. Trying next if available. Error: ${error.message}`);
+            lastError = error; // Store the last error
         }
     }
-});
+
+    if (aiResponseText !== null) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ text: aiResponseText })
+      };
+    } else {
+      // If all API key attempts failed
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: `Failed to get AI response after trying all available keys. Last error: ${lastError ? lastError.message : 'Unknown error'}` })
+      };
+    }
+
+  } catch (error) {
+    console.error("Error in Netlify AI function (outer catch):", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: `Failed to process request: ${error.message}` })
+    };
+  }
+};
