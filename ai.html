@@ -1,113 +1,67 @@
-// netlify/functions/ai-handler.js
-const { GoogleGenerativeAI } = require("@google/generative-ai");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledeqth - AI</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+</head>
+<body>
+    <div id="snow-container"></div>
 
-exports.handler = async function(event, context) {
-  if (event.httpMethod !== 'POST') {
-    return {
-      statusCode: 405,
-      body: JSON.stringify({ message: 'Method Not Allowed' })
-    };
-  }
+    <main>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="nav-button">Home</a></li>
+                <li><a href="projects.html" class="nav-button">Projects</a></li>
+                <li><a href="games.html" class="nav-button">Games</a></li>
+                <li><a href="ai.html" class="nav-button">AI</a></li>
+                <li><a href="chat.html" class="nav-button">Chat</a></li>
+                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
+            </ul>
+        </nav>
 
-  try {
-    const { prompt, imageData, model } = JSON.parse(event.body);
+        <h2>Ledeqth AI</h2>
+        <p>Interact with our AI models. You can ask questions, generate text, or analyze images.</p>
 
-    // Retrieve API keys from environment variables
-    const primaryApiKey = process.env.GEMINI_API_KEY; // This name must match Netlify
-    const secondaryApiKey = process.env.GEMINI_API_KEY_2; // This name must match Netlify
+        <div class="ai-container">
+            <!-- AI Model Selection Dropdown -->
+            <div class="ai-model-selection">
+                <label for="aiModelSelect">Select AI Model:</label>
+                <select id="aiModelSelect" class="ai-select">
+                    <option value="gemini-2.0-flash">AI-1 (gemini-2.0-flash, with fallback key)</option>
+                    <option value="gemini-1.5-pro">AI-2 (gemini-2.0-flash, primary key only)</option>
+                </select>
+            </div>
 
-    // Check if primary key is missing (this causes the first error you saw)
-    if (!primaryApiKey) {
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ message: 'Server configuration error: Primary Gemini API key not found.' })
-      };
-    }
+            <div class="ai-interaction-area">
+                <div class="image-preview-area" id="image-preview-area">
+                    <img id="uploaded-image-preview" src="#" alt="Image Preview" style="display: none;">
+                    <button class="remove-image-button" id="remove-image-button" style="display: none;">&times;</button>
+                </div>
 
-    let apiKeysToTry = [];
-    const targetModel = "gemini-2.0-flash"; // Force all requests to use gemini-2.0-flash
+                <div id="ai-response">
+                    <p>Your AI response will appear here.</p>
+                </div>
 
-    if (model === 'gemini-2.0-flash') {
-      // If AI-1 is selected, try primary then secondary key
-      apiKeysToTry.push(primaryApiKey);
-      if (secondaryApiKey) { // Only add secondary key if it exists
-        apiKeysToTry.push(secondaryApiKey);
-      } else {
-        // This log will help debug if GEMINI_API_KEY_2 is missing but expected
-        console.warn('GEMINI_API_KEY_2 is not set, only using primary key for AI-1 fallback.');
-      }
-    } else if (model === 'gemini-1.5-pro') { // This value now means "AI-2"
-      // If AI-2 is selected, only use the primary key
-      apiKeysToTry.push(primaryApiKey);
-    } else {
-      // Fallback: if model is not specified or unrecognized, use primary key
-      apiKeysToTry.push(primaryApiKey);
-    }
+                <div class="prompt-input-area">
+                    <textarea id="user-prompt" placeholder="Type your prompt here..."></textarea>
+                    <div class="input-controls">
+                        <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                        <button class="nav-button" id="upload-image-button">Upload Image</button>
+                        <button class="nav-button" id="send-prompt-button">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-    if (apiKeysToTry.length === 0) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: 'No valid API keys configured for the selected AI option.' })
-        };
-    }
+    <footer>
+        <p>&copy; 2025 Ledeqth</p>
+    </footer>
 
-    let aiResponseText = null;
-    let lastError = null;
-
-    // Try each API key until a successful response is received
-    for (const apiKey of apiKeysToTry) {
-        try {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const generativeModel = genAI.getGenerativeModel({ model: targetModel }); // Use targetModel here
-
-            let parts = [];
-            if (prompt) {
-                parts.push({ text: prompt });
-            }
-            if (imageData && imageData.data && imageData.mimeType) {
-                parts.push({
-                    inlineData: {
-                        mimeType: imageData.mimeType,
-                        data: imageData.data
-                    }
-                });
-            }
-
-            if (parts.length === 0) {
-                return {
-                    statusCode: 400,
-                    body: JSON.stringify({ message: 'No prompt or image data provided.' })
-                };
-            }
-
-            const result = await generativeModel.generateContent({ contents: [{ role: "user", parts: parts }] });
-            const response = await result.response;
-            aiResponseText = response.text();
-            break; // Exit loop on first successful response
-        } catch (error) {
-            console.warn(`Attempt with API key failed for model ${targetModel}. Trying next if available. Error: ${error.message}`);
-            lastError = error; // Store the last error
-        }
-    }
-
-    if (aiResponseText !== null) {
-      return {
-        statusCode: 200,
-        body: JSON.stringify({ text: aiResponseText })
-      };
-    } else {
-      // If all API key attempts failed
-      return {
-        statusCode: 500,
-        body: JSON.stringify({ message: `Failed to get AI response after trying all available keys. Last error: ${lastError ? lastError.message : 'Unknown error'}` })
-      };
-    }
-
-  } catch (error) {
-    console.error("Error in Netlify AI function (outer catch):", error);
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ message: `Failed to process request: ${error.message}` })
-    };
-  }
-};
+    <script src="snow.js"></script>
+    <script src="ai.js"></script>
+</body>
+</html>
