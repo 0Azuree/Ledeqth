@@ -516,6 +516,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Game Logic Functions ---
 
+    // UPDATED checkCollision function for more reliable bullet-zombie hits
+    function checkCollision(obj1, obj2) {
+        if (obj1.radius && obj2.width) { // Bullet (circle) - Zombie (rectangle) collision
+            // Find the closest point on the rectangle to the circle's center
+            let testX = obj1.x;
+            let testY = obj1.y;
+
+            // Which edge is closest?
+            if (obj1.x < obj2.x) { // left edge
+                testX = obj2.x;
+            } else if (obj1.x > obj2.x + obj2.width) { // right edge
+                testX = obj2.x + obj2.width;
+            }
+
+            if (obj1.y < obj2.y) { // top edge
+                testY = obj2.y;
+            } else if (obj1.y > obj2.y + obj2.height) { // bottom edge
+                testY = obj2.y + obj2.height;
+            }
+
+            // Calculate the distance between the closest point and the circle's center
+            let distX = obj1.x - testX;
+            let distY = obj1.y - testY;
+            let distance = Math.sqrt((distX * distX) + (distY * distY));
+
+            // If the distance is less than the circle's radius, there's a collision
+            return distance <= obj1.radius;
+
+        } else { // Player-Zombie collision (AABB) - keep existing logic
+            return obj1.x < obj2.x + obj2.width &&
+                   obj1.x + obj1.width > obj2.x &&
+                   obj1.y < obj2.y + obj2.height &&
+                   obj1.y + obj1.height > obj2.y;
+        }
+    }
+
+
     function initGame() {
         player = new Player();
         bullets = [];
@@ -606,6 +643,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         for (let i = bullets.length - 1; i >= 0; i--) {
             bullets[i].update();
+            // Remove bullets that go off-screen
             if (bullets[i].x < -BULLET_RADIUS || bullets[i].x > canvas.width + BULLET_RADIUS ||
                 bullets[i].y < -BULLET_RADIUS || bullets[i].y > canvas.height + BULLET_RADIUS) {
                 bullets.splice(i, 1);
@@ -615,21 +653,28 @@ document.addEventListener('DOMContentLoaded', () => {
         for (let i = zombies.length - 1; i >= 0; i--) {
             zombies[i].update();
 
+            // Check for bullet collisions with current zombie
             for (let j = bullets.length - 1; j >= 0; j--) {
                 if (checkCollision(bullets[j], zombies[i])) {
                     const zombieDied = zombies[i].takeDamage(bullets[j].damage);
-                    bullets.splice(j, 1);
+                    bullets.splice(j, 1); // Remove the bullet
                     if (zombieDied) {
                         player.cash += getRandomCashPerKill();
-                        zombies.splice(i, 1);
-                        roundData.zombieCount--;
+                        zombies.splice(i, 1); // Remove the zombie
+                        roundData.zombieCount--; // Decrement overall zombie count for the round
                         updateUI();
-                        break;
+                        // Important: If a zombie dies, the outer loop's index 'i' might become invalid
+                        // because we just removed an element. We need to break from the inner loop
+                        // and let the outer loop re-evaluate its index in the next iteration.
+                        // Or, handle the splicing carefully if not breaking.
+                        // For simplicity and correctness with splice, breaking here is fine.
+                        break; // Exit inner bullet loop, go to next zombie
                     }
                 }
             }
         }
 
+        // Check if all zombies for the current round are defeated
         if (zombies.length === 0 && roundData.zombieCount === 0 && gameRunning && !isRoundStarting) {
             startNextRoundCountdown();
         }
@@ -666,27 +711,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function checkCollision(obj1, obj2) {
-        if (obj1.radius && obj2.width) { // Bullet-Zombie collision
-            const distX = Math.abs(obj1.x - obj2.x - obj2.width / 2);
-            const distY = Math.abs(obj1.y - obj2.y - obj2.height / 2);
-
-            if (distX > (obj2.width / 2 + obj1.radius)) { return false; }
-            if (distY > (obj2.height / 2 + obj1.radius)) { return false; }
-
-            if (distX <= (obj2.width / 2)) { return true; }
-            if (distY <= (obj2.height / 2)) { return true; }
-
-            const dx = distX - obj2.width / 2;
-            const dy = distY - obj2.height / 2;
-            return (dx * dx + dy * dy <= (obj1.radius * obj1.radius));
-        } else { // Player-Zombie collision (AABB)
-            return obj1.x < obj2.x + obj2.width &&
-                   obj1.x + obj1.width > obj2.x &&
-                   obj1.y < obj2.y + obj2.height &&
-                   obj1.y + obj1.height > obj2.y;
-        }
-    }
 
     function startNextRoundCountdown() {
         isRoundStarting = true;
