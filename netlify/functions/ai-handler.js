@@ -1,122 +1,110 @@
 // netlify/functions/ai-handler.js
-// This function handles incoming requests from the frontend AI page,
-// processes both text and optional image data, and interacts with the
-// Google Generative AI API.
-
-// Import the Google Generative AI library
-// Ensure this dependency is listed in your functions/package.json
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-// Netlify Functions handler function
-// event: Contains information about the request (headers, body, etc.)
-// context: Provides information about the execution environment
-exports.handler = async (event, context) => {
+exports.handler = async function(event, context) {
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      body: JSON.stringify({ message: 'Method Not Allowed' })
+    };
+  }
 
-    // Only allow POST requests, as the frontend sends data via POST
-    if (event.httpMethod !== 'POST') {
+  try {
+    const { prompt, imageData, model } = JSON.parse(event.body);
+
+    // Retrieve API keys from environment variables
+    const primaryApiKey = process.env.GEMINI_API_KEY;
+    const secondaryApiKey = process.env.GEMINI_API_KEY_2; // New secondary key
+
+    if (!primaryApiKey) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: 'Server configuration error: Primary Gemini API key not found.' })
+      };
+    }
+
+    let selectedApiKeys = [];
+    let modelToUse = model;
+
+    if (model === 'gemini-2.0-flash') {
+      // For AI-1 (gemini-2.0-flash), try both keys if available
+      selectedApiKeys.push(primaryApiKey);
+      if (secondaryApiKey) {
+        selectedApiKeys.push(secondaryApiKey);
+      }
+    } else if (model === 'gemini-1.5-pro') {
+      // For AI-2 (gemini-1.5-pro), only use the primary key
+      selectedApiKeys.push(primaryApiKey);
+    } else {
+      // Fallback if model is not specified or unrecognized, use primary key with default model
+      selectedApiKeys.push(primaryApiKey);
+      modelToUse = "gemini-2.0-flash"; // Default model
+    }
+
+    if (selectedApiKeys.length === 0) {
         return {
-            statusCode: 405, // Method Not Allowed
-            body: JSON.stringify({ message: "Method Not Allowed" })
+            statusCode: 500,
+            body: JSON.stringify({ message: 'No valid API keys configured for the selected model.' })
         };
     }
 
-    let body;
-    try {
-        // Parse the JSON body sent from the frontend
-        body = JSON.parse(event.body);
-    } catch (error) {
-        console.error("Error parsing request body:", error);
-        return {
-            statusCode: 400, // Bad Request
-            body: JSON.stringify({ message: "Invalid JSON body." })
-        };
-    }
+    let aiResponseText = null;
+    let lastError = null;
 
-    // Extract prompt text, base64 image data, and image MIME type from the body
-    const prompt = body.prompt || ""; // Prompt text (can be empty)
-    const imageData = body.image; // Base64 image data (optional)
-    const mimeType = body.mimeType; // Image MIME type (optional)
+    // Try each API key until a successful response is received
+    for (const apiKey of selectedApiKeys) {
+        try {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const generativeModel = genAI.getGenerativeModel({ model: modelToUse });
 
-    // Ensure at least text or image data is provided
-    if (!prompt && !imageData) {
-        console.warn("Received request with no prompt or image data.");
-        return {
-            statusCode: 400, // Bad Request
-            body: JSON.stringify({ message: "Please provide text or an image." })
-        };
-    }
+            let parts = [];
+            if (prompt) {
+                parts.push({ text: prompt });
+            }
+            if (imageData && imageData.data && imageData.mimeType) {
+                parts.push({
+                    inlineData: {
+                        mimeType: imageData.mimeType,
+                        data: imageData.data
+                    }
+                });
+            }
 
-    // Get the Google AI API key from Netlify Environment Variables
-    // This variable must be set in your Netlify site settings under Environment variables
-    const API_KEY = process.env.GOOGLE_API_KEY;
+            if (parts.length === 0) {
+                return {
+                    statusCode: 400,
+                    body: JSON.stringify({ message: 'No prompt or image data provided.' })
+                };
+            }
 
-    if (!API_KEY) {
-        console.error("GOOGLE_API_KEY environment variable not set in Netlify!");
-        return {
-            statusCode: 500, // Internal Server Error
-            body: JSON.stringify({ message: "Server configuration error: API key not available." })
-        };
-    }
-
-    try {
-        // Initialize the Google Generative AI client with the API key
-        const genAI = new GoogleGenerativeAI(API_KEY);
-
-        // Get the generative model instance
-        // Using 'gemini-2.0-flash' as requested
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-        // Construct the 'parts' array for the multimodal content
-        // The API expects an array of content parts (text, inlineData, etc.)
-        const parts = [];
-
-        // Add the text prompt part if it exists
-        if (prompt) {
-            parts.push({ text: prompt });
+            const result = await generativeModel.generateContent({ contents: [{ role: "user", parts: parts }] });
+            const response = await result.response;
+            aiResponseText = response.text();
+            break; // Exit loop on first successful response
+        } catch (error) {
+            console.warn(`Attempt with API key failed. Trying next if available. Error: ${error.message}`);
+            lastError = error; // Store the last error
         }
-
-        // Add the image data part if it exists
-        if (imageData && mimeType) {
-            // The inlineData format requires only the base64 string, not the "data:image/...;base64," prefix
-            const base64DataOnly = imageData.split(',')[1];
-            parts.push({
-                inlineData: {
-                    data: base64DataOnly, // The base64 string
-                    mimeType: mimeType // The image MIME type (e.g., "image/jpeg", "image/png")
-                }
-            });
-        }
-
-        // Make the API call with the constructed multimodal content
-        // The content is wrapped in a 'contents' array, which itself contains a 'parts' array
-        const result = await model.generateContent({ contents: [{ parts: parts }] });
-
-        // Get the response text from the API result
-        const response = await result.response;
-        const text = response.text();
-
-        console.log("Successfully received AI response.");
-
-        // Return the AI's response text to the frontend
-        return {
-            statusCode: 200, // OK
-            headers: {
-                "Content-Type": "application/json",
-                // Add CORS headers if needed (Netlify usually handles this, but explicit headers can help)
-                // "Access-Control-Allow-Origin": "*", // Allow requests from any origin
-                // "Access-Control-Allow-Headers": "Content-Type",
-                // "Access-Control-Allow-Methods": "POST, OPTIONS"
-            },
-            body: JSON.stringify({ response: text })
-        };
-
-    } catch (error) {
-        console.error("Error calling Google AI API:", error);
-        // Return an error response to the frontend
-        return {
-            statusCode: 500, // Internal Server Error
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message: "Error processing AI request.", error: error.message })
-        };
     }
+
+    if (aiResponseText !== null) {
+      return {
+        statusCode: 200,
+        body: JSON.stringify({ text: aiResponseText })
+      };
+    } else {
+      // If all API key attempts failed
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: `Failed to get AI response after trying all available keys. Last error: ${lastError ? lastError.message : 'Unknown error'}` })
+      };
+    }
+
+  } catch (error) {
+    console.error("Error in Netlify AI function (outer catch):", error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ message: `Failed to process request: ${error.message}` })
+    };
+  }
 };
