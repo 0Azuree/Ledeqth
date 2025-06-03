@@ -315,7 +315,47 @@ footer {
     gap: 20px; /* Space between sections */
 }
 
-/* History area styles removed */
+/* AI Model Selection Dropdown Styles */
+.ai-model-selection {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #eee;
+    font-size: 1.1em;
+}
+
+.ai-model-selection label {
+    font-weight: bold;
+}
+
+.ai-select {
+    padding: 8px 12px;
+    border: 1px solid #555;
+    border-radius: 5px;
+    background-color: #333;
+    color: #eee;
+    font-size: 1em;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    -webkit-appearance: none; /* Remove default dropdown arrow for custom styling */
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%23eee"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+}
+
+.ai-select:hover {
+    border-color: #00aaff;
+}
+
+.ai-select:focus {
+    border-color: #00aaff;
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
+}
 
 
 /* Main Interaction Area (Response + Input) */
