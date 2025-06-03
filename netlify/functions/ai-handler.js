@@ -32,8 +32,8 @@ exports.handler = async function(event, context) {
       if (secondaryApiKey) {
         selectedApiKeys.push(secondaryApiKey);
       }
-    } else if (model === 'gemini-1.5-pro') {
-      // For AI-2 (gemini-1.5-pro), only use the primary key
+    } else if (model === 'gemini-2.0-flash') {
+      // For AI-2 (gemini 2.0-flash), only use the primary key
       selectedApiKeys.push(primaryApiKey);
     } else {
       // Fallback if model is not specified or unrecognized, use primary key with default model
