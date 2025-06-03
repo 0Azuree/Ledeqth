@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Ledeqth - Chat</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="zombie-shooter.css">
+    <link rel="stylesheet" href="zombie-shooter.css"> <!-- Keep this if chat uses zombie-shooter styles -->
     <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
 </head>
 <body>
@@ -17,9 +17,9 @@
                 <li><a href="index.html" class="nav-button">Home</a></li>
                 <li><a href="projects.html" class="nav-button">Projects</a></li>
                 <li><a href="games.html" class="nav-button">Games</a></li>
-                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
+                <li><a href="chat.html" class="nav-button">Chat</a></li> <!-- CHAT HERE -->
                 <li><a href="ai.html" class="nav-button">AI</a></li>
-                <li><a href="chat.html" class="nav-button">Chat</a></li>
+                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
             </ul>
         </nav>
 
@@ -51,7 +51,8 @@
             <div id="chat-room-screen" class="chat-screen" style="display: none;">
                 <h3 id="roomTitle">Room: CODE</h3>
                 <div id="messages" class="chat-messages">
-                    </div>
+                    <!-- Messages will be appended here -->
+                </div>
                 <div class="chat-input-area">
                     <input type="text" id="messageInput" placeholder="Type your message...">
                     <button id="sendMessageButton" class="nav-button">Send</button>
@@ -66,6 +67,7 @@
         <p>&copy; 2025 Ledeqth</p>
     </footer>
 
+    <!-- Pusher Client Library -->
     <script src="https://js.pusher.com/8.0/pusher.min.js"></script>
     <script src="snow.js"></script>
     <script src="chat.js"></script>
