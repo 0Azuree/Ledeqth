@@ -1,208 +1,135 @@
-// ai.js - Updated without History, with Image Input Logic
+// ai.js
 
-document.addEventListener('DOMContentLoaded', function() {
-    const promptTextarea = document.getElementById('user-prompt');
-    const sendButton = document.getElementById('send-prompt-button');
-    const responseDiv = document.getElementById('ai-response');
-
-    // Removed history elements
-    // const historyListDiv = document.getElementById('history-list');
-    // const clearHistoryButton = document.getElementById('clear-history-button');
-
-    const imageUploadInput = document.getElementById('image-upload-input');
+document.addEventListener('DOMContentLoaded', () => {
+    const userPromptInput = document.getElementById('user-prompt');
+    const sendPromptButton = document.getElementById('send-prompt-button');
+    const aiResponseDiv = document.getElementById('ai-response');
+    const imageUploadInput = document.getElementById('image-upload');
     const uploadImageButton = document.getElementById('upload-image-button');
-    const imagePreviewArea = document.getElementById('image-preview-area');
     const uploadedImagePreview = document.getElementById('uploaded-image-preview');
+    const imagePreviewArea = document.getElementById('image-preview-area');
     const removeImageButton = document.getElementById('remove-image-button');
+    const aiModelSelect = document.getElementById('aiModelSelect'); // New: AI model dropdown
 
+    let uploadedImageBase64 = null;
+    // API Key (provided by user)
+    const apiKey = "AIzaSyDK1zFOQKQGm_htraELnA9lQRBxtLlgdcE";
 
-    // Removed history storage key
-    // const HISTORY_STORAGE_KEY = 'aiHistory';
+    // Default to the first option in the dropdown
+    let selectedAIModel = aiModelSelect.value;
 
-    let currentImageFile = null; // To store the selected image file object
-
-    // --- Removed History Functions ---
-    // loadHistory, saveHistory, displayHistory, addHistoryItem, clearHistory
-    // Removed clearHistoryButton event listener
-
-
-    // --- Image Input Functions ---
-
-    // Trigger file input click when upload button is clicked
-    uploadImageButton.addEventListener('click', () => {
-        imageUploadInput.click();
+    // Event listener for AI model selection change
+    aiModelSelect.addEventListener('change', (event) => {
+        selectedAIModel = event.target.value;
+        console.log('Selected AI Model:', selectedAIModel);
+        // You might want to clear the response or give a message here
+        aiResponseDiv.innerHTML = '<p>AI model changed. Enter a new prompt!</p>';
+        aiResponseDiv.classList.remove('loading');
     });
 
-    // Handle file selection from the input
+
+    sendPromptButton.addEventListener('click', sendPrompt);
+    userPromptInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { // Allow Shift+Enter for new line
+            e.preventDefault();
+            sendPrompt();
+        }
+    });
+
+    uploadImageButton.addEventListener('click', () => {
+        imageUploadInput.click(); // Trigger the hidden file input
+    });
+
     imageUploadInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
-        if (file && file.type.startsWith('image/')) {
-            currentImageFile = file; // Store the file object
-            displayImagePreview(file);
-        } else {
-            currentImageFile = null;
-            clearImagePreview();
-            if (file) {
-                 alert("Please select a valid image file.");
-            }
-        }
-         // Clear the input value so selecting the same file again triggers change
-         imageUploadInput.value = '';
-    });
-
-    // Handle image paste event
-    document.addEventListener('paste', (event) => {
-        const items = event.clipboardData.items;
-        for (let i = 0; i < items.length; i++) {
-            const item = items[i];
-            if (item.type.startsWith('image/')) {
-                event.preventDefault(); // Prevent default paste behavior (like pasting into textarea)
-                const file = item.getAsFile();
-                currentImageFile = file; // Store the file object
-                displayImagePreview(file);
-                break; // Process only the first image found
-            }
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                uploadedImageBase64 = e.target.result.split(',')[1]; // Get base64 part
+                uploadedImagePreview.src = e.target.result;
+                uploadedImagePreview.style.display = 'block';
+                imagePreviewArea.style.display = 'flex'; // Show the preview area
+                removeImageButton.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
         }
     });
 
+    removeImageButton.addEventListener('click', () => {
+        uploadedImageBase64 = null;
+        uploadedImagePreview.src = '#';
+        uploadedImagePreview.style.display = 'none';
+        imagePreviewArea.style.display = 'none'; // Hide the preview area
+        removeImageButton.style.display = 'none';
+        imageUploadInput.value = ''; // Clear the file input value
+    });
 
-    // Display the selected/pasted image preview
-    function displayImagePreview(file) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            uploadedImagePreview.src = e.target.result; // Set the image source to the data URL
-            uploadedImagePreview.style.display = 'block'; // Show the image
-            removeImageButton.style.display = 'block'; // Show the remove button
-             imagePreviewArea.style.display = 'flex'; // Show the preview container
-             responseDiv.style.marginTop = '15px'; // Add space between preview and response
-        };
-        reader.readAsDataURL(file); // Read the file as a data URL (base64)
-        // self.status_label.textContent = `Image selected: ${file.name}`; // Update status (if you had one)
-    }
-
-    // Clear the image preview
-    function clearImagePreview() {
-        currentImageFile = null;
-        uploadedImagePreview.src = '#'; // Reset image source
-        uploadedImagePreview.style.display = 'none'; // Hide the image
-        removeImageButton.style.display = 'none'; // Hide the remove button
-         imagePreviewArea.style.display = 'none'; // Hide the preview container
-         responseDiv.style.marginTop = '0'; // Remove the added space
-    }
-
-    // Handle remove image button click
-    removeImageButton.addEventListener('click', clearImagePreview);
-
-
-    // --- AI Interaction Function (Modified to include image) ---
-
-    sendButton.addEventListener('click', async function() {
-        const prompt = promptTextarea.value.trim();
-
-        // Check if either prompt text or an image is provided
-        if (prompt === '' && !currentImageFile) {
-            responseDiv.innerHTML = '<p style="color: #ff6666;">Please enter a prompt or upload/paste an image.</p>';
+    async function sendPrompt() {
+        const prompt = userPromptInput.value.trim();
+        if (!prompt && !uploadedImageBase64) {
+            aiResponseDiv.innerHTML = '<p style="color: red;">Please enter a prompt or upload an image.</p>';
             return;
         }
 
-        responseDiv.innerHTML = '<p>Loading...</p>';
-        responseDiv.classList.add('loading');
-        sendButton.disabled = true;
-         uploadImageButton.disabled = true; // Disable upload button during request
-         removeImageButton.disabled = true; // Disable remove button during request
+        aiResponseDiv.innerHTML = '<p>Generating response...</p>';
+        aiResponseDiv.classList.add('loading');
+        sendPromptButton.disabled = true;
+        userPromptInput.disabled = true;
+        uploadImageButton.disabled = true;
+        removeImageButton.disabled = true;
+        aiModelSelect.disabled = true; // Disable dropdown during generation
 
+        try {
+            let chatHistory = [];
+            let parts = [{ text: prompt }];
 
-        // Prepare the data to send to the backend
-        const requestBody = {
-            prompt: prompt // Always send the text prompt (can be empty)
-        };
+            if (uploadedImageBase64) {
+                parts.push({
+                    inlineData: {
+                        mimeType: "image/png", // Assuming PNG, adjust if needed
+                        data: uploadedImageBase64
+                    }
+                });
+            }
+            chatHistory.push({ role: "user", parts: parts });
 
-        if (currentImageFile) {
-            // Read the image file as a Data URL (Base64)
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                // Add image data to the request body
-                requestBody.image = e.target.result; // Base64 Data URL
-                requestBody.mimeType = currentImageFile.type; // Image MIME type
+            const payload = { contents: chatHistory };
 
-                // Now send the request with image data
-                await sendToBackend(requestBody);
-            };
-            reader.onerror = (error) => {
-                 console.error("Error reading image file:", error);
-                 responseDiv.innerHTML = '<p style="color: #ff6666;">Error reading image file.</p>';
-                 responseDiv.classList.remove('loading');
-                 sendButton.disabled = false;
-                 uploadImageButton.disabled = false;
-                 removeImageButton.disabled = false;
-            };
-            reader.readAsDataURL(currentImageFile); // Start reading the file
+            // Determine the model to use based on selection
+            const modelToUse = selectedAIModel;
 
-        } else {
-            // If no image, just send the text prompt
-            await sendToBackend(requestBody);
-        }
-    });
+            // Construct the API URL
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${modelToUse}:generateContent?key=${apiKey}`;
 
-    // Function to send the request to the backend
-    async function sendToBackend(requestBody) {
-         const functionEndpoint = '/.netlify/functions/ai-handler'; // Your Netlify Function endpoint
-
-         try {
-            const response = await fetch(functionEndpoint, {
+            const response = await fetch(apiUrl, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(requestBody) // Send the prepared body (text + optional image)
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
             });
 
-            if (!response.ok) {
-                const errorBody = await response.json().catch(() => ({ message: `Error: ${response.status} ${response.statusText}` }));
-                 throw new Error(errorBody.message || `HTTP error! status: ${response.status}`);
-            }
+            const result = await response.json();
 
-            const data = await response.json();
-
-            if (data && data.response) {
-                const aiResponseText = data.response;
-                responseDiv.innerHTML = `<p>${aiResponseText.replace(/\n/g, '<br>')}</p>`;
-
-                // Removed history add call
-                // addHistoryItem(requestBody.prompt, aiResponseText);
-
+            if (result.candidates && result.candidates.length > 0 &&
+                result.candidates[0].content && result.candidates[0].content.parts &&
+                result.candidates[0].content.parts.length > 0) {
+                const text = result.candidates[0].content.parts[0].text;
+                aiResponseDiv.innerHTML = `<p>${text}</p>`;
             } else {
-                responseDiv.innerHTML = '<p style="color: #ff6666;">Error: Invalid response format from backend.</p>';
+                aiResponseDiv.innerHTML = '<p style="color: red;">No response or unexpected format from AI. Please try again.</p>';
+                console.error("AI response structure unexpected:", result);
             }
-
         } catch (error) {
-            console.error('Error calling AI backend function:', error);
-            responseDiv.innerHTML = `<p style="color: #ff6666;">Error: Could not get AI response. Details: ${error.message}</p>`;
+            aiResponseDiv.innerHTML = `<p style="color: red;">Error: ${error.message}. Please try again.</p>`;
+            console.error("Error calling Gemini API:", error);
         } finally {
-            responseDiv.classList.remove('loading');
-            sendButton.disabled = false;
+            aiResponseDiv.classList.remove('loading');
+            sendPromptButton.disabled = false;
+            userPromptInput.disabled = false;
             uploadImageButton.disabled = false;
             removeImageButton.disabled = false;
-            // Clear the image preview after sending (optional, but often desired)
-            clearImagePreview();
-            promptTextarea.value = ''; // Clear prompt text area
+            aiModelSelect.disabled = false; // Re-enable dropdown
+            userPromptInput.value = ''; // Clear prompt input
+            removeImageButton.click(); // Clear image preview
         }
     }
-
-
-    // Allow sending prompt with Enter key (Shift+Enter for newline)
-    promptTextarea.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter' && !event.shiftKey) {
-            event.preventDefault();
-            sendButton.click();
-        }
-    });
-
-    // --- Initial Setup ---
-    // Removed history load and display on initial setup
-    // displayHistory(loadHistory()); // Load and display history when the page loads
-
-    // Removed event listener for the clear history button
-    // clearHistoryButton.addEventListener('click', clearHistory);
-
 });
