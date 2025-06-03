@@ -32,9 +32,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const finalRoundSpan = document.getElementById('finalRound');
     const restartGameButton = document.getElementById('restartGameButton');
     const damageOverlay = document.getElementById('damageOverlay');
-    const roundCountdownOverlay = document.getElementById('roundCountdownOverlay');
-    const roundCountdownText = document.getElementById('roundCountdownText');
-    const inventoryPanel = document.getElementById('inventoryPanel'); // New inventory panel
+    const roundCountdownOverlay = document.getElementById('roundCountdownOverlay'); // Still reference for hiding
+    const roundCountdownText = document.getElementById('roundCountdownText'); // Still reference for hiding
 
     const devConsoleInput = document.getElementById('devConsoleInput');
     const devOptions = document.getElementById('devOptions');
@@ -66,8 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const RELOAD_TIME = 800; // 0.8 seconds
 
     let isRoundStarting = false;
-    let roundCountdown = 0;
-    let countdownInterval;
+    let roundStartTimeout; // Use setTimeout for silent delay
 
     // Cheat Flags
     let infiniteAmmo = false;
@@ -304,7 +302,6 @@ document.addEventListener('DOMContentLoaded', () => {
             const barrelTipY = playerCenterY + Math.sin(this.gunAngle) * 45;
 
             bullets.push(new Bullet(barrelTipX, barrelTipY, this.gunAngle, this.equippedGun.damage, this.equippedGun.bulletSpeed));
-            console.log(`Bullet fired! Damage: ${this.equippedGun.damage}, Speed: ${this.equippedGun.bulletSpeed}`); // DEBUG LOG
             if (!infiniteAmmo) {
                 this.equippedGun.ammo--;
                 // Also update the stored ammo in gunsOwned for the current gun
@@ -507,10 +504,8 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.takeDamage = function(amount) {
-            console.log(`Zombie health before: ${this.health}, taking damage: ${amount}`); // DEBUG LOG
             this.health -= amount;
             if (this.health <= 0) {
-                console.log('Zombie died!'); // DEBUG LOG
                 return true; // Zombie is dead
             }
             return false; // Zombie is still alive
@@ -546,9 +541,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // If the distance is less than the circle's radius, there's a collision
             const collision = distance <= obj1.radius;
-            if (collision) {
-                console.log('Collision detected between bullet and zombie!'); // DEBUG LOG
-            }
             return collision;
 
         } else { // Player-Zombie collision (AABB) - keep existing logic
@@ -615,11 +607,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         gameOverScreen.style.display = 'none';
         startScreen.style.display = 'flex';
-        roundCountdownOverlay.style.display = 'none';
+        roundCountdownOverlay.style.display = 'none'; // Ensure hidden
         gameRunning = false;
         paused = false;
         isRoundStarting = false;
-        if (countdownInterval) clearInterval(countdownInterval);
+        if (roundStartTimeout) clearTimeout(roundStartTimeout); // Clear any pending timeout
         updateUI();
     }
 
@@ -721,27 +713,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function startNextRoundCountdown() {
         isRoundStarting = true;
-        roundCountdown = 10; // 10-second countdown
-        roundCountdownOverlay.style.display = 'flex';
-        roundCountdownText.textContent = `Round Starting in ${roundCountdown}...`;
+        // roundCountdownOverlay.style.display = 'flex'; // No longer showing overlay
+        // roundCountdownText.textContent = `Round Starting...`; // No longer showing text
 
-        if (countdownInterval) clearInterval(countdownInterval);
-        countdownInterval = setInterval(() => {
-            roundCountdown--;
-            if (roundCountdown > 0) {
-                roundCountdownText.textContent = `Round Starting in ${roundCountdown}...`;
-            } else {
-                clearInterval(countdownInterval);
-                roundCountdownOverlay.style.display = 'none';
-                startNextRound(); // Start the actual round
-            }
-        }, 1000);
+        if (roundStartTimeout) clearTimeout(roundStartTimeout); // Clear any existing timeout
+        roundStartTimeout = setTimeout(() => {
+            // roundCountdownOverlay.style.display = 'none'; // No longer showing overlay
+            startNextRound(); // Start the actual round after 2 seconds
+        }, 2000); // 2 seconds delay
     }
 
     function quickStartRound() {
         if (isRoundStarting) {
-            clearInterval(countdownInterval);
-            roundCountdownOverlay.style.display = 'none';
+            if (roundStartTimeout) clearTimeout(roundStartTimeout);
+            // roundCountdownOverlay.style.display = 'none'; // No longer showing overlay
             startNextRound();
         }
     }
@@ -896,7 +881,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function gameOver() {
         gameRunning = false;
         clearInterval(gameLoopInterval);
-        if (countdownInterval) clearInterval(countdownInterval); // Stop countdown if active
+        if (roundStartTimeout) clearTimeout(roundStartTimeout); // Stop countdown if active
         finalRoundSpan.textContent = roundData.current;
         gameOverScreen.style.display = 'flex';
         const existingPauseIndicator = document.getElementById('pauseIndicator');
@@ -909,20 +894,11 @@ document.addEventListener('DOMContentLoaded', () => {
         paused = !paused;
         if (paused) {
             clearInterval(gameLoopInterval);
-            if (isRoundStarting) clearInterval(countdownInterval); // Pause countdown too
+            if (isRoundStarting) clearTimeout(roundStartTimeout); // Pause countdown too
         } else {
             startGameLoop();
             if (isRoundStarting) { // Resume countdown if it was active
-                countdownInterval = setInterval(() => {
-                    roundCountdown--;
-                    if (roundCountdown > 0) {
-                        roundCountdownText.textContent = `Round Starting in ${roundCountdown}...`;
-                    } else {
-                        clearInterval(countdownInterval);
-                        roundCountdownOverlay.style.display = 'none';
-                        startNextRound();
-                    }
-                }, 1000);
+                startNextRoundCountdown(); // Re-initiate the timeout
             }
         }
         draw();
