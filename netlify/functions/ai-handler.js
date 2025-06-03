@@ -16,6 +16,7 @@ exports.handler = async function(event, context) {
     const primaryApiKey = process.env.GEMINI_API_KEY;
     const secondaryApiKey = process.env.GEMINI_API_KEY_2; // New secondary key
 
+    // Check if primary key is missing (this causes the first error you saw)
     if (!primaryApiKey) {
       return {
         statusCode: 500,
@@ -29,7 +30,7 @@ exports.handler = async function(event, context) {
     if (model === 'gemini-2.0-flash') {
       // If AI-1 is selected, try primary then secondary key
       apiKeysToTry.push(primaryApiKey);
-      if (secondaryApiKey) {
+      if (secondaryApiKey) { // Only add secondary key if it exists
         apiKeysToTry.push(secondaryApiKey);
       }
     } else if (model === 'gemini-1.5-pro') { // This value now means "AI-2"
