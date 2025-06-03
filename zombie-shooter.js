@@ -506,19 +506,11 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         this.takeDamage = function(amount) {
-            if (invincible) return;
-
             this.health -= amount;
-            this.lastHitTime = Date.now();
-            damageOverlay.classList.add('active');
-            setTimeout(() => {
-                damageOverlay.classList.remove('active');
-            }, 100);
-
             if (this.health <= 0) {
-                this.health = 0;
-                gameOver();
+                return true; // Zombie is dead
             }
+            return false; // Zombie is still alive
         };
     }
 
