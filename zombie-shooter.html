@@ -17,8 +17,9 @@
                 <li><a href="index.html" class="nav-button">Home</a></li>
                 <li><a href="projects.html" class="nav-button">Projects</a></li>
                 <li><a href="games.html" class="nav-button">Games</a></li>
-                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
                 <li><a href="ai.html" class="nav-button">AI</a></li>
+                <li><a href="chat.html" class="nav-button">Chat</a></li>
+                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li> <!-- MOVED TO LAST -->
             </ul>
         </nav>
 
@@ -28,8 +29,10 @@
         <div class="game-wrapper">
             <canvas id="gameCanvas" width="800" height="400"></canvas>
 
+            <!-- Damage Overlay -->
             <div id="damageOverlay" class="damage-overlay"></div>
 
+            <!-- Start Screen -->
             <div id="start-screen" class="game-overlay">
                 <h3>Welcome to Zombie Shooter!</h3>
                 <p>Prepare to face endless waves of the undead.</p>
@@ -47,11 +50,13 @@
                 </div>
             </div>
 
+            <!-- Round Start Countdown Overlay -->
             <div id="roundCountdownOverlay" class="game-overlay" style="display: none;">
                 <h3 id="roundCountdownText">Round Starting in 10...</h3>
                 <p>Press <strong>Tab</strong> to quick start!</p>
             </div>
 
+            <!-- Game Over Screen -->
             <div id="game-over-screen" class="game-overlay" style="display: none;">
                 <h3>Game Over!</h3>
                 <p>You survived <span id="finalRound">0</span> rounds.</p>
@@ -109,9 +114,12 @@
                 </div>
             </div>
 
+            <!-- Player Inventory -->
             <div id="inventoryPanel">
-                </div>
+                <!-- Guns will be dynamically added here -->
+            </div>
 
+            <!-- Dev Console -->
             <div class="dev-console">
                 <input type="text" id="devConsoleInput" placeholder="Enter dev code...">
                 <div id="devOptions" class="dev-options" style="display: none;">
