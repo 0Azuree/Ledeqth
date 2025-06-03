@@ -16,34 +16,45 @@
                 <li><a href="index.html" class="nav-button">Home</a></li>
                 <li><a href="projects.html" class="nav-button">Projects</a></li>
                 <li><a href="games.html" class="nav-button">Games</a></li>
-                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
                 <li><a href="ai.html" class="nav-button">AI</a></li>
-                 </ul>
+                <li><a href="chat.html" class="nav-button">Chat</a></li>
+                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
+            </ul>
         </nav>
 
-        <h2>AI Interaction</h2>
-        <p>Enter your prompt and/or upload an image below to interact with the AI.</p>
+        <h2>Ledeqth AI</h2>
+        <p>Interact with our AI models. You can ask questions, generate text, or analyze images.</p>
 
         <div class="ai-container">
+            <!-- AI Model Selection Dropdown -->
+            <div class="ai-model-selection">
+                <label for="aiModelSelect">Select AI Model:</label>
+                <select id="aiModelSelect" class="ai-select">
+                    <option value="gemini-2.0-flash">AI-1 (gemini-2.0-flash)</option>
+                    <option value="gemini-1.5-pro">AI-2 (gemini-1.5-pro)</option>
+                </select>
+            </div>
+
             <div class="ai-interaction-area">
-                 <div id="image-preview-area" class="image-preview-area">
-                     <img id="uploaded-image-preview" src="#" alt="Image Preview" style="display: none;">
-                     <button id="remove-image-button" class="remove-image-button" style="display: none;">&times;</button> </div>
+                <div class="image-preview-area" id="image-preview-area">
+                    <img id="uploaded-image-preview" src="#" alt="Image Preview" style="display: none;">
+                    <button class="remove-image-button" id="remove-image-button" style="display: none;">&times;</button>
+                </div>
 
                 <div id="ai-response">
-                    <p>Waiting for prompt...</p>
+                    <p>Your AI response will appear here.</p>
                 </div>
 
                 <div class="prompt-input-area">
-                    <textarea id="user-prompt" placeholder="Enter your prompt here..." rows="5"></textarea>
+                    <textarea id="user-prompt" placeholder="Type your prompt here..."></textarea>
                     <div class="input-controls">
-                         <input type="file" id="image-upload-input" accept="image/*" style="display: none;"> <button id="upload-image-button" class="nav-button">Upload Image</button>
-                         <button id="send-prompt-button" class="nav-button">Send to AI</button>
+                        <input type="file" id="image-upload" accept="image/*" style="display: none;">
+                        <button class="nav-button" id="upload-image-button">Upload Image</button>
+                        <button class="nav-button" id="send-prompt-button">Send</button>
                     </div>
                 </div>
             </div>
         </div>
-
     </main>
 
     <footer>
