@@ -41,15 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     imageUploadInput.addEventListener('change', (event) => {
         const file = event.target.files[0];
         if (file) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                uploadedImageBase64 = e.target.result.split(',')[1]; // Get base64 part
-                uploadedImagePreview.src = e.target.result;
-                uploadedImagePreview.style.display = 'block';
-                imagePreviewArea.style.display = 'flex'; // Show the preview area
-                removeImageButton.style.display = 'block';
-            };
-            reader.readAsDataURL(file);
+            processImageFile(file);
         }
     });
 
@@ -58,13 +50,59 @@ document.addEventListener('DOMContentLoaded', () => {
         uploadedImagePreview.src = '#';
         uploadedImagePreview.style.display = 'none';
         imagePreviewArea.style.display = 'none'; // Hide the preview area
-        removeImageButton.value = ''; // Clear the file input value
+        removeImageButton.style.display = 'none'; // Hide the button
+        imageUploadInput.value = ''; // Clear the file input value
     });
+
+    // NEW: Paste event listener for image pasting
+    userPromptInput.addEventListener('paste', (event) => {
+        const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+        let imageFound = false;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].type.indexOf('image') !== -1) {
+                const blob = items[i].getAsFile();
+                if (blob) {
+                    event.preventDefault(); // Prevent default paste behavior (e.g., pasting text)
+                    processImageFile(blob);
+                    imageFound = true;
+                    break;
+                }
+            }
+        }
+        if (imageFound) {
+            // Optionally, clear the text input if an image was pasted
+            // userPromptInput.value = '';
+        }
+    });
+
+    // Helper function to process image file (from upload or paste)
+    function processImageFile(file) {
+        if (file.size > 5 * 1024 * 1024) { // Limit to 5MB, adjust as needed
+            aiResponseDiv.innerHTML = '<p style="color: red;">Image size exceeds 5MB limit.</p>';
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            uploadedImageBase64 = e.target.result.split(',')[1]; // Get base64 part
+            uploadedImagePreview.src = e.target.result;
+            uploadedImagePreview.style.display = 'block';
+            imagePreviewArea.style.display = 'flex'; // Show the preview area
+            removeImageButton.style.display = 'block';
+            aiResponseDiv.innerHTML = '<p>Image uploaded/pasted. Enter your prompt.</p>';
+            aiResponseDiv.classList.remove('loading');
+        };
+        reader.onerror = () => {
+            aiResponseDiv.innerHTML = '<p style="color: red;">Failed to read image file.</p>';
+        };
+        reader.readAsDataURL(file);
+    }
+
 
     async function sendPrompt() {
         const prompt = userPromptInput.value.trim();
         if (!prompt && !uploadedImageBase64) {
-            aiResponseDiv.innerHTML = '<p style="color: red;">Please enter a prompt or upload an image.</p>';
+            aiResponseDiv.innerHTML = '<p style="color: red;">Please enter a prompt or upload/paste an image.</p>';
             return;
         }
 
@@ -84,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({
                     prompt: prompt,
                     imageData: uploadedImageBase64 ? {
-                        mimeType: "image/png", // Assuming PNG, adjust if needed
+                        mimeType: "image/png", // Assuming PNG for pasted, adjust if needed
                         data: uploadedImageBase64
                     } : null,
                     model: selectedAIModel // Pass the selected model to the function
