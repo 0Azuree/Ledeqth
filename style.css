@@ -605,11 +605,93 @@ footer {
 }
 
 /* Chat Room Specific Styles */
+#chat-room-container {
+    display: flex; /* Use flexbox for side-by-side layout */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 20px; /* Space between chat and info panels */
+    width: 100%;
+    max-width: 900px; /* Increased max-width to fit both panels */
+    justify-content: center; /* Center the panels */
+}
+
 #chat-room-screen {
-    max-width: 600px; /* Wider for chat content */
+    flex: 2; /* Chat screen takes more space */
+    min-width: 350px; /* Minimum width for chat screen */
+    max-width: 600px; /* Max width for chat screen */
     min-height: 450px;
     justify-content: space-between; /* Push input to bottom */
+    margin-bottom: 0; /* Remove bottom margin as container handles spacing */
 }
+
+/* NEW: Room Info Panel Styles */
+.room-info-panel {
+    flex: 1; /* Info panel takes remaining space */
+    min-width: 250px; /* Minimum width for info panel */
+    max-width: 300px; /* Max width for info panel */
+    text-align: left; /* Align text left within info panel */
+    margin-bottom: 0; /* Remove bottom margin */
+    align-items: flex-start; /* Align content to the start (left) */
+}
+
+.room-info-panel .info-section {
+    width: 100%;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #444;
+}
+.room-info-panel .info-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.room-info-panel h4 {
+    color: #00aaff; /* Blue for section titles */
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+#roomOwnerUsername {
+    font-weight: bold;
+    color: #ffcc00; /* Yellow for owner name */
+}
+
+#roomMembersList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px; /* Limit height for long lists */
+    overflow-y: auto; /* Scroll if list is long */
+    font-size: 0.95em;
+}
+
+#roomMembersList li {
+    margin-bottom: 3px;
+    color: #bbb;
+}
+
+#roomMembersList li.owner {
+    font-weight: bold;
+    color: #ffcc00; /* Highlight owner in list */
+}
+
+.command-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85em;
+    line-height: 1.5;
+    color: #aaffaa; /* Greenish for commands */
+}
+
+.command-list code {
+    background-color: #333;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
 
 #messages {
     width: 100%;
@@ -727,9 +809,25 @@ footer {
         padding: 20px;
         gap: 10px;
     }
+    #chat-room-container {
+        flex-direction: column; /* Stack chat and info panels vertically */
+        max-width: 600px; /* Revert to single-panel max-width */
+        gap: 15px; /* Space between stacked panels */
+    }
+    #chat-room-screen, .room-info-panel {
+        flex: none; /* Remove flex grow */
+        width: 100%; /* Take full width when stacked */
+        max-width: unset; /* Remove max-width when stacked */
+        margin-bottom: 0; /* Ensure no extra margin */
+    }
     #chat-room-screen {
-        max-width: 95%;
-        min-height: 400px;
+        min-height: 350px; /* Adjust height for stacked layout */
+    }
+    .room-info-panel {
+        padding: 20px;
+    }
+    #roomMembersList {
+        max-height: 100px; /* Adjust height for smaller screen */
     }
     #messages {
         max-height: 250px;
@@ -808,10 +906,10 @@ footer {
         gap: 8px;
     }
     #chat-room-screen {
-        min-height: 350px;
+        min-height: 300px; /* Adjust height for stacked layout */
     }
     #messages {
-        max-height: 200px;
+        max-height: 150px;
     }
     .chat-message {
         font-size: 0.85em;
