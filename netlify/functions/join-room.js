@@ -1,10 +1,14 @@
 // netlify/functions/join-room.js
-const { initializeApp } = require('firebase-admin/app');
-const { getFirestore, FieldValue } = require('firebase-admin/firestore'); // Import FieldValue
+const { initializeApp, getApps } = require('firebase-admin/app');
+const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { credential } = require('firebase-admin'); // Import credential
 
 // Initialize Firebase Admin SDK if not already initialized
-if (!initializeApp.length) {
-    initializeApp();
+if (!getApps().length) {
+    // Initialize from environment variable
+    initializeApp({
+        credential: credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_CONFIG_JSON))
+    });
 }
 
 const db = getFirestore();
