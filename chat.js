@@ -8,9 +8,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     const initialAuthToken = window.initialAuthToken;
     const appId = window.appId;
 
-    // Firebase Firestore imports (available globally via window.db, window.auth etc.)
-    const { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, arrayRemove } = firebase;
-    const { signInAnonymously, signInWithCustomToken, onAuthStateChanged } = firebase.auth;
+    // Firebase Firestore functions (now globally exposed from chat.html)
+    const doc = window.doc;
+    const getDoc = window.getDoc;
+    const setDoc = window.setDoc;
+    const updateDoc = window.updateDoc;
+    const onSnapshot = window.onSnapshot;
+    const collection = window.collection;
+    const query = window.query;
+    const where = window.where;
+    const arrayUnion = window.arrayUnion;
+    const arrayRemove = window.arrayRemove;
+
+    // Firebase Auth functions (now globally exposed from chat.html)
+    const signInAnonymously = window.signInAnonymously;
+    const signInWithCustomToken = window.signInWithCustomToken;
+    const onAuthStateChanged = window.onAuthStateChanged;
+
 
     // UI Elements
     const usernameScreen = document.getElementById('username-screen');
@@ -108,15 +122,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Username Handling ---
     setUsernameButton.addEventListener('click', () => {
+        console.log("Set Username button clicked!"); // DEBUG LOG
         const username = usernameInput.value.trim();
+        console.log("Entered username:", username); // DEBUG LOG
+
         if (username.length >= 3 && username.length <= 12) {
             currentUserData.username = username;
             localStorage.setItem('chatUsername', username);
             usernameError.style.display = 'none';
+            console.log("Username valid, showing room selection."); // DEBUG LOG
             showScreen('roomSelection');
         } else {
             usernameError.textContent = 'Username must be 3-12 characters long.';
             usernameError.style.display = 'block';
+            console.log("Username invalid:", usernameError.textContent); // DEBUG LOG
         }
     });
 
@@ -160,99 +179,82 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Firebase/Firestore Room Management ---
     async function createChatRoom() {
         const roomCode = generateRoomCode();
-        const roomDocRef = doc(db, `artifacts/${appId}/public/data/chatRooms`, roomCode);
-
+        // Use Netlify Function for room creation to ensure server-side Firestore interaction
         try {
-            const roomDoc = await getDoc(roomDocRef);
-            if (roomDoc.exists()) {
-                // If room exists, try creating another one (collision)
-                console.warn('Room code collision, trying again.');
-                return createChatRoom(); // Recursively try again
-            }
-
-            // Create new room document in Firestore
-            await setDoc(roomDocRef, {
-                ownerId: currentUserData.userId,
-                roomCode: roomCode,
-                createdAt: Date.now(),
-                members: [{ userId: currentUserData.userId, username: currentUserData.username }],
-                bannedUsers: [],
-                whitelistedUsers: [],
-                isLocked: false,
-                messages: [] // Store a few recent messages directly in the room doc
+            const response = await fetch('/.netlify/functions/create-room', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomCode: roomCode,
+                    username: currentUserData.username,
+                    userId: currentUserData.userId,
+                    appId: appId
+                })
             });
 
-            console.log(`Room ${roomCode} created by ${currentUserData.username}`);
-            await connectToPusher(roomCode);
-            currentRoomCode = roomCode;
-            currentRoomRef = roomDocRef;
-            setupRoomDataListener(roomDocRef); // Start listening for room data changes
-            showScreen('chatRoom');
-            roomTitle.textContent = `Room: ${roomCode}`;
-            addMessage('server', `You created room ${roomCode}. Share this code with others!`);
-
+            const result = await response.json();
+            if (response.ok) {
+                console.log(`Room ${roomCode} created by ${currentUserData.username}`);
+                await connectToPusher(roomCode);
+                currentRoomCode = roomCode;
+                currentRoomRef = doc(db, `artifacts/${appId}/public/data/chatRooms`, roomCode); // Get doc ref
+                setupRoomDataListener(currentRoomRef); // Start listening for room data changes
+                showScreen('chatRoom');
+                roomTitle.textContent = `Room: ${roomCode}`;
+                addMessage('server', `You created room ${roomCode}. Share this code with others!`);
+            } else {
+                alert(`Failed to create room: ${result.message}`); // Use custom modal later
+                console.error("Error creating room via Netlify Function:", result.message);
+                if (result.message === 'Room code already exists. Try again.') {
+                     return createChatRoom(); // Recursively try again for collision
+                }
+            }
         } catch (error) {
-            console.error("Error creating room:", error);
-            alert("Failed to create room. Please try again."); // Use custom modal later
+            console.error("Error creating room (network/function call):", error);
+            alert("Failed to create room due to a network error. Please try again."); // Use custom modal later
         }
     }
 
     async function joinChatRoom(roomCode) {
-        const roomDocRef = doc(db, `artifacts/${appId}/public/data/chatRooms`, roomCode);
-
+        // Use Netlify Function for room joining to ensure server-side Firestore interaction
         try {
-            const roomDoc = await getDoc(roomDocRef);
-            if (!roomDoc.exists()) {
-                roomJoinError.textContent = 'Room does not exist.';
+            const response = await fetch('/.netlify/functions/join-room', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomCode: roomCode,
+                    username: currentUserData.username,
+                    userId: currentUserData.userId,
+                    appId: appId
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                console.log(`Joined room ${roomCode}`);
+                await connectToPusher(roomCode);
+                currentRoomCode = roomCode;
+                currentRoomRef = doc(db, `artifacts/${appId}/public/data/chatRooms`, roomCode); // Get doc ref
+                setupRoomDataListener(currentRoomRef); // Start listening for room data changes
+                showScreen('chatRoom');
+                roomTitle.textContent = `Room: ${roomCode}`;
+                addMessage('server', `You joined room ${roomCode}.`);
+
+                // Load initial messages from roomData passed by function
+                messagesDiv.innerHTML = ''; // Clear previous messages
+                if (result.roomData && result.roomData.messages && result.roomData.messages.length > 0) {
+                    result.roomData.messages.forEach(msg => {
+                        addMessage(msg.sender, msg.text, msg.timestamp);
+                    });
+                }
+            } else {
+                roomJoinError.textContent = result.message || 'Failed to join room. Unknown error.';
                 roomJoinError.style.display = 'block';
-                return;
+                console.error("Error joining room via Netlify Function:", result.message);
             }
-
-            const roomData = roomDoc.data();
-            currentRoomData = roomData; // Update local room data
-
-            // Check if room is locked and if user is whitelisted
-            if (roomData.isLocked && !roomData.whitelistedUsers.includes(currentUserData.userId)) {
-                roomJoinError.textContent = 'This room is locked and you are not whitelisted.';
-                roomJoinError.style.display = 'block';
-                return;
-            }
-
-            // Check if user is banned
-            if (roomData.bannedUsers.includes(currentUserData.userId)) {
-                roomJoinError.textContent = 'You are banned from this room.';
-                roomJoinError.style.display = 'block';
-                return;
-            }
-
-            // Add current user to members array if not already present
-            const isMember = roomData.members.some(m => m.userId === currentUserData.userId);
-            if (!isMember) {
-                await updateDoc(roomDocRef, {
-                    members: arrayUnion({ userId: currentUserData.userId, username: currentUserData.username })
-                });
-            }
-
-            console.log(`Joined room ${roomCode}`);
-            await connectToPusher(roomCode);
-            currentRoomCode = roomCode;
-            currentRoomRef = roomDocRef;
-            setupRoomDataListener(roomDocRef); // Start listening for room data changes
-            showScreen('chatRoom');
-            roomTitle.textContent = `Room: ${roomCode}`;
-            addMessage('server', `You joined room ${roomCode}.`);
-
-            // Load initial messages
-            messagesDiv.innerHTML = ''; // Clear previous messages
-            if (roomData.messages && roomData.messages.length > 0) {
-                roomData.messages.forEach(msg => {
-                    addMessage(msg.sender, msg.text, msg.timestamp);
-                });
-            }
-
         } catch (error) {
-            console.error("Error joining room:", error);
-            roomJoinError.textContent = 'Failed to join room. Please try again.';
+            console.error("Error joining room (network/function call):", error);
+            roomJoinError.textContent = 'Failed to join room due to a network error. Please try again.';
             roomJoinError.style.display = 'block';
         }
     }
@@ -261,10 +263,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!currentRoomCode || !currentUserData.userId || !currentRoomRef) return;
 
         try {
-            // Remove current user from members array in Firestore
-            await updateDoc(currentRoomRef, {
-                members: arrayRemove({ userId: currentUserData.userId, username: currentUserData.username })
-            });
+            // No direct Firestore update for leaving from client-side now, as join-room handles addition.
+            // When a user leaves, the `onSnapshot` listener for the room will update member list for others.
+            // We just need to clean up client-side state.
 
             // Unsubscribe from Pusher channel
             if (channel) {
@@ -299,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             roomSnapshotUnsubscribe(); // Unsubscribe from any previous listener
         }
 
-        roomSnapshotUnsubscribe = onSnapshot(roomDocRef, (docSnapshot) => {
+        onSnapshot(roomDocRef, (docSnapshot) => { // Use direct onSnapshot
             if (docSnapshot.exists()) {
                 const data = docSnapshot.data();
                 currentRoomData = data; // Update local room data
@@ -325,17 +326,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             const ownerMember = currentRoomData.members.find(m => m.userId === currentRoomData.ownerId);
             if (ownerMember) {
                 roomOwnerUsername.textContent = ownerMember.username;
+            } else {
+                 // If owner is not in members list (e.g., they left but still own it)
+                 roomOwnerUsername.textContent = `${currentRoomData.ownerId} (User ID)`; // Fallback
             }
         }
 
-        currentRoomData.members.forEach(member => {
-            const li = document.createElement('li');
-            li.textContent = member.username;
-            if (member.userId === currentRoomData.ownerId) {
-                li.classList.add('owner');
-            }
-            roomMembersList.appendChild(li);
-        });
+        if (currentRoomData.members && currentRoomData.members.length > 0) {
+            currentRoomData.members.forEach(member => {
+                const li = document.createElement('li');
+                li.textContent = member.username;
+                if (member.userId === currentRoomData.ownerId) {
+                    li.classList.add('owner');
+                }
+                roomMembersList.appendChild(li);
+            });
+        } else {
+            roomMembersList.innerHTML = '<li>No members</li>';
+        }
+
 
         // Show owner commands if current user is the owner
         if (currentUserData.userId === currentRoomData.ownerId) {
@@ -347,7 +356,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     // --- Pusher Integration ---
     async function connectToPusher(roomCode) {
         // Fetch Pusher config from Netlify Function
-        const pusherConfigResponse = await fetch('/.netlify/functions/pusher-config');
+        const pusherConfigResponse = await fetch('/.netlify/functions/pusher-config'); // Assuming this exists
         const pusherConfig = await pusherConfigResponse.json();
 
         if (!pusherConfig.key || !pusherConfig.cluster) {
@@ -373,8 +382,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         channel.bind('pusher:subscription_succeeded', () => {
             console.log('Pusher subscription to channel succeeded.');
-            // This is where you might send a "user_joined" event to other members
-            // For now, Firestore listener handles member list updates.
         });
 
         channel.bind('client-message', (data) => {
@@ -391,10 +398,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 addMessage('server', 'You have been banned from the room.');
                 leaveChatRoom();
             } else if (data.action === 'kickall' && currentUserData.userId !== currentRoomData.ownerId) {
-                addMessage('server', 'The room owner has kicked everyone.');
+                addMessage('server', 'All members (except owner) have been kicked.');
                 leaveChatRoom();
             } else if (data.action === 'banall' && currentUserData.userId !== currentRoomData.ownerId) {
-                addMessage('server', 'The room owner has banned everyone.');
+                addMessage('server', 'All members (except owner) have been banned.');
                 leaveChatRoom();
             }
         });
