@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const appId = window.appId;
 
     // Firebase Firestore functions (now globally exposed from chat.html)
+    // No longer destructuring from 'firebase.firestore' or 'firebase.auth'
     const doc = window.doc;
     const getDoc = window.getDoc;
     const setDoc = window.setDoc;
