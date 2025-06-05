@@ -48,16 +48,49 @@
                 <button id="backToRoomSelection" class="nav-button small-button">Back</button>
             </div>
 
-            <div id="chat-room-screen" class="chat-screen" style="display: none;">
-                <h3 id="roomTitle">Room: CODE</h3>
-                <div id="messages" class="chat-messages">
-                    <!-- Messages will be appended here -->
+            <div id="chat-room-container" style="display: none;">
+                <div id="chat-room-screen" class="chat-screen">
+                    <h3 id="roomTitle">Room: CODE</h3>
+                    <div id="messages" class="chat-messages">
+                        <!-- Messages will be appended here -->
+                    </div>
+                    <div class="chat-input-area">
+                        <input type="text" id="messageInput" placeholder="Type your message...">
+                        <button id="sendMessageButton" class="nav-button">Send</button>
+                    </div>
+                    <button id="leaveRoomButton" class="nav-button small-button">Leave Room</button>
                 </div>
-                <div class="chat-input-area">
-                    <input type="text" id="messageInput" placeholder="Type your message...">
-                    <button id="sendMessageButton" class="nav-button">Send</button>
+
+                <!-- NEW: Room Info Panel -->
+                <div id="room-info-panel" class="chat-screen room-info-panel">
+                    <h3>Room Info</h3>
+                    <div class="info-section">
+                        <h4>Owner of the Room:</h4>
+                        <p id="roomOwnerUsername">Loading...</p>
+                    </div>
+                    <div class="info-section">
+                        <h4>Members:</h4>
+                        <ul id="roomMembersList">
+                            <li>Loading...</li>
+                        </ul>
+                    </div>
+                    <div class="info-section" id="owner-commands-section" style="display: none;">
+                        <h4>Owner Commands:</h4>
+                        <ul class="command-list">
+                            <li><code>!kick &lt;username&gt;</code></li>
+                            <li><code>!ban &lt;username&gt;</code></li>
+                            <li><code>!unban &lt;username&gt;</code></li>
+                            <li><code>!kickall</code></li>
+                            <li><code>!banall</code></li>
+                            <li><code>!lockroom</code></li>
+                            <li><code>!unlockroom</code></li>
+                            <li><code>!whitelist on</code></li>
+                            <li><code>!whitelist off</code></li>
+                            <li><code>!whitelist on add &lt;username&gt;</code></li>
+                            <li><code>!whitelist on remove &lt;username&gt;</code></li>
+                        </ul>
+                    </div>
                 </div>
-                <button id="leaveRoomButton" class="nav-button small-button">Leave Room</button>
             </div>
         </div>
 
@@ -67,6 +100,39 @@
         <p>&copy; 2025 Ledeqth</p>
     </footer>
 
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables for Firebase (will be used by chat.js)
+        window.firebaseApp = initializeApp(JSON.parse(__firebase_config));
+        window.db = getFirestore(window.firebaseApp);
+        window.auth = getAuth(window.firebaseApp);
+        window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+        window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+        // Sign in anonymously or with custom token
+        onAuthStateChanged(window.auth, async (user) => {
+            if (!user) {
+                try {
+                    if (window.initialAuthToken) {
+                        await signInWithCustomToken(window.auth, window.initialAuthToken);
+                        console.log("Signed in with custom token.");
+                    } else {
+                        await signInAnonymously(window.auth);
+                        console.log("Signed in anonymously.");
+                    }
+                } catch (error) {
+                    console.error("Firebase authentication error:", error);
+                    // Handle auth error, e.g., show a message to the user
+                }
+            } else {
+                console.log("Firebase user is already signed in:", user.uid);
+            }
+        });
+    </script>
     <!-- Pusher Client Library -->
     <script src="https://js.pusher.com/8.0/pusher.min.js"></script>
     <script src="snow.js"></script>
