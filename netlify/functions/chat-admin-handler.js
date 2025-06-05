@@ -1,11 +1,15 @@
 // netlify/functions/chat-admin-handler.js
-const { initializeApp } = require('firebase-admin/app');
+const { initializeApp, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
+const { credential } = require('firebase-admin'); // Import credential
 const Pusher = require('pusher');
 
 // Initialize Firebase Admin SDK if not already initialized
-if (!initializeApp.length) {
-    initializeApp();
+if (!getApps().length) {
+    // Initialize from environment variable
+    initializeApp({
+        credential: credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_CONFIG_JSON))
+    });
 }
 
 const db = getFirestore();
@@ -207,7 +211,7 @@ exports.handler = async function(event, context) {
                     adminMessage = 'Whitelist is now OFF. Room access determined by lock status.';
                     await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'whitelist_status', message: adminMessage });
                 } else {
-                    return { statusCode: 400, body: JSON.stringify({ message: 'Usage: !whitelist on/off/on add <username>/on remove <username>' }) };
+                    return { statusCode: 400, body: JSON.stringify({ message: 'Unknown whitelist action.' }) };
                 }
                 break;
 
