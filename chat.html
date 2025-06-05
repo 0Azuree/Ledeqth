@@ -113,15 +113,33 @@
         window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
+        // CRITICAL: Expose Firestore functions globally for chat.js
+        window.doc = doc;
+        window.getDoc = getDoc;
+        window.setDoc = setDoc;
+        window.updateDoc = updateDoc;
+        window.onSnapshot = onSnapshot;
+        window.collection = collection;
+        window.query = query;
+        window.where = where;
+        window.arrayUnion = arrayUnion;
+        window.arrayRemove = arrayRemove;
+
+        // CRITICAL: Expose Auth functions globally for chat.js
+        window.signInAnonymously = signInAnonymously;
+        window.signInWithCustomToken = signInWithCustomToken;
+        window.onAuthStateChanged = onAuthStateChanged;
+
+
         // Sign in anonymously or with custom token
-        onAuthStateChanged(window.auth, async (user) => {
+        window.onAuthStateChanged(window.auth, async (user) => {
             if (!user) {
                 try {
                     if (window.initialAuthToken) {
-                        await signInWithCustomToken(window.auth, window.initialAuthToken);
+                        await window.signInWithCustomToken(window.auth, window.initialAuthToken);
                         console.log("Signed in with custom token.");
                     } else {
-                        await signInAnonymously(window.auth);
+                        await window.signInAnonymously(window.auth);
                         console.log("Signed in anonymously.");
                     }
                 } catch (error) {
