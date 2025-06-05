@@ -102,25 +102,27 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
+        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Safely get Firebase config from environment, defaulting to an empty object if not defined
-        // This is the correct way to handle __firebase_config possibly not being injected immediately.
+        // This prevents "ReferenceError: __firebase_config is not defined" if the variable is not injected.
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
         console.log("Firebase Config:", firebaseConfig); // Debugging: check what config is loaded
 
-        // Initialize Firebase App
+        // Initialize Firebase App and services
         window.firebaseApp = initializeApp(firebaseConfig);
         window.db = getFirestore(window.firebaseApp);
         window.auth = getAuth(window.firebaseApp);
 
-        // Expose environment variables to global scope for chat.js
+        // Expose environment variables that are dynamically injected by Canvas to global scope for chat.js
         window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // CRITICAL: Expose Firestore functions globally for chat.js
+        // CRITICAL: Expose ALL required Firebase functions globally for chat.js
+        // This addresses "ReferenceError: firebase is not defined" because 'firebase' itself is not global.
         window.doc = doc;
         window.getDoc = getDoc;
         window.setDoc = setDoc;
@@ -132,12 +134,11 @@
         window.arrayUnion = arrayUnion;
         window.arrayRemove = arrayRemove;
 
-        // CRITICAL: Expose Auth functions globally for chat.js
         window.signInAnonymously = signInAnonymously;
         window.signInWithCustomToken = signInWithCustomToken;
         window.onAuthStateChanged = onAuthStateChanged;
 
-        // Sign in anonymously or with custom token when auth state changes (first time will be null, then user)
+        // Start Firebase authentication process
         window.onAuthStateChanged(window.auth, async (user) => {
             if (!user) {
                 console.log("onAuthStateChanged: No user, attempting sign-in...");
@@ -152,7 +153,7 @@
                 } catch (error) {
                     console.error("Firebase authentication error:", error);
                     // Handle auth error, e.g., show a message to the user
-                    alert("Authentication failed: " + error.message); // Temporary alert for debugging
+                    // Using console.error instead of alert to avoid blocking UI
                 }
             } else {
                 console.log("Firebase user is signed in:", user.uid);
