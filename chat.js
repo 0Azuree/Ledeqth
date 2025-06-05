@@ -1,5 +1,17 @@
 // chat.js
-document.addEventListener('DOMContentLoaded', () => {
+
+document.addEventListener('DOMContentLoaded', async () => {
+    // Firebase and Firestore global variables are now initialized in chat.html script tag
+    const firebaseApp = window.firebaseApp;
+    const db = window.db;
+    const auth = window.auth;
+    const initialAuthToken = window.initialAuthToken;
+    const appId = window.appId;
+
+    // Firebase Firestore imports (available globally via window.db, window.auth etc.)
+    const { doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, arrayRemove } = firebase;
+    const { signInAnonymously, signInWithCustomToken, onAuthStateChanged } = firebase.auth;
+
     // UI Elements
     const usernameScreen = document.getElementById('username-screen');
     const usernameInput = document.getElementById('usernameInput');
@@ -16,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const roomJoinError = document.getElementById('roomJoinError');
     const backToRoomSelectionButton = document.getElementById('backToRoomSelection');
 
+    const chatRoomContainer = document.getElementById('chat-room-container'); // New container for chat + info
     const chatRoomScreen = document.getElementById('chat-room-screen');
     const roomTitle = document.getElementById('roomTitle');
     const messagesDiv = document.getElementById('messages');
@@ -23,239 +36,462 @@ document.addEventListener('DOMContentLoaded', () => {
     const sendMessageButton = document.getElementById('sendMessageButton');
     const leaveRoomButton = document.getElementById('leaveRoomButton');
 
-    let username = '';
-    let currentRoomCode = '';
-    let pusher = null;
-    let channel = null; // The Pusher channel for the current room
+    // Room Info Panel Elements
+    const roomInfoPanel = document.getElementById('room-info-panel');
+    const roomOwnerUsername = document.getElementById('roomOwnerUsername');
+    const roomMembersList = document.getElementById('roomMembersList');
+    const ownerCommandsSection = document.getElementById('owner-commands-section'); // Section to show/hide owner commands
 
-    // --- Configuration (These are now directly set using your keys) ---
-    const PUSHER_APP_KEY = 'cc987e99c9392dc90a23'; // Your Pusher Key
-    const PUSHER_APP_CLUSTER = 'us2'; // Your Pusher Cluster
+    // Pusher setup
+    let pusher;
+    let channel;
+    let currentRoomCode = null;
+    let currentRoomRef = null; // Firestore document reference for the current room
+    let roomSnapshotUnsubscribe = null; // To unsubscribe from Firestore listener
 
-    // --- Screen Management Functions ---
-    function showScreen(screen) {
+    // User data
+    let currentUserData = {
+        userId: null,
+        username: null
+    };
+    let currentRoomData = { // Store current room's state
+        ownerId: null,
+        members: [],
+        bannedUsers: [],
+        whitelistedUsers: [],
+        isLocked: false
+    };
+
+    // --- Firebase Authentication Setup ---
+    // The Firebase app and auth are initialized in chat.html script tag.
+    // We wait for auth state to be ready before proceeding.
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUserData.userId = user.uid;
+            console.log("Firebase user ID:", currentUserData.userId);
+            // Check if username is already set in localStorage
+            const storedUsername = localStorage.getItem('chatUsername');
+            if (storedUsername) {
+                currentUserData.username = storedUsername;
+                showScreen('roomSelection');
+            } else {
+                showScreen('username');
+            }
+        } else {
+            // This case should ideally not happen if signInAnonymously/signInWithCustomToken works
+            console.error("User not authenticated after onAuthStateChanged.");
+            showScreen('username'); // Fallback to username screen
+        }
+    });
+
+
+    // --- Screen Management ---
+    function showScreen(screenName) {
         usernameScreen.style.display = 'none';
         roomSelectionScreen.style.display = 'none';
         joinRoomInputScreen.style.display = 'none';
-        chatRoomScreen.style.display = 'none';
-        screen.style.display = 'flex'; // Use flex for centering/layout
-    }
+        chatRoomContainer.style.display = 'none'; // Hide the container for chat + info
 
-    function showUsernameScreen() {
-        showScreen(usernameScreen);
-        usernameError.style.display = 'none';
-        usernameInput.value = '';
-        usernameInput.focus();
-    }
-
-    function showRoomSelectionScreen() {
-        if (!username) { // Prevent direct access without username
-            showUsernameScreen();
-            return;
+        if (screenName === 'username') {
+            usernameScreen.style.display = 'flex';
+            usernameInput.focus();
+        } else if (screenName === 'roomSelection') {
+            roomSelectionScreen.style.display = 'flex';
+        } else if (screenName === 'joinRoomInput') {
+            joinRoomInputScreen.style.display = 'flex';
+            roomCodeInput.focus();
+        } else if (screenName === 'chatRoom') {
+            chatRoomContainer.style.display = 'flex'; // Show the container
+            messageInput.focus();
         }
-        showScreen(roomSelectionScreen);
     }
 
-    function showJoinRoomInputScreen() {
-        showScreen(joinRoomInputScreen);
-        roomJoinError.style.display = 'none';
-        roomCodeInput.value = '';
-        roomCodeInput.focus();
-    }
-
-    function showChatRoomScreen(code) {
-        currentRoomCode = code;
-        roomTitle.textContent = `Room: ${code}`;
-        messagesDiv.innerHTML = ''; // Clear previous messages
-        showScreen(chatRoomScreen);
-        messageInput.focus();
-    }
-
-    // --- Message Display Function ---
-    function addMessageToChat(sender, message, timestamp) {
-        const messageElement = document.createElement('div');
-        messageElement.classList.add('chat-message');
-
-        if (sender === 'SERVER') {
-            messageElement.innerHTML = `<span class="server-message">${message}</span>`;
-        } else {
-            messageElement.innerHTML = `<span class="username">${sender}:</span> ${message} <span class="timestamp">${timestamp || new Date().toLocaleTimeString()}</span>`;
-        }
-        messagesDiv.appendChild(messageElement);
-        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll to bottom
-    }
-
-    // --- Room Code Generation ---
-    function generateRoomCode() {
-        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-        let result = '';
-        const charactersLength = characters.length;
-        for (let i = 0; i < 5; i++) {
-            result += characters.charAt(Math.floor(Math.random() * charactersLength));
-        }
-        return result;
-    }
-
-    // --- Pusher Connection and Channel Management ---
-    function connectToPusher() {
-        if (pusher) return; // Already connected
-
-        pusher = new Pusher(PUSHER_APP_KEY, {
-            cluster: PUSHER_APP_CLUSTER,
-            forceTLS: true // Ensure secure connection
-        });
-
-        pusher.connection.bind('connected', () => {
-            console.log('Connected to Pusher!');
-            // After connecting, proceed to username screen or room selection
-            if (username) {
-                showRoomSelectionScreen();
-            } else {
-                showUsernameScreen();
-            }
-        });
-
-        pusher.connection.bind('disconnected', () => {
-            console.warn('Disconnected from Pusher.');
-            // Handle disconnection, e.g., show a message or try to reconnect
-            alert('Disconnected from chat. Please refresh to reconnect.');
-            showUsernameScreen(); // Go back to start
-        });
-
-        pusher.connection.bind('error', (err) => {
-            console.error('Pusher connection error:', err);
-            alert('Pusher connection error. Check console for details.');
-            showUsernameScreen(); // Go back to start
-        });
-    }
-
-    function subscribeToRoom(roomCode) {
-        if (channel) {
-            pusher.unsubscribe(channel.name); // Unsubscribe from previous channel
-        }
-
-        channel = pusher.subscribe(`chat-${roomCode}`); // Prefix channels to avoid conflicts
-
-        channel.bind('pusher:subscription_succeeded', () => {
-            console.log(`Subscribed to channel: chat-${roomCode}`);
-            addMessageToChat('SERVER', `You joined room: ${roomCode}`);
-            showChatRoomScreen(roomCode);
-        });
-
-        channel.bind('pusher:subscription_error', (status) => {
-            console.error(`Subscription error for chat-${roomCode}:`, status);
-            roomJoinError.textContent = `Failed to join room. Status: ${status}`;
-            roomJoinError.style.display = 'block';
-            showRoomSelectionScreen(); // Go back if subscription fails
-        });
-
-        // Bind to our custom 'message' event on this channel
-        channel.bind('message', (data) => {
-            addMessageToChat(data.username, data.message, data.timestamp);
-        });
-    }
-
-    function leavePusherRoom() {
-        if (channel) {
-            pusher.unsubscribe(channel.name);
-            channel = null;
-            console.log(`Left channel: ${currentRoomCode}`);
-            addMessageToChat('SERVER', `You left room: ${currentRoomCode}`);
-            currentRoomCode = '';
-        }
-        showRoomSelectionScreen();
-    }
-
-
-    // --- Event Listeners ---
-
+    // --- Username Handling ---
     setUsernameButton.addEventListener('click', () => {
-        const inputName = usernameInput.value.trim();
-        if (inputName.length >= 3 && inputName.length <= 12) {
-            username = inputName;
-            connectToPusher(); // Connect to Pusher once username is set
+        const username = usernameInput.value.trim();
+        if (username.length >= 3 && username.length <= 12) {
+            currentUserData.username = username;
+            localStorage.setItem('chatUsername', username);
+            usernameError.style.display = 'none';
+            showScreen('roomSelection');
         } else {
             usernameError.textContent = 'Username must be 3-12 characters long.';
             usernameError.style.display = 'block';
         }
     });
 
-    usernameInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            setUsernameButton.click();
+    // --- Room Selection ---
+    createRoomButton.addEventListener('click', async () => {
+        if (!currentUserData.userId || !currentUserData.username) {
+            usernameError.textContent = 'Please set your username first.';
+            usernameError.style.display = 'block';
+            showScreen('username');
+            return;
         }
-    });
-
-    createRoomButton.addEventListener('click', () => {
-        const newRoomCode = generateRoomCode();
-        subscribeToRoom(newRoomCode);
+        await createChatRoom();
     });
 
     joinRoomButton.addEventListener('click', () => {
-        showJoinRoomInputScreen();
+        if (!currentUserData.userId || !currentUserData.username) {
+            usernameError.textContent = 'Please set your username first.';
+            usernameError.style.display = 'block';
+            showScreen('username');
+            return;
+        }
+        showScreen('joinRoomInput');
     });
 
     backToRoomSelectionButton.addEventListener('click', () => {
-        showRoomSelectionScreen();
+        roomCodeInput.value = '';
+        roomJoinError.style.display = 'none';
+        showScreen('roomSelection');
     });
 
-    submitJoinRoomButton.addEventListener('click', () => {
-        const code = roomCodeInput.value.trim().toUpperCase();
-        if (code.length === 5) {
-            subscribeToRoom(code);
+    submitJoinRoomButton.addEventListener('click', async () => {
+        const roomCode = roomCodeInput.value.trim().toUpperCase();
+        if (roomCode.length === 5) {
+            await joinChatRoom(roomCode);
         } else {
             roomJoinError.textContent = 'Room code must be 5 letters.';
             roomJoinError.style.display = 'block';
         }
     });
 
-    roomCodeInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            submitJoinRoomButton.click();
+    // --- Firebase/Firestore Room Management ---
+    async function createChatRoom() {
+        const roomCode = generateRoomCode();
+        const roomDocRef = doc(db, `artifacts/${appId}/public/data/chatRooms`, roomCode);
+
+        try {
+            const roomDoc = await getDoc(roomDocRef);
+            if (roomDoc.exists()) {
+                // If room exists, try creating another one (collision)
+                console.warn('Room code collision, trying again.');
+                return createChatRoom(); // Recursively try again
+            }
+
+            // Create new room document in Firestore
+            await setDoc(roomDocRef, {
+                ownerId: currentUserData.userId,
+                roomCode: roomCode,
+                createdAt: Date.now(),
+                members: [{ userId: currentUserData.userId, username: currentUserData.username }],
+                bannedUsers: [],
+                whitelistedUsers: [],
+                isLocked: false,
+                messages: [] // Store a few recent messages directly in the room doc
+            });
+
+            console.log(`Room ${roomCode} created by ${currentUserData.username}`);
+            await connectToPusher(roomCode);
+            currentRoomCode = roomCode;
+            currentRoomRef = roomDocRef;
+            setupRoomDataListener(roomDocRef); // Start listening for room data changes
+            showScreen('chatRoom');
+            roomTitle.textContent = `Room: ${roomCode}`;
+            addMessage('server', `You created room ${roomCode}. Share this code with others!`);
+
+        } catch (error) {
+            console.error("Error creating room:", error);
+            alert("Failed to create room. Please try again."); // Use custom modal later
         }
-    });
+    }
 
-    sendMessageButton.addEventListener('click', async () => {
-        const message = messageInput.value.trim();
-        if (message && currentRoomCode && username) {
-            // Send message via Netlify Function (HTTP POST)
-            try {
-                const response = await fetch('/.netlify/functions/chat-event', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        roomCode: currentRoomCode,
-                        username: username,
-                        message: message,
-                    }),
+    async function joinChatRoom(roomCode) {
+        const roomDocRef = doc(db, `artifacts/${appId}/public/data/chatRooms`, roomCode);
+
+        try {
+            const roomDoc = await getDoc(roomDocRef);
+            if (!roomDoc.exists()) {
+                roomJoinError.textContent = 'Room does not exist.';
+                roomJoinError.style.display = 'block';
+                return;
+            }
+
+            const roomData = roomDoc.data();
+            currentRoomData = roomData; // Update local room data
+
+            // Check if room is locked and if user is whitelisted
+            if (roomData.isLocked && !roomData.whitelistedUsers.includes(currentUserData.userId)) {
+                roomJoinError.textContent = 'This room is locked and you are not whitelisted.';
+                roomJoinError.style.display = 'block';
+                return;
+            }
+
+            // Check if user is banned
+            if (roomData.bannedUsers.includes(currentUserData.userId)) {
+                roomJoinError.textContent = 'You are banned from this room.';
+                roomJoinError.style.display = 'block';
+                return;
+            }
+
+            // Add current user to members array if not already present
+            const isMember = roomData.members.some(m => m.userId === currentUserData.userId);
+            if (!isMember) {
+                await updateDoc(roomDocRef, {
+                    members: arrayUnion({ userId: currentUserData.userId, username: currentUserData.username })
                 });
+            }
 
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    console.error('Failed to send message:', errorData.message);
-                    alert('Error sending message: ' + errorData.message); // Simple alert for user feedback
-                } else {
-                    messageInput.value = ''; // Clear input on success
-                }
-            } catch (error) {
-                console.error('Network error sending message:', error);
-                alert('Network error. Could not send message.');
+            console.log(`Joined room ${roomCode}`);
+            await connectToPusher(roomCode);
+            currentRoomCode = roomCode;
+            currentRoomRef = roomDocRef;
+            setupRoomDataListener(roomDocRef); // Start listening for room data changes
+            showScreen('chatRoom');
+            roomTitle.textContent = `Room: ${roomCode}`;
+            addMessage('server', `You joined room ${roomCode}.`);
+
+            // Load initial messages
+            messagesDiv.innerHTML = ''; // Clear previous messages
+            if (roomData.messages && roomData.messages.length > 0) {
+                roomData.messages.forEach(msg => {
+                    addMessage(msg.sender, msg.text, msg.timestamp);
+                });
+            }
+
+        } catch (error) {
+            console.error("Error joining room:", error);
+            roomJoinError.textContent = 'Failed to join room. Please try again.';
+            roomJoinError.style.display = 'block';
+        }
+    }
+
+    async function leaveChatRoom() {
+        if (!currentRoomCode || !currentUserData.userId || !currentRoomRef) return;
+
+        try {
+            // Remove current user from members array in Firestore
+            await updateDoc(currentRoomRef, {
+                members: arrayRemove({ userId: currentUserData.userId, username: currentUserData.username })
+            });
+
+            // Unsubscribe from Pusher channel
+            if (channel) {
+                pusher.unsubscribe(`private-${currentRoomCode}`);
+                channel = null;
+            }
+            // Unsubscribe from Firestore listener
+            if (roomSnapshotUnsubscribe) {
+                roomSnapshotUnsubscribe();
+                roomSnapshotUnsubscribe = null;
+            }
+
+            currentRoomCode = null;
+            currentRoomRef = null;
+            currentRoomData = { ownerId: null, members: [], bannedUsers: [], whitelistedUsers: [], isLocked: false }; // Reset local room data
+            messagesDiv.innerHTML = ''; // Clear messages
+            roomOwnerUsername.textContent = 'Loading...'; // Reset room info panel
+            roomMembersList.innerHTML = '<li>Loading...</li>';
+            ownerCommandsSection.style.display = 'none'; // Hide owner commands
+
+            showScreen('roomSelection');
+            console.log("Left room.");
+        } catch (error) {
+            console.error("Error leaving room:", error);
+            alert("Failed to leave room. Please try again.");
+        }
+    }
+
+    // --- Firestore Real-time Room Data Listener ---
+    function setupRoomDataListener(roomDocRef) {
+        if (roomSnapshotUnsubscribe) {
+            roomSnapshotUnsubscribe(); // Unsubscribe from any previous listener
+        }
+
+        roomSnapshotUnsubscribe = onSnapshot(roomDocRef, (docSnapshot) => {
+            if (docSnapshot.exists()) {
+                const data = docSnapshot.data();
+                currentRoomData = data; // Update local room data
+                updateRoomInfoPanel();
+            } else {
+                // Room no longer exists (e.g., deleted by owner)
+                addMessage('server', 'The room you were in no longer exists. You have been disconnected.');
+                leaveChatRoom(); // Force leave
+            }
+        }, (error) => {
+            console.error("Error listening to room data:", error);
+            addMessage('server', 'Error updating room info. You may have been disconnected.');
+            leaveChatRoom(); // Force leave on error
+        });
+    }
+
+    function updateRoomInfoPanel() {
+        roomOwnerUsername.textContent = 'Unknown';
+        roomMembersList.innerHTML = '';
+        ownerCommandsSection.style.display = 'none'; // Hide by default
+
+        if (currentRoomData.ownerId) {
+            const ownerMember = currentRoomData.members.find(m => m.userId === currentRoomData.ownerId);
+            if (ownerMember) {
+                roomOwnerUsername.textContent = ownerMember.username;
             }
         }
-    });
 
+        currentRoomData.members.forEach(member => {
+            const li = document.createElement('li');
+            li.textContent = member.username;
+            if (member.userId === currentRoomData.ownerId) {
+                li.classList.add('owner');
+            }
+            roomMembersList.appendChild(li);
+        });
+
+        // Show owner commands if current user is the owner
+        if (currentUserData.userId === currentRoomData.ownerId) {
+            ownerCommandsSection.style.display = 'block';
+        }
+    }
+
+
+    // --- Pusher Integration ---
+    async function connectToPusher(roomCode) {
+        // Fetch Pusher config from Netlify Function
+        const pusherConfigResponse = await fetch('/.netlify/functions/pusher-config');
+        const pusherConfig = await pusherConfigResponse.json();
+
+        if (!pusherConfig.key || !pusherConfig.cluster) {
+            console.error("Pusher config not loaded:", pusherConfig);
+            alert("Failed to load chat configuration. Please try again.");
+            return;
+        }
+
+        Pusher.logToConsole = true; // For debugging Pusher
+
+        pusher = new Pusher(pusherConfig.key, {
+            cluster: pusherConfig.cluster,
+            authEndpoint: '/.netlify/functions/pusher-auth',
+            auth: {
+                headers: {
+                    'x-user-id': currentUserData.userId,
+                    'x-username': currentUserData.username
+                }
+            }
+        });
+
+        channel = pusher.subscribe(`private-${roomCode}`);
+
+        channel.bind('pusher:subscription_succeeded', () => {
+            console.log('Pusher subscription to channel succeeded.');
+            // This is where you might send a "user_joined" event to other members
+            // For now, Firestore listener handles member list updates.
+        });
+
+        channel.bind('client-message', (data) => {
+            addMessage(data.sender, data.message, data.timestamp);
+        });
+
+        channel.bind('client-admin-message', (data) => {
+            addMessage('server', data.message);
+            // If the message is about being kicked/banned, force leave
+            if (data.action === 'kick' && data.targetUserId === currentUserData.userId) {
+                addMessage('server', 'You have been kicked from the room.');
+                leaveChatRoom();
+            } else if (data.action === 'ban' && data.targetUserId === currentUserData.userId) {
+                addMessage('server', 'You have been banned from the room.');
+                leaveChatRoom();
+            } else if (data.action === 'kickall' && currentUserData.userId !== currentRoomData.ownerId) {
+                addMessage('server', 'The room owner has kicked everyone.');
+                leaveChatRoom();
+            } else if (data.action === 'banall' && currentUserData.userId !== currentRoomData.ownerId) {
+                addMessage('server', 'The room owner has banned everyone.');
+                leaveChatRoom();
+            }
+        });
+
+        channel.bind('pusher:subscription_error', (status) => {
+            console.error('Pusher subscription error:', status);
+            addMessage('server', `Chat connection error: ${status}. Please try again.`);
+            leaveChatRoom(); // Force leave on subscription error
+        });
+    }
+
+    // --- Message Handling ---
+    function addMessage(sender, message, timestamp = Date.now()) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('chat-message');
+
+        const date = new Date(timestamp);
+        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        if (sender === 'server') {
+            messageElement.innerHTML = `<span class="server-message">${message}</span> <span class="timestamp">(${timeString})</span>`;
+        } else {
+            messageElement.innerHTML = `<span class="username">${sender}:</span> ${message} <span class="timestamp">(${timeString})</span>`;
+        }
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll to bottom
+    }
+
+    sendMessageButton.addEventListener('click', sendMessage);
     messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-            sendMessageButton.click();
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
         }
     });
 
-    leaveRoomButton.addEventListener('click', () => {
-        leavePusherRoom();
-    });
+    async function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message || !channel) return;
 
-    // Initial screen setup (connect Pusher only after username is set, or if coming back to username screen)
-    showUsernameScreen();
+        if (message.startsWith('!')) {
+            await handleOwnerCommand(message);
+        } else {
+            // Send regular message via Pusher
+            channel.trigger('client-message', {
+                sender: currentUserData.username,
+                message: message,
+                timestamp: Date.now()
+            });
+        }
+        messageInput.value = '';
+    }
+
+    async function handleOwnerCommand(commandText) {
+        if (currentUserData.userId !== currentRoomData.ownerId) {
+            addMessage('server', 'You are not the room owner to use commands.', 'red');
+            return;
+        }
+
+        const parts = commandText.split(/\s+/); // Split by one or more spaces
+        const command = parts[0].toLowerCase();
+        const args = parts.slice(1);
+
+        try {
+            const response = await fetch('/.netlify/functions/chat-admin-handler', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: currentUserData.userId,
+                    username: currentUserData.username,
+                    roomCode: currentRoomCode,
+                    command: command,
+                    args: args
+                })
+            });
+
+            const result = await response.json();
+            if (response.ok) {
+                addMessage('server', `Command executed: ${result.message}`, 'lime');
+            } else {
+                addMessage('server', `Command error: ${result.message}`, 'red');
+            }
+        } catch (error) {
+            console.error("Error sending command to Netlify Function:", error);
+            addMessage('server', `Failed to send command: ${error.message}`, 'red');
+        }
+    }
+
+    // --- Utility Functions ---
+    function generateRoomCode() {
+        const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        let result = '';
+        for (let i = 0; i < 5; i++) {
+            result += characters.charAt(Math.floor(Math.random() * characters.length));
+        }
+        return result;
+    }
+
+    leaveRoomButton.addEventListener('click', leaveChatRoom);
 });
