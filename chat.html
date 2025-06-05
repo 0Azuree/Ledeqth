@@ -107,12 +107,16 @@
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Safely get Firebase config from environment, defaulting to an empty object if not defined
+        // This is the correct way to handle __firebase_config possibly not being injected immediately.
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        console.log("Firebase Config:", firebaseConfig); // Debugging: check what config is loaded
 
-        // Global variables for Firebase (will be used by chat.js)
+        // Initialize Firebase App
         window.firebaseApp = initializeApp(firebaseConfig);
         window.db = getFirestore(window.firebaseApp);
         window.auth = getAuth(window.firebaseApp);
+
+        // Expose environment variables to global scope for chat.js
         window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -133,10 +137,10 @@
         window.signInWithCustomToken = signInWithCustomToken;
         window.onAuthStateChanged = onAuthStateChanged;
 
-
-        // Sign in anonymously or with custom token
+        // Sign in anonymously or with custom token when auth state changes (first time will be null, then user)
         window.onAuthStateChanged(window.auth, async (user) => {
             if (!user) {
+                console.log("onAuthStateChanged: No user, attempting sign-in...");
                 try {
                     if (window.initialAuthToken) {
                         await window.signInWithCustomToken(window.auth, window.initialAuthToken);
@@ -148,9 +152,10 @@
                 } catch (error) {
                     console.error("Firebase authentication error:", error);
                     // Handle auth error, e.g., show a message to the user
+                    alert("Authentication failed: " + error.message); // Temporary alert for debugging
                 }
             } else {
-                console.log("Firebase user is already signed in:", user.uid);
+                console.log("Firebase user is signed in:", user.uid);
             }
         });
     </script>
