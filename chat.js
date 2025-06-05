@@ -1,15 +1,16 @@
-// chat.js
+// chat.js - This script relies on Firebase and Pusher variables and functions
+// being exposed globally by the script type="module" in chat.html.
 
 document.addEventListener('DOMContentLoaded', async () => {
-    // Firebase and Firestore global variables are now initialized and exposed in chat.html script tag
-    // Access them directly from the window object
+    // Access Firebase variables and functions directly from the window object.
+    // These are initialized and exposed in chat.html's <script type="module"> block.
     const firebaseApp = window.firebaseApp;
     const db = window.db;
     const auth = window.auth;
-    const initialAuthToken = window.initialAuthToken;
-    const appId = window.appId;
+    const initialAuthToken = window.initialAuthToken; // Canvas-injected token
+    const appId = window.appId; // Canvas-injected app ID
 
-    // Firebase Firestore functions (globally exposed from chat.html)
+    // Firebase Firestore functions
     const doc = window.doc;
     const getDoc = window.getDoc;
     const setDoc = window.setDoc;
@@ -21,10 +22,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const arrayUnion = window.arrayUnion;
     const arrayRemove = window.arrayRemove;
 
-    // Firebase Auth functions (globally exposed from chat.html)
-    const signInAnonymously = window.signInAnonymously;
-    const signInWithCustomToken = window.signInWithCustomToken;
-    const onAuthStateChanged = window.onAuthStateChanged; // This listener is already set up in chat.html
+    // Firebase Auth functions
+    const signInAnonymously = window.signInAnonymously; // Exposed for direct use if needed
+    const signInWithCustomToken = window.signInWithCustomToken; // Exposed for direct use if needed
+    const onAuthStateChanged = window.onAuthStateChanged; // The main listener is set in chat.html
 
     // UI Elements
     const usernameScreen = document.getElementById('username-screen');
@@ -60,15 +61,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     let pusher;
     let channel;
     let currentRoomCode = null;
-    let currentRoomRef = null;
-    let roomSnapshotUnsubscribe = null;
+    let currentRoomRef = null; // Firestore document reference for the current room
+    let roomSnapshotUnsubscribe = null; // To unsubscribe from Firestore listener
 
     // User data
     let currentUserData = {
         userId: null,
         username: null
     };
-    let currentRoomData = {
+    let currentRoomData = { // Store current room's state
         ownerId: null,
         members: [],
         bannedUsers: [],
@@ -76,23 +77,34 @@ document.addEventListener('DOMContentLoaded', async () => {
         isLocked: false
     };
 
-    // --- Initial Authentication Status Check ---
-    // This is called *after* the onAuthStateChanged in chat.html might have run,
-    // but ensures the UI state is correct on load.
-    if (auth.currentUser) {
-        currentUserData.userId = auth.currentUser.uid;
-        const storedUsername = localStorage.getItem('chatUsername');
-        if (storedUsername) {
-            currentUserData.username = storedUsername;
-            showScreen('roomSelection');
+    // --- Initial Authentication Status Check and UI Display ---
+    // This runs once DOM is loaded. The `onAuthStateChanged` in chat.html will ensure auth is ready.
+    // We wait for `auth.currentUser` to be populated, which `onAuthStateChanged` in chat.html guarantees.
+    // If it's not immediately available, the onAuthStateChanged in chat.html will eventually update it.
+    // Using a small delay to ensure auth is processed if it's async and not immediately ready.
+    const checkAuthStateAndShowScreen = () => {
+        if (auth.currentUser) {
+            currentUserData.userId = auth.currentUser.uid;
+            console.log("chat.js: Current User ID after DOMContentLoaded:", currentUserData.userId);
+            const storedUsername = localStorage.getItem('chatUsername');
+            if (storedUsername) {
+                currentUserData.username = storedUsername;
+                console.log("chat.js: Found stored username, showing room selection.");
+                showScreen('roomSelection');
+            } else {
+                console.log("chat.js: No stored username, showing username screen.");
+                showScreen('username');
+            }
         } else {
+            console.log("chat.js: No auth.currentUser found yet. Waiting for onAuthStateChanged.");
+            // Fallback: If auth.currentUser is not immediately available, show username screen
+            // The onAuthStateChanged in chat.html will eventually call back and trigger the proper screen.
             showScreen('username');
         }
-    } else {
-        // If no user immediately, onAuthStateChanged in HTML will handle anonymous sign-in.
-        // We ensure the username screen is shown until auth is ready or username is set.
-        showScreen('username');
-    }
+    };
+
+    // Call this after a short delay to allow Firebase Auth to initialize properly
+    setTimeout(checkAuthStateAndShowScreen, 100);
 
 
     // --- Screen Management ---
@@ -119,20 +131,26 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Username Handling ---
     setUsernameButton.addEventListener('click', () => {
-        console.log("Set Username button clicked!");
+        console.log("Set Username button clicked!"); // DEBUG LOG
         const username = usernameInput.value.trim();
-        console.log("Entered username:", username);
+        console.log("Entered username:", username); // DEBUG LOG
 
         if (username.length >= 3 && username.length <= 12) {
+            if (!auth.currentUser || !auth.currentUser.uid) {
+                usernameError.textContent = 'Firebase authentication not ready. Please wait a moment and try again.';
+                usernameError.style.display = 'block';
+                console.warn("Attempted to set username before Firebase Auth was ready.");
+                return;
+            }
             currentUserData.username = username;
             localStorage.setItem('chatUsername', username);
             usernameError.style.display = 'none';
-            console.log("Username valid, showing room selection.");
+            console.log("Username valid and Auth ready, showing room selection."); // DEBUG LOG
             showScreen('roomSelection');
         } else {
             usernameError.textContent = 'Username must be 3-12 characters long.';
             usernameError.style.display = 'block';
-            console.log("Username invalid:", usernameError.textContent);
+            console.log("Username invalid:", usernameError.textContent); // DEBUG LOG
         }
     });
 
