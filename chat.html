@@ -107,30 +107,29 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Safely get Firebase config from environment, defaulting to an empty object if not defined or null
-        // This addresses "ReferenceError: __firebase_config is not defined" and parsing errors.
-        let firebaseConfig = {};
-        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-            try {
-                firebaseConfig = JSON.parse(__firebase_config);
-            } catch (e) {
-                console.error("Error parsing __firebase_config:", e);
-                // Fallback to empty config if parsing fails
-            }
-        }
-        console.log("Firebase Config:", firebaseConfig); // Debugging: check what config is loaded
+        // Your web app's Firebase configuration - HARDCODED FOR DIAGNOSTIC PURPOSES
+        const hardcodedFirebaseConfig = {
+            apiKey: "AIzaSyAC-7Vyzk5Jzw-31Wb7Xy2ZfCNwrpf8_KM",
+            authDomain: "ledeqth-chat-app.firebaseapp.com",
+            projectId: "ledeqth-chat-app",
+            storageBucket: "ledeqth-chat-app.firebasestorage.app",
+            messagingSenderId: "256285151146",
+            appId: "1:256285151146:web:3a983f2ae5cb181aa7e5d3",
+            measurementId: "G-B4FVKHC6ST"
+        };
+        console.log("Using hardcoded Firebase Config:", hardcodedFirebaseConfig); // Debugging
 
-        // Initialize Firebase App and services
-        window.firebaseApp = initializeApp(firebaseConfig);
+        // Initialize Firebase App and services using the hardcoded config
+        window.firebaseApp = initializeApp(hardcodedFirebaseConfig);
         window.db = getFirestore(window.firebaseApp);
         window.auth = getAuth(window.firebaseApp);
 
         // Expose environment variables that are dynamically injected by Canvas to global scope for chat.js
+        // We still use these for initialAuthToken and appId, assuming they are injected correctly or fallback.
         window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
         // CRITICAL: Expose ALL required Firebase functions globally for chat.js
-        // This addresses "ReferenceError: firebase is not defined" because 'firebase' itself is not global.
         window.doc = doc;
         window.getDoc = getDoc;
         window.setDoc = setDoc;
@@ -147,8 +146,6 @@
         window.onAuthStateChanged = onAuthStateChanged;
 
         // Start Firebase authentication process
-        // This listener ensures that a user is authenticated (anonymously or via token)
-        // before chat.js attempts Firestore operations.
         window.onAuthStateChanged(window.auth, async (user) => {
             if (!user) {
                 console.log("onAuthStateChanged: No user, attempting sign-in...");
@@ -162,8 +159,6 @@
                     }
                 } catch (error) {
                     console.error("Firebase authentication error:", error);
-                    // Handle auth error, e.g., show a message to the user
-                    // Using console.error instead of alert to avoid blocking UI
                 }
             } else {
                 console.log("Firebase user is signed in:", user.uid);
