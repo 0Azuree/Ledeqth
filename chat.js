@@ -3,15 +3,13 @@
 
 document.addEventListener('DOMContentLoaded', async () => {
     // Access Firebase variables and functions directly from the window object.
-    // These are initialized and exposed in chat.html's <script type="module"> block.
     const firebaseApp = window.firebaseApp;
     const db = window.db;
     const auth = window.auth;
-    const initialAuthToken = window.initialAuthToken; // Canvas-injected token
-    const appId = window.appId; // Canvas-injected app ID
+    const initialAuthToken = window.initialAuthToken;
+    const appId = window.appId;
 
-    // Firebase Firestore functions (globally exposed from chat.html)
-    // IMPORTANT: No longer trying to destructure from a global 'firebase' object.
+    // Firebase Firestore functions
     const doc = window.doc;
     const getDoc = window.getDoc;
     const setDoc = window.setDoc;
@@ -23,10 +21,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     const arrayUnion = window.arrayUnion;
     const arrayRemove = window.arrayRemove;
 
-    // Firebase Auth functions (globally exposed from chat.html)
-    const signInAnonymously = window.signInAnonymously; // Exposed for direct use if needed
-    const signInWithCustomToken = window.signInWithCustomToken; // Exposed for direct use if needed
-    const onAuthStateChanged = window.onAuthStateChanged; // The main listener is set in chat.html
+    // Firebase Auth functions
+    const signInAnonymously = window.signInAnonymously;
+    const signInWithCustomToken = window.signInWithCustomToken;
+    const onAuthStateChanged = window.onAuthStateChanged;
 
     // UI Elements
     const usernameScreen = document.getElementById('username-screen');
@@ -37,7 +35,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const roomSelectionScreen = document.getElementById('room-selection-screen');
     const createRoomButton = document.getElementById('createRoomButton');
     const joinRoomButton = document.getElementById('joinRoomButton');
-    const changeUsernameButton = document.getElementById('changeUsernameButton'); // NEW UI Element
+    const changeUsernameButton = document.getElementById('changeUsernameButton');
 
     const joinRoomInputScreen = document.getElementById('join-room-input-screen');
     const roomCodeInput = document.getElementById('roomCodeInput');
@@ -71,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         userId: null,
         username: null
     };
-    let currentRoomData = { // Store current room's state
+    let currentRoomData = {
         ownerId: null,
         members: [],
         bannedUsers: [],
@@ -79,30 +77,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         isLocked: false
     };
 
-    let isAuthReady = false; // New state variable to track Firebase Auth readiness
+    let isAuthReady = false;
 
     // --- Firebase Authentication Listener ---
-    // This listener is crucial. It updates `isAuthReady` and `currentUserData.userId`
-    // once Firebase authentication has completed (anonymous sign-in or custom token).
     onAuthStateChanged(auth, (user) => {
         if (user) {
             currentUserData.userId = user.uid;
             isAuthReady = true;
-            setUsernameButton.disabled = false; // Enable the "Done" button once auth is ready
-            usernameError.style.display = 'none'; // Hide any previous error message
+            setUsernameButton.disabled = false;
+            usernameError.style.display = 'none';
             console.log("Firebase Auth Ready. User ID:", currentUserData.userId);
 
-            // If a username is already stored locally AND we are still on the username screen,
-            // automatically transition to the room selection screen.
             const storedUsername = localStorage.getItem('chatUsername');
             if (storedUsername && usernameScreen.style.display === 'flex') {
                 currentUserData.username = storedUsername;
                 showScreen('roomSelection');
             }
         } else {
-            // Firebase Auth is not ready (e.g., initial state or error during sign-in)
             isAuthReady = false;
-            setUsernameButton.disabled = true; // Disable the button until auth is ready
+            setUsernameButton.disabled = true;
             usernameError.textContent = 'Authenticating with Firebase... Please wait.';
             usernameError.style.display = 'block';
             console.log("Firebase Auth Not Ready. User is null.");
@@ -110,24 +103,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // --- Initial Screen Display ---
-    // Show the username screen immediately when the DOM content is loaded.
-    // The "Done" button will be disabled by default until `onAuthStateChanged` confirms Firebase Auth is ready.
     showScreen('username');
-    setUsernameButton.disabled = true; // Initially disable the button
-    usernameError.textContent = 'Loading authentication...'; // Show a loading message
+    setUsernameButton.disabled = true;
+    usernameError.textContent = 'Loading authentication...';
     usernameError.style.display = 'block';
 
 
     // --- Screen Management ---
-    // Function to control which main chat screen is visible.
     function showScreen(screenName) {
-        // Hide all main chat screens first
         usernameScreen.style.display = 'none';
         roomSelectionScreen.style.display = 'none';
         joinRoomInputScreen.style.display = 'none';
-        chatRoomContainer.style.display = 'none'; // This container holds chat + info panel
+        chatRoomContainer.style.display = 'none';
 
-        // Show the requested screen and set focus where appropriate
         if (screenName === 'username') {
             usernameScreen.style.display = 'flex';
             usernameInput.focus();
@@ -137,8 +125,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             joinRoomInputScreen.style.display = 'flex';
             roomCodeInput.focus();
         } else if (screenName === 'chatRoom') {
-            chatRoomContainer.style.display = 'flex'; // Show the chat room and info panel
-            messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll messages to bottom
+            chatRoomContainer.style.display = 'flex';
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
             messageInput.focus();
         }
     }
@@ -149,23 +137,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const username = usernameInput.value.trim();
         console.log("Entered username:", username);
 
-        // Before processing username, ensure Firebase authentication is fully ready.
         if (!isAuthReady || !currentUserData.userId) {
             usernameError.textContent = 'Firebase authentication not ready. Please wait a moment and try again.';
             usernameError.style.display = 'block';
             console.warn("Attempted to set username before Firebase Auth was ready.");
-            return; // Stop function execution if not ready
+            return;
         }
 
-        // Validate username length
         if (username.length >= 3 && username.length <= 12) {
-            currentUserData.username = username; // Store valid username
-            localStorage.setItem('chatUsername', username); // Persist username locally
-            usernameError.style.display = 'none'; // Clear any error message
+            currentUserData.username = username;
+            localStorage.setItem('chatUsername', username);
+            usernameError.style.display = 'none';
             console.log("Username valid and Auth ready, showing room selection.");
-            showScreen('roomSelection'); // Move to the next screen
+            showScreen('roomSelection');
         } else {
-            // Show error if username is invalid
             usernameError.textContent = 'Username must be 3-12 characters long.';
             usernameError.style.display = 'block';
             console.log("Username invalid:", usernameError.textContent);
@@ -175,59 +160,55 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Change Username Button Handler
     changeUsernameButton.addEventListener('click', () => {
         console.log("Change Username button clicked. Resetting username.");
-        localStorage.removeItem('chatUsername'); // Clear stored username from local storage
-        currentUserData.username = null; // Reset current user data in memory
-        usernameInput.value = ''; // Clear username input field in the UI
-        showScreen('username'); // Go back to the username entry screen
-        usernameError.style.display = 'none'; // Hide any previous error messages
+        localStorage.removeItem('chatUsername');
+        currentUserData.username = null;
+        usernameInput.value = '';
+        showScreen('username');
+        usernameError.style.display = 'none';
     });
 
 
-    // --- Room Selection Screen Event Listeners ---
+    // --- Room Selection ---
     createRoomButton.addEventListener('click', async () => {
-        // Ensure auth and username are ready before creating a room
         if (!isAuthReady || !currentUserData.userId || !currentUserData.username) {
             usernameError.textContent = 'Authentication or username not set. Please wait or re-enter username.';
             usernameError.style.display = 'block';
             showScreen('username');
             return;
         }
-        await createChatRoom(); // Call function to create a chat room
+        await createChatRoom();
     });
 
     joinRoomButton.addEventListener('click', () => {
-        // Ensure auth and username are ready before attempting to join
         if (!isAuthReady || !currentUserData.userId || !currentUserData.username) {
             usernameError.textContent = 'Authentication or username not set. Please wait or re-enter username.';
             usernameError.style.display = 'block';
             showScreen('username');
             return;
         }
-        showScreen('joinRoomInput'); // Transition to join room input screen
+        showScreen('joinRoomInput');
     });
 
     backToRoomSelectionButton.addEventListener('click', () => {
-        roomCodeInput.value = ''; // Clear input
-        roomJoinError.style.display = 'none'; // Hide error
-        showScreen('roomSelection'); // Go back to room selection
+        roomCodeInput.value = '';
+        roomJoinError.style.display = 'none';
+        showScreen('roomSelection');
     });
 
     submitJoinRoomButton.addEventListener('click', async () => {
-        const roomCode = roomCodeInput.value.trim().toUpperCase(); // Get and format room code
+        const roomCode = roomCodeInput.value.trim().toUpperCase();
         if (roomCode.length === 5) {
-            await joinChatRoom(roomCode); // Call function to join a chat room
+            await joinChatRoom(roomCode);
         } else {
-            // Show error if room code is invalid
             roomJoinError.textContent = 'Room code must be 5 letters.';
             roomJoinError.style.display = 'block';
         }
     });
 
-    // --- Firebase/Firestore Room Management Functions (Interacting with Netlify Functions) ---
+    // --- Firebase/Firestore Room Management ---
     async function createChatRoom() {
-        const roomCode = generateRoomCode(); // Generate a unique 5-letter code
+        const roomCode = generateRoomCode();
         try {
-            // Call Netlify Function to create room server-side (for Firestore interaction)
             const response = await fetch('/.netlify/functions/create-room', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -239,22 +220,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 })
             });
 
-            const result = await response.json(); // Parse response from Netlify Function
+            const result = await response.json();
             if (response.ok) {
                 console.log(`Room ${roomCode} created by ${currentUserData.username}`);
-                await connectToPusher(roomCode); // Connect to Pusher for real-time messaging
+                await connectToPusher(roomCode);
                 currentRoomCode = roomCode;
-                // Get Firestore document reference for the newly created room
                 currentRoomRef = doc(db, `artifacts/${appId}/public/data/chatRooms`, roomCode);
-                setupRoomDataListener(currentRoomRef); // Start real-time listener for room data changes
-                showScreen('chatRoom'); // Transition to the chat room screen
-                roomTitle.textContent = `Room: ${roomCode}`; // Update room title in UI
+                setupRoomDataListener(currentRoomRef);
+                showScreen('chatRoom');
+                roomTitle.textContent = `Room: ${roomCode}`;
                 addMessage('server', `You created room ${roomCode}. Share this code with others!`);
             } else {
                 console.error(`Failed to create room: ${result.message}`);
                 roomJoinError.textContent = `Failed to create room: ${result.message}`;
                 roomJoinError.style.display = 'block';
-                // If room code collision, try creating another one recursively
                 if (result.message === 'Room code already exists. Try again.') {
                      return createChatRoom();
                 }
@@ -268,7 +247,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     async function joinChatRoom(roomCode) {
         try {
-            // Call Netlify Function to join room server-side (for Firestore interaction)
             const response = await fetch('/.netlify/functions/join-room', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -283,24 +261,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             const result = await response.json();
             if (response.ok) {
                 console.log(`Joined room ${roomCode}`);
-                await connectToPusher(roomCode); // Connect to Pusher for real-time messaging
+                await connectToPusher(roomCode);
                 currentRoomCode = roomCode;
-                // Get Firestore document reference for the joined room
                 currentRoomRef = doc(db, `artifacts/${appId}/public/data/chatRooms`, roomCode);
-                setupRoomDataListener(currentRoomRef); // Start real-time listener for room data changes
-                showScreen('chatRoom'); // Transition to chat room screen
-                roomTitle.textContent = `Room: ${roomCode}`; // Update room title in UI
+                setupRoomDataListener(currentRoomRef);
+                showScreen('chatRoom');
+                roomTitle.textContent = `Room: ${roomCode}`;
                 addMessage('server', `You joined room ${roomCode}.`);
 
-                // Display initial messages loaded from room data (e.g., chat history)
-                messagesDiv.innerHTML = ''; // Clear any existing messages
+                messagesDiv.innerHTML = '';
                 if (result.roomData && result.roomData.messages && result.roomData.messages.length > 0) {
                     result.roomData.messages.forEach(msg => {
                         addMessage(msg.sender, msg.text, msg.timestamp);
                     });
                 }
             } else {
-                // Show error message if joining failed
                 roomJoinError.textContent = result.message || 'Failed to join room. Unknown error.';
                 roomJoinError.style.display = 'block';
                 console.error("Error joining room via Netlify Function:", result.message);
@@ -312,42 +287,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
-    // Function to handle a user leaving the chat room
+    // UPDATED: leaveChatRoom to call Netlify Function
     async function leaveChatRoom() {
         if (!currentRoomCode || !currentUserData.userId || !currentRoomRef) return;
 
+        console.log(`Attempting to leave room ${currentRoomCode} for user ${currentUserData.username} (${currentUserData.userId}).`);
+
         try {
-            // Unsubscribe from the Pusher channel to stop receiving messages
-            if (channel) {
-                pusher.unsubscribe(`private-${currentRoomCode}`);
-                channel = null;
-            }
-            // Unsubscribe from the Firestore real-time listener to stop receiving room updates
-            if (roomSnapshotUnsubscribe) {
-                roomSnapshotUnsubscribe();
-                roomSnapshotUnsubscribe = null;
-            }
+            // Call the Netlify Function to handle leaving, ownership transfer, and room deletion
+            const response = await fetch('/.netlify/functions/leave-room-handler', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomCode: currentRoomCode,
+                    userId: currentUserData.userId,
+                    username: currentUserData.username,
+                    appId: appId
+                })
+            });
 
-            // Reset local room state variables to clear previous room data
-            currentRoomCode = null;
-            currentRoomRef = null;
-            currentRoomData = { ownerId: null, members: [], bannedUsers: [], whitelistedUsers: [], isLocked: false };
-            messagesDiv.innerHTML = ''; // Clear chat messages from the UI
-            roomOwnerUsername.textContent = 'Loading...'; // Reset room info panel display
-            roomMembersList.innerHTML = '<li>Loading...</li>';
-            ownerCommandsSection.style.display = 'none'; // Hide owner commands section
-
-            showScreen('roomSelection'); // Go back to the room selection screen
-            console.log("Left room.");
+            const result = await response.json();
+            if (response.ok) {
+                console.log("Leave room handler success:", result.message);
+            } else {
+                console.error("Leave room handler failed:", result.message);
+                addMessage('server', `Failed to leave room: ${result.message}`, 'red');
+            }
         } catch (error) {
-            console.error("Error leaving room:", error);
+            console.error("Network error calling leave-room-handler:", error);
+            addMessage('server', `Network error leaving room: ${error.message}`, 'red');
         }
+
+        // Regardless of server outcome, clean up client-side state immediately
+        // The Firestore listener (onSnapshot) will eventually handle actual room deletion
+        // or ownership transfer, causing `onSnapshot` to trigger and update the UI.
+        // If the room was deleted, the onSnapshot error handler will call leaveChatRoom() again.
+        cleanUpClientRoomState();
+        showScreen('roomSelection'); // Always return to selection screen after attempting to leave
+        console.log("Left room.");
     }
 
+    // New function to encapsulate client-side cleanup
+    function cleanUpClientRoomState() {
+        if (channel) {
+            pusher.unsubscribe(`private-${currentRoomCode}`);
+            channel = null;
+        }
+        if (roomSnapshotUnsubscribe) {
+            roomSnapshotUnsubscribe();
+            roomSnapshotUnsubscribe = null;
+        }
+
+        currentRoomCode = null;
+        currentRoomRef = null;
+        currentRoomData = { ownerId: null, members: [], bannedUsers: [], whitelistedUsers: [], isLocked: false };
+        messagesDiv.innerHTML = '';
+        roomOwnerUsername.textContent = 'Loading...';
+        roomMembersList.innerHTML = '<li>Loading...</li>';
+        ownerCommandsSection.style.display = 'none';
+    }
+
+
     // --- Firestore Real-time Room Data Listener ---
-    // Sets up a real-time listener on the current room's Firestore document.
     function setupRoomDataListener(roomDocRef) {
-        // Unsubscribe from any previously active listener to avoid memory leaks if switching rooms
         if (roomSnapshotUnsubscribe) {
             roomSnapshotUnsubscribe();
         }
@@ -355,53 +357,51 @@ document.addEventListener('DOMContentLoaded', async () => {
         roomSnapshotUnsubscribe = onSnapshot(roomDocRef, (docSnapshot) => {
             if (docSnapshot.exists()) {
                 const data = docSnapshot.data();
-                currentRoomData = data; // Update local state with latest room data
-                updateRoomInfoPanel(); // Update the UI based on new data
+                currentRoomData = data;
+                updateRoomInfoPanel();
             } else {
-                // If the document no longer exists (e.g., room was deleted by owner)
+                // This block executes if the room document is deleted (e.g., auto-closed by leave-room-handler)
                 addMessage('server', 'The room you were in no longer exists. You have been disconnected.');
-                leaveChatRoom(); // Force the user to leave the room
+                cleanUpClientRoomState(); // Clean up state
+                showScreen('roomSelection'); // Go back to selection screen
+                console.log("Room document no longer exists. Disconnected.");
             }
         }, (error) => {
-            // Handle errors during real-time listening (e.g., permissions revoked)
             console.error("Error listening to room data:", error);
             addMessage('server', 'Error updating room info. You may have been disconnected.');
-            leaveChatRoom(); // Force leave on error
+            cleanUpClientRoomState(); // Clean up state
+            showScreen('roomSelection'); // Go back to selection screen
+            console.log("Firestore listener error. Disconnected.");
         });
     }
 
-    // Updates the "Room Info" panel in the UI with current room data.
     function updateRoomInfoPanel() {
-        roomOwnerUsername.textContent = 'Unknown'; // Default owner text
-        roomMembersList.innerHTML = ''; // Clear current member list display
-        ownerCommandsSection.style.display = 'none'; // Hide owner commands by default
+        roomOwnerUsername.textContent = 'Unknown';
+        roomMembersList.innerHTML = '';
+        ownerCommandsSection.style.display = 'none';
 
-        // Display room owner's username
         if (currentRoomData.ownerId) {
             const ownerMember = currentRoomData.members.find(m => m.userId === currentRoomData.ownerId);
             if (ownerMember) {
                 roomOwnerUsername.textContent = ownerMember.username;
             } else {
-                 // Fallback: If owner is not in members list (e.g., they left but still own it, or a bug)
                  roomOwnerUsername.textContent = `${currentRoomData.ownerId} (User ID)`;
             }
         }
 
-        // Populate the members list
         if (currentRoomData.members && currentRoomData.members.length > 0) {
             currentRoomData.members.forEach(member => {
                 const li = document.createElement('li');
                 li.textContent = member.username;
                 if (member.userId === currentRoomData.ownerId) {
-                    li.classList.add('owner'); // Highlight owner in the list
+                    li.classList.add('owner');
                 }
                 roomMembersList.appendChild(li);
             });
         } else {
-            roomMembersList.innerHTML = '<li>No members</li>'; // Display message if no members are found
+            roomMembersList.innerHTML = '<li>No members</li>';
         }
 
-        // Show owner commands section ONLY if the current user is the room owner
         if (currentUserData.userId === currentRoomData.ownerId) {
             ownerCommandsSection.style.display = 'block';
         }
@@ -409,117 +409,122 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Pusher Integration ---
     async function connectToPusher(roomCode) {
-        // Fetch Pusher configuration from a Netlify Function securely
         const pusherConfigResponse = await fetch('/.netlify/functions/pusher-config');
         const pusherConfig = await pusherConfigResponse.json();
 
         if (!pusherConfig.key || !pusherConfig.cluster) {
             console.error("Pusher config not loaded:", pusherConfig);
-            return; // Exit if config is missing
+            return;
         }
 
-        Pusher.logToConsole = true; // Enable Pusher debugging logs in console for better visibility
+        Pusher.logToConsole = true;
 
-        // Initialize Pusher client
         pusher = new Pusher(pusherConfig.key, {
             cluster: pusherConfig.cluster,
-            authEndpoint: '/.netlify/functions/pusher-auth', // Authentication endpoint for private channels
+            authEndpoint: '/.netlify/functions/pusher-auth',
             auth: {
                 headers: {
-                    'x-user-id': currentUserData.userId, // Pass user ID in headers for authentication
-                    'x-username': currentUserData.username // Pass username in headers for authentication
+                    'x-user-id': currentUserData.userId,
+                    'x-username': currentUserData.username
                 }
             }
         });
 
-        channel = pusher.subscribe(`private-${roomCode}`); // Subscribe to the private room channel
+        channel = pusher.subscribe(`private-${roomCode}`);
 
-        // Event listener for successful Pusher subscription
         channel.bind('pusher:subscription_succeeded', () => {
             console.log('Pusher subscription to channel succeeded.');
         });
 
-        // Event listener for incoming chat messages (client-message event)
-        // This is triggered by other clients, or locally if Pusher echo is enabled (but we're not relying on it)
         channel.bind('client-message', (data) => {
             console.log("Received client-message:", data);
             addMessage(data.sender, data.message, data.timestamp);
         });
 
-        // Event listener for admin messages (e.g., kicks, bans, room locks)
         channel.bind('client-admin-message', (data) => {
             console.log("Received client-admin-message:", data);
-            addMessage('server', data.message); // Display the admin message in the chat
-            // Handle specific actions that require the user to leave the room (e.g., being kicked or banned)
+            addMessage('server', data.message);
+
+            // Handle new owner event
+            if (data.action === 'owner_transferred') {
+                // The room snapshot listener will automatically update currentRoomData.ownerId,
+                // and updateRoomInfoPanel will be called by it.
+                addMessage('server', `ROOM UPDATE: ${data.newOwnerUsername} is now the owner.`);
+            }
+
+            // Handle room closed event
+            if (data.action === 'room_closed' && data.roomCode === currentRoomCode) {
+                addMessage('server', 'ROOM CLOSED: The room has been closed because all members have left.');
+                cleanUpClientRoomState();
+                showScreen('roomSelection');
+            }
+
+
             if (data.action === 'kick' && data.targetUserId === currentUserData.userId) {
                 addMessage('server', 'You have been kicked from the room.');
-                leaveChatRoom();
+                cleanUpClientRoomState();
+                showScreen('roomSelection');
             } else if (data.action === 'ban' && data.targetUserId === currentUserData.userId) {
                 addMessage('server', 'You have been banned from the room.');
-                leaveChatRoom();
+                cleanUpClientRoomState();
+                showScreen('roomSelection');
             } else if (data.action === 'kickall' && currentUserData.userId !== currentRoomData.ownerId) {
                 addMessage('server', 'All members (except owner) have been kicked.');
-                leaveChatRoom();
+                cleanUpClientRoomState();
+                showScreen('roomSelection');
             } else if (data.action === 'banall' && currentUserData.userId !== currentRoomData.ownerId) {
                 addMessage('server', 'All members (except owner) have been banned.');
-                leaveChatRoom();
+                cleanUpClientRoomState();
+                showScreen('roomSelection');
             }
         });
 
-        // Event listener for Pusher subscription errors
         channel.bind('pusher:subscription_error', (status) => {
             console.error('Pusher subscription error:', status);
             addMessage('server', `Chat connection error: ${status}. Please try again.`);
-            leaveChatRoom(); // Force leave on connection error to allow user to retry
+            cleanUpClientRoomState();
+            showScreen('roomSelection');
         });
     }
 
     // --- Message Handling (Displaying Messages in UI) ---
-    // Appends a new message to the messages display area.
     function addMessage(sender, message, timestamp = Date.now()) {
         const messageElement = document.createElement('div');
-        messageElement.classList.add('chat-message'); // Apply chat message styling
+        messageElement.classList.add('chat-message');
 
         const date = new Date(timestamp);
-        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); // Format timestamp
+        const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         if (sender === 'server') {
-            // Special styling for server messages (e.g., room created, user joined/left)
             messageElement.innerHTML = `<span class="server-message">${message}</span> <span class="timestamp">(${timeString})</span>`;
         } else {
-            // Standard message format with username and timestamp
             messageElement.innerHTML = `<span class="username">${sender}:</span> ${message} <span class="timestamp">(${timeString})</span>`;
         }
-        messagesDiv.appendChild(messageElement); // Add message to the DOM
-        messagesDiv.scrollTop = messagesDiv.scrollHeight; // Auto-scroll to the latest message to keep it in view
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
     // --- Sending Messages and Commands ---
-    // Event listener for the "Send" button click.
     sendMessageButton.addEventListener('click', sendMessage);
-    // Event listener for "Enter" key press in the message input field.
     messageInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter' && !e.shiftKey) { // Send on Enter, allow Shift+Enter for a new line within input
-            e.preventDefault(); // Prevent default Enter behavior (e.g., form submission)
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
             sendMessage();
         }
     });
 
-    // Main function to send a message or execute an owner command.
     async function sendMessage() {
-        const message = messageInput.value.trim(); // Get message text and trim whitespace
+        const message = messageInput.value.trim();
         if (!message || !channel) {
             console.log("Attempted to send empty message or channel not ready.");
-            return; // Do nothing if message is empty or Pusher channel is not established
+            return;
         }
 
-        console.log("Sending message:", message); // Debug log: confirm message content being processed
+        console.log("Sending message:", message);
 
         if (message.startsWith('!')) {
-            // If message starts with '!', treat it as an owner command and handle it.
             await handleOwnerCommand(message);
         } else {
-            // Otherwise, trigger a regular chat message event via Pusher.
             const messageData = {
                 sender: currentUserData.username,
                 message: message,
@@ -529,34 +534,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             try {
                 channel.trigger('client-message', messageData);
                 console.log("Pusher client-message triggered successfully.");
-
-                // CRITICAL FIX: Add the message to the local UI immediately after triggering Pusher.
-                // Pusher's `client-` events do not echo back to the triggering client by default.
-                // This ensures the sender sees their own message without waiting for the network roundtrip.
                 addMessage(messageData.sender, messageData.message, messageData.timestamp);
 
             } catch (error) {
-                console.error("Error triggering client-message:", error); // Log any errors during Pusher client trigger
-                addMessage('server', 'Failed to send message: ' + error.message, 'red'); // Inform user of failure
+                console.error("Error triggering client-message:", error);
+                addMessage('server', 'Failed to send message: ' + error.message, 'red');
             }
         }
-        messageInput.value = ''; // Clear the input field after sending the message/command
+        messageInput.value = '';
     }
 
-    // Handles owner commands by sending them to a Netlify Function for server-side processing.
     async function handleOwnerCommand(commandText) {
-        // Client-side check: ensure the current user is indeed the room owner.
         if (currentUserData.userId !== currentRoomData.ownerId) {
             addMessage('server', 'You are not the room owner to use commands.', 'red');
-            return; // Stop if not the owner
+            return;
         }
 
-        const parts = commandText.split(/\s+/); // Split the command text by one or more spaces
-        const command = parts[0].toLowerCase(); // Extract the command itself (e.g., "!kick")
-        const args = parts.slice(1); // Extract arguments following the command
+        const parts = commandText.split(/\s+/);
+        const command = parts[0].toLowerCase();
+        const args = parts.slice(1);
 
         try {
-            // Send the command details to the server-side Netlify Function for secure processing.
             const response = await fetch('/.netlify/functions/chat-admin-handler', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -569,20 +567,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 })
             });
 
-            const result = await response.json(); // Parse the JSON response from the server function
+            const result = await response.json();
             if (response.ok) {
-                addMessage('server', `Command executed: ${result.message}`, 'lime'); // Show success message from server
+                addMessage('server', `Command executed: ${result.message}`, 'lime');
             } else {
-                addMessage('server', `Command error: ${result.message}`, 'red'); // Show error message from server
+                addMessage('server', `Command error: ${result.message}`, 'red');
             }
         } catch (error) {
             console.error("Error sending command to Netlify Function:", error);
-            addMessage('server', `Failed to send command: ${error.message}`, 'red'); // Inform user of network/function call error
+            addMessage('server', `Failed to send command: ${error.message}`, 'red');
         }
     }
 
     // --- Utility Functions ---
-    // Generates a random 5-letter uppercase room code for new rooms.
     function generateRoomCode() {
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
         let result = '';
@@ -592,6 +589,5 @@ document.addEventListener('DOMContentLoaded', async () => {
         return result;
     }
 
-    // Event listener for the "Leave Room" button.
     leaveRoomButton.addEventListener('click', leaveChatRoom);
 });
