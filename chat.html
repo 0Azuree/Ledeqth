@@ -38,6 +38,7 @@
                 <h3>Choose an Option</h3>
                 <button id="createRoomButton" class="nav-button">Create Room</button>
                 <button id="joinRoomButton" class="nav-button">Join Room</button>
+                <button id="changeUsernameButton" class="nav-button small-button">Change Username</button> <!-- NEW BUTTON -->
             </div>
 
             <div id="join-room-input-screen" class="chat-screen" style="display: none;">
@@ -61,7 +62,7 @@
                     <button id="leaveRoomButton" class="nav-button small-button">Leave Room</button>
                 </div>
 
-                <!-- NEW: Room Info Panel -->
+                <!-- Room Info Panel -->
                 <div id="room-info-panel" class="chat-screen room-info-panel">
                     <h3>Room Info</h3>
                     <div class="info-section">
@@ -102,12 +103,10 @@
 
     <!-- Firebase SDKs -->
     <script type="module">
-        // Import Firebase modules
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Your web app's Firebase configuration - HARDCODED FOR DIAGNOSTIC PURPOSES
         const hardcodedFirebaseConfig = {
             apiKey: "AIzaSyAC-7Vyzk5Jzw-31Wb7Xy2ZfCNwrpf8_KM",
             authDomain: "ledeqth-chat-app.firebaseapp.com",
@@ -117,19 +116,15 @@
             appId: "1:256285151146:web:3a983f2ae5cb181aa7e5d3",
             measurementId: "G-B4FVKHC6ST"
         };
-        console.log("Using hardcoded Firebase Config:", hardcodedFirebaseConfig); // Debugging
+        console.log("Using hardcoded Firebase Config:", hardcodedFirebaseConfig);
 
-        // Initialize Firebase App and services using the hardcoded config
         window.firebaseApp = initializeApp(hardcodedFirebaseConfig);
         window.db = getFirestore(window.firebaseApp);
         window.auth = getAuth(window.firebaseApp);
 
-        // Expose environment variables that are dynamically injected by Canvas to global scope for chat.js
-        // We still use these for initialAuthToken and appId, assuming they are injected correctly or fallback.
         window.initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
         window.appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
-        // CRITICAL: Expose ALL required Firebase functions globally for chat.js
         window.doc = doc;
         window.getDoc = getDoc;
         window.setDoc = setDoc;
@@ -145,7 +140,6 @@
         window.signInWithCustomToken = signInWithCustomToken;
         window.onAuthStateChanged = onAuthStateChanged;
 
-        // Start Firebase authentication process
         window.onAuthStateChanged(window.auth, async (user) => {
             if (!user) {
                 console.log("onAuthStateChanged: No user, attempting sign-in...");
