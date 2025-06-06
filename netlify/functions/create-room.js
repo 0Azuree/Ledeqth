@@ -31,7 +31,8 @@ exports.handler = async function(event, context) {
             ownerId: userId,
             roomCode: roomCode,
             createdAt: Date.now(),
-            members: [{ userId: userId, username: username }],
+            // ADDED: joinTime for the first member
+            members: [{ userId: userId, username: username, joinTime: Date.now() }],
             bannedUsers: [],
             whitelistedUsers: [],
             isLocked: false,
