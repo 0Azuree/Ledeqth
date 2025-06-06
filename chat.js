@@ -10,7 +10,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const initialAuthToken = window.initialAuthToken; // Canvas-injected token
     const appId = window.appId; // Canvas-injected app ID
 
-    // Firebase Firestore functions
+    // Firebase Firestore functions (globally exposed from chat.html)
+    // IMPORTANT: No longer trying to destructure from a global 'firebase' object.
     const doc = window.doc;
     const getDoc = window.getDoc;
     const setDoc = window.setDoc;
@@ -22,7 +23,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const arrayUnion = window.arrayUnion;
     const arrayRemove = window.arrayRemove;
 
-    // Firebase Auth functions
+    // Firebase Auth functions (globally exposed from chat.html)
     const signInAnonymously = window.signInAnonymously; // Exposed for direct use if needed
     const signInWithCustomToken = window.signInWithCustomToken; // Exposed for direct use if needed
     const onAuthStateChanged = window.onAuthStateChanged; // The main listener is set in chat.html
@@ -79,11 +80,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Initial Authentication Status Check and UI Display ---
     // This runs once DOM is loaded. The `onAuthStateChanged` in chat.html will ensure auth is ready.
-    // We wait for `auth.currentUser` to be populated, which `onAuthStateChanged` in chat.html guarantees.
-    // If it's not immediately available, the onAuthStateChanged in chat.html will eventually update it.
-    // Using a small delay to ensure auth is processed if it's async and not immediately ready.
+    // We wait for `auth.currentUser` to be populated.
     const checkAuthStateAndShowScreen = () => {
-        if (auth.currentUser) {
+        if (auth && auth.currentUser) { // Check if auth object exists and has current user
             currentUserData.userId = auth.currentUser.uid;
             console.log("chat.js: Current User ID after DOMContentLoaded:", currentUserData.userId);
             const storedUsername = localStorage.getItem('chatUsername');
@@ -96,9 +95,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showScreen('username');
             }
         } else {
-            console.log("chat.js: No auth.currentUser found yet. Waiting for onAuthStateChanged.");
-            // Fallback: If auth.currentUser is not immediately available, show username screen
-            // The onAuthStateChanged in chat.html will eventually call back and trigger the proper screen.
+            console.log("chat.js: No auth.currentUser found yet or auth not initialized. Showing username screen and waiting for onAuthStateChanged.");
+            // If auth is not ready, show username screen. onAuthStateChanged in chat.html will eventually trigger.
             showScreen('username');
         }
     };
@@ -131,12 +129,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // --- Username Handling ---
     setUsernameButton.addEventListener('click', () => {
-        console.log("Set Username button clicked!"); // DEBUG LOG
+        console.log("Set Username button clicked!");
         const username = usernameInput.value.trim();
-        console.log("Entered username:", username); // DEBUG LOG
+        console.log("Entered username:", username);
 
         if (username.length >= 3 && username.length <= 12) {
-            if (!auth.currentUser || !auth.currentUser.uid) {
+            // Re-check auth.currentUser just before setting username
+            if (!auth || !auth.currentUser || !auth.currentUser.uid) {
                 usernameError.textContent = 'Firebase authentication not ready. Please wait a moment and try again.';
                 usernameError.style.display = 'block';
                 console.warn("Attempted to set username before Firebase Auth was ready.");
@@ -145,12 +144,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentUserData.username = username;
             localStorage.setItem('chatUsername', username);
             usernameError.style.display = 'none';
-            console.log("Username valid and Auth ready, showing room selection."); // DEBUG LOG
+            console.log("Username valid and Auth ready, showing room selection.");
             showScreen('roomSelection');
         } else {
             usernameError.textContent = 'Username must be 3-12 characters long.';
             usernameError.style.display = 'block';
-            console.log("Username invalid:", usernameError.textContent); // DEBUG LOG
+            console.log("Username invalid:", usernameError.textContent);
         }
     });
 
@@ -217,15 +216,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 roomTitle.textContent = `Room: ${roomCode}`;
                 addMessage('server', `You created room ${roomCode}. Share this code with others!`);
             } else {
-                alert(`Failed to create room: ${result.message}`);
-                console.error("Error creating room via Netlify Function:", result.message);
+                // Using console.error instead of alert to avoid blocking UI
+                console.error(`Failed to create room: ${result.message}`);
+                // Use a custom modal or message display for user feedback
+                roomJoinError.textContent = `Failed to create room: ${result.message}`;
+                roomJoinError.style.display = 'block';
                 if (result.message === 'Room code already exists. Try again.') {
-                     return createChatRoom();
+                     return createChatRoom(); // Recursively try again for collision
                 }
             }
         } catch (error) {
             console.error("Error creating room (network/function call):", error);
-            alert("Failed to create room due to a network error. Please try again.");
+            // Using console.error instead of alert to avoid blocking UI
+            roomJoinError.textContent = `Failed to create room due to a network error: ${error.message}. Please try again.`;
+            roomJoinError.style.display = 'block';
         }
     }
 
@@ -266,7 +270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         } catch (error) {
             console.error("Error joining room (network/function call):", error);
-            roomJoinError.textContent = 'Failed to join room due to a network error. Please try again.';
+            roomJoinError.textContent = `Failed to join room due to a network error: ${error.message}. Please try again.`;
             roomJoinError.style.display = 'block';
         }
     }
@@ -296,7 +300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             console.log("Left room.");
         } catch (error) {
             console.error("Error leaving room:", error);
-            alert("Failed to leave room. Please try again.");
+            // Using console.error instead of alert to avoid blocking UI
         }
     }
 
