@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ledeqth - Sniper Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="sniper-game.css">
+    <link rel="icon" type="image/png" sizes="32x32" href="favicon.png">
+</head>
+<body>
+    <div id="snow-container"></div>
+
+    <main>
+        <nav>
+            <ul>
+                <li><a href="index.html" class="nav-button">Home</a></li>
+                <li><a href="projects.html" class="nav-button">Projects</a></li>
+                <li><a href="games.html" class="nav-button">Games</a></li>
+                <li><a href="chat.html" class="nav-button">Chat</a></li>
+                <li><a href="ai.html" class="nav-button">AI</a></li>
+                <li><a href="suggestions.html" class="nav-button">Suggestions</a></li>
+            </ul>
+        </nav>
+
+        <h2 class="game-title">Pixel Sniper</h2>
+        <p class="game-subtitle">Aim, shoot, and survive the pixel hunt!</p>
+
+        <div class="game-container">
+            <canvas id="gameCanvas"></canvas>
+
+            <div class="game-ui-panel">
+                <div class="game-stats">
+                    <p>Score: <span id="scoreDisplay">0</span></p>
+                    <p>Ammo: <span id="ammoDisplay">∞</span></p>
+                    <p>Wind: <span id="windDisplay">0</span></p>
+                </div>
+
+                <div id="gameStartScreen" class="game-overlay active">
+                    <h3>Welcome to Pixel Sniper!</h3>
+                    <p>Eliminate targets with your pixel-perfect aim.</p>
+                    <p>Watch out for bullet drop and wind!</p>
+                    <button id="startButton" class="game-button">Start Game</button>
+                    <p class="controls-info">Controls: Mouse to aim, Click to shoot.</p>
+                </div>
+
+                <div id="gameOverScreen" class="game-overlay">
+                    <h3>Game Over!</h3>
+                    <p>Final Score: <span id="finalScoreDisplay">0</span></p>
+                    <button id="restartButton" class="game-button">Play Again</button>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer>
+        <p>&copy; 2025 Ledeqth</p>
+    </footer>
+
+    <script src="snow.js"></script>
+    <script src="sniper-game.js"></script>
+</body>
+</html>
+
