@@ -1,20 +1,16 @@
 // netlify/functions/chat-admin-handler.js
 const { initializeApp, getApps } = require('firebase-admin/app');
 const { getFirestore, FieldValue } = require('firebase-admin/firestore');
-const { credential } = require('firebase-admin'); // Import credential
+const { credential } = require('firebase-admin');
 const Pusher = require('pusher');
 
-// Initialize Firebase Admin SDK if not already initialized
 if (!getApps().length) {
-    // Initialize from environment variable
     initializeApp({
         credential: credential.cert(JSON.parse(process.env.FIREBASE_ADMIN_CONFIG_JSON))
     });
 }
-
 const db = getFirestore();
 
-// Initialize Pusher (ensure these are set as Netlify Environment Variables)
 const pusher = new Pusher({
     appId: process.env.PUSHER_APP_ID,
     key: process.env.PUSHER_APP_KEY,
@@ -27,10 +23,9 @@ exports.handler = async function(event, context) {
     if (event.httpMethod !== 'POST') {
         return { statusCode: 405, body: 'Method Not Allowed' };
     }
-
     try {
         const { userId, username, roomCode, command, args } = JSON.parse(event.body);
-        const appId = process.env.__APP_ID || 'default-app-id'; // Use __APP_ID from Netlify context if available
+        const appId = process.env.__APP_ID || 'default-app-id';
 
         if (!userId || !username || !roomCode || !command || !appId) {
             return { statusCode: 400, body: JSON.stringify({ message: 'Missing required parameters.' }) };
@@ -42,17 +37,14 @@ exports.handler = async function(event, context) {
         if (!roomDoc.exists) {
             return { statusCode: 404, body: JSON.stringify({ message: 'Room not found.' }) };
         }
-
         const roomData = roomDoc.data();
-
-        // --- Owner Authorization Check ---
         if (roomData.ownerId !== userId) {
             return { statusCode: 403, body: JSON.stringify({ message: 'You are not the room owner.' }) };
         }
 
         let adminMessage = '';
-        let targetUserId = null; // For kick/ban
-        let targetUsername = null; // For kick/ban messages
+        let targetUserId = null;
+        let targetUsername = null;
 
         switch (command) {
             case '!kick':
@@ -63,9 +55,7 @@ exports.handler = async function(event, context) {
                     if (memberToKick.userId === userId) {
                          return { statusCode: 400, body: JSON.stringify({ message: 'Cannot kick yourself.' }) };
                     }
-                    await roomRef.update({
-                        members: FieldValue.arrayRemove(memberToKick)
-                    });
+                    await roomRef.update({ members: FieldValue.arrayRemove(memberToKick) });
                     adminMessage = `${targetUsername} has been kicked from the room.`;
                     targetUserId = memberToKick.userId;
                     await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'kick', message: adminMessage, targetUserId: targetUserId });
@@ -73,7 +63,6 @@ exports.handler = async function(event, context) {
                     return { statusCode: 404, body: JSON.stringify({ message: `User '${targetUsername}' not found in room.` }) };
                 }
                 break;
-
             case '!ban':
                 if (args.length === 0) return { statusCode: 400, body: JSON.stringify({ message: 'Usage: !ban <username>' }) };
                 targetUsername = args.join(' ');
@@ -93,47 +82,32 @@ exports.handler = async function(event, context) {
                     return { statusCode: 404, body: JSON.stringify({ message: `User '${targetUsername}' not found in room.` }) };
                 }
                 break;
-
             case '!unban':
                 if (args.length === 0) return { statusCode: 400, body: JSON.stringify({ message: 'Usage: !unban <username>' }) };
                 targetUsername = args.join(' ');
-                // To unban by username, we need to know the userId of the banned person.
-                // This assumes we have a way to map the username to the userId.
-                // A robust system would require storing banned usernames alongside UIDs or fetching all users.
-                // For simplicity here, we'll try to find a matching user who is currently banned.
                 const membersWhoWereBanned = roomData.members.filter(m => roomData.bannedUsers.includes(m.userId));
                 const userToUnban = membersWhoWereBanned.find(m => m.username.toLowerCase() === targetUsername.toLowerCase());
 
                 if (userToUnban) {
-                    await roomRef.update({
-                        bannedUsers: FieldValue.arrayRemove(userToUnban.userId)
-                    });
+                    await roomRef.update({ bannedUsers: FieldValue.arrayRemove(userToUnban.userId) });
                     adminMessage = `${userToUnban.username} has been unbanned.`;
                     await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'unban', message: adminMessage });
                 } else {
-                    // Fallback: If not found among currently banned members, try to remove by username
-                    // This is less reliable as userId is the unique identifier for banned users.
-                    // If you strictly want to unban by a name not currently in the room,
-                    // you'd need a more complex way to resolve username to banned userId.
                     return { statusCode: 404, body: JSON.stringify({ message: `User '${targetUsername}' not found in banned list or not correctly identified.` }) };
                 }
                 break;
-
             case '!kickall':
-                const membersToKick = roomData.members.filter(m => m.userId !== userId); // Don't kick owner
+                const membersToKick = roomData.members.filter(m => m.userId !== userId);
                 if (membersToKick.length > 0) {
-                    await roomRef.update({
-                        members: FieldValue.arrayRemove(...membersToKick)
-                    });
+                    await roomRef.update({ members: FieldValue.arrayRemove(...membersToKick) });
                     adminMessage = 'All members (except owner) have been kicked.';
                     await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'kickall', message: adminMessage });
                 } else {
                     return { statusCode: 400, body: JSON.stringify({ message: 'No other members to kick.' }) };
                 }
                 break;
-
             case '!banall':
-                const membersToBan = roomData.members.filter(m => m.userId !== userId); // Don't ban owner
+                const membersToBan = roomData.members.filter(m => m.userId !== userId);
                 const userIdsToBan = membersToBan.map(m => m.userId);
                 if (userIdsToBan.length > 0) {
                     await roomRef.update({
@@ -146,7 +120,6 @@ exports.handler = async function(event, context) {
                     return { statusCode: 400, body: JSON.stringify({ message: 'No other members to ban.' }) };
                 }
                 break;
-
             case '!lockroom':
                 if (roomData.isLocked) {
                     return { statusCode: 400, body: JSON.stringify({ message: 'Room is already locked.' }) };
@@ -155,7 +128,6 @@ exports.handler = async function(event, context) {
                 adminMessage = 'Room has been locked. Only whitelisted users can join.';
                 await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'lockroom', message: adminMessage });
                 break;
-
             case '!unlockroom':
                 if (!roomData.isLocked) {
                     return { statusCode: 400, body: JSON.stringify({ message: 'Room is not locked.' }) };
@@ -164,40 +136,31 @@ exports.handler = async function(event, context) {
                 adminMessage = 'Room has been unlocked. Anyone can join.';
                 await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'unlockroom', message: adminMessage });
                 break;
-
             case '!whitelist':
                 if (args.length === 0) return { statusCode: 400, body: JSON.stringify({ message: 'Usage: !whitelist on/off/on add <username>/on remove <username>' }) };
                 const whitelistAction = args[0].toLowerCase();
                 if (whitelistAction === 'on') {
-                    if (args.length === 1) { // !whitelist on
-                        // This command just turns "on" whitelist mode, implying room is locked.
-                        // Actual joining logic in join-room.js will check whitelistedUsers array.
-                        // No separate isWhitelisted flag in DB, just checking if isLocked is true AND whitelist has users.
+                    if (args.length === 1) {
                         adminMessage = 'Whitelist is set to ON. Make sure room is locked for it to take effect.';
                         await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'whitelist_status', message: adminMessage });
-                    } else if (args[1].toLowerCase() === 'add') { // !whitelist on add <username>
+                    } else if (args[1].toLowerCase() === 'add') {
                         const userToAddName = args.slice(2).join(' ');
                         const userToAdd = roomData.members.find(m => m.username.toLowerCase() === userToAddName.toLowerCase());
                         if (userToAdd) {
                             if (roomData.whitelistedUsers && roomData.whitelistedUsers.includes(userToAdd.userId)) {
                                 return { statusCode: 400, body: JSON.stringify({ message: `'${userToAddName}' is already whitelisted.` }) };
                             }
-                            await roomRef.update({
-                                whitelistedUsers: FieldValue.arrayUnion(userToAdd.userId)
-                            });
+                            await roomRef.update({ whitelistedUsers: FieldValue.arrayUnion(userToAdd.userId) });
                             adminMessage = `${userToAddName} added to whitelist.`;
                             await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'whitelist_add', message: adminMessage });
                         } else {
                             return { statusCode: 404, body: JSON.stringify({ message: `User '${userToAddName}' not found in room to whitelist.` }) };
                         }
-                    } else if (args[1].toLowerCase() === 'remove') { // !whitelist on remove <username>
+                    } else if (args[1].toLowerCase() === 'remove') {
                         const userToRemoveName = args.slice(2).join(' ');
-                        // Find user ID from members or assume username maps to ID
                         const userToRemove = roomData.members.find(m => m.username.toLowerCase() === userToRemoveName.toLowerCase());
                         if (userToRemove && roomData.whitelistedUsers && roomData.whitelistedUsers.includes(userToRemove.userId)) {
-                            await roomRef.update({
-                                whitelistedUsers: FieldValue.arrayRemove(userToRemove.userId)
-                            });
+                            await roomRef.update({ whitelistedUsers: FieldValue.arrayRemove(userToRemove.userId) });
                             adminMessage = `${userToRemoveName} removed from whitelist.`;
                             await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'whitelist_remove', message: adminMessage });
                         } else {
@@ -206,29 +169,19 @@ exports.handler = async function(event, context) {
                     } else {
                         return { statusCode: 400, body: JSON.stringify({ message: 'Usage: !whitelist on/off/on add <username>/on remove <username>' }) };
                     }
-                } else if (whitelistAction === 'off') { // !whitelist off
-                    // This command just turns "off" whitelist mode (removes effect, room no longer restricted by whitelist unless locked)
+                } else if (whitelistAction === 'off') {
                     adminMessage = 'Whitelist is now OFF. Room access determined by lock status.';
                     await pusher.trigger(`private-${roomCode}`, 'client-admin-message', { action: 'whitelist_status', message: adminMessage });
                 } else {
                     return { statusCode: 400, body: JSON.stringify({ message: 'Unknown whitelist action.' }) };
                 }
                 break;
-
             default:
                 return { statusCode: 400, body: JSON.stringify({ message: `Unknown command: ${command}` }) };
         }
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({ message: adminMessage })
-        };
-
+        return { statusCode: 200, body: JSON.stringify({ message: adminMessage }) };
     } catch (error) {
         console.error('Error handling admin command:', error);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: `Server error: ${error.message}` })
-        };
+        return { statusCode: 500, body: JSON.stringify({ message: `Server error: ${error.message}` }) };
     }
 };
