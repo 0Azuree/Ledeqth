@@ -107,9 +107,17 @@
         import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot, collection, query, where, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Safely get Firebase config from environment, defaulting to an empty object if not defined
-        // This prevents "ReferenceError: __firebase_config is not defined" if the variable is not injected.
-        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        // Safely get Firebase config from environment, defaulting to an empty object if not defined or null
+        // This addresses "ReferenceError: __firebase_config is not defined" and parsing errors.
+        let firebaseConfig = {};
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try {
+                firebaseConfig = JSON.parse(__firebase_config);
+            } catch (e) {
+                console.error("Error parsing __firebase_config:", e);
+                // Fallback to empty config if parsing fails
+            }
+        }
         console.log("Firebase Config:", firebaseConfig); // Debugging: check what config is loaded
 
         // Initialize Firebase App and services
@@ -139,6 +147,8 @@
         window.onAuthStateChanged = onAuthStateChanged;
 
         // Start Firebase authentication process
+        // This listener ensures that a user is authenticated (anonymously or via token)
+        // before chat.js attempts Firestore operations.
         window.onAuthStateChanged(window.auth, async (user) => {
             if (!user) {
                 console.log("onAuthStateChanged: No user, attempting sign-in...");
