@@ -40,10 +40,12 @@ exports.handler = async function(event, context) {
                 body: JSON.stringify({ message: 'This room is locked and you are not whitelisted.' })
             };
         }
+        // Check if user is already a member
         const isMember = roomData.members.some(m => m.userId === userId);
         if (!isMember) {
+            // ADDED: joinTime for new members
             await roomRef.update({
-                members: FieldValue.arrayUnion({ userId: userId, username: username })
+                members: FieldValue.arrayUnion({ userId: userId, username: username, joinTime: Date.now() })
             });
         }
         return {
