@@ -1,203 +1,193 @@
 /* General Body and Layout */
 body {
-    background-color: #1a1a1a; /* Dark background */
-    color: #e0e0e0; /* Light text color */
-    font-family: 'Inter', sans-serif; /* Recommended clean font */
+    background-color: #1a1a1a; /* Dark background as requested */
+    color: #e0e0e0; /* Light text color for readability */
+    font-family: 'Inter', sans-serif; /* A clean, modern font */
     margin: 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    min-height: 100vh; /* Ensures footer sticks to bottom on short content pages */
-    line-height: 1.6; /* Improved readability */
+    min-height: 100vh; /* Ensures footer sticks to the bottom of the viewport */
+    line-height: 1.6; /* Improved line spacing for readability */
 }
 
-/* Snow Container (if you have a snow.js script) */
+/* Snow Container - Ensures the snow effect is visible and behind content */
 #snow-container {
-    position: fixed;
+    position: fixed; /* Fixed position relative to the viewport */
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allows clicks to pass through */
-    z-index: -1; /* Ensures snow is behind other content */
+    pointer-events: none; /* Allows mouse events to pass through to elements beneath */
+    z-index: -1; /* Ensures snow is visually behind other content */
+    overflow: hidden; /* Prevent scrollbars if snow particles go slightly out of bounds */
 }
 
-/* Main Content Area */
+/* Main Content Area Styling */
 main {
-    flex: 1; /* Allows main content to grow and push footer down */
+    flex: 1; /* Allows the main content area to expand and push the footer down */
     display: flex;
     flex-direction: column;
-    align-items: center; /* Center content horizontally */
-    padding: 20px;
-    box-sizing: border-box; /* Include padding in element's total width/height */
-    max-width: 1200px; /* Max width for central content */
-    margin: 0 auto; /* Center the main content block */
-    width: 100%; /* Ensure it takes full width up to max-width */
+    align-items: center; /* Centers content horizontally within the main area */
+    padding: 20px; /* Padding around the main content */
+    box-sizing: border-box; /* Include padding in the element's total width/height */
+    max-width: 1200px; /* Maximum width for the central content block */
+    margin: 0 auto; /* Centers the main content block on the page */
+    width: 100%; /* Ensures it takes full width up to max-width */
 }
 
+/* Heading (h2) Styling */
 h2 {
     font-size: 2.5em;
     color: #f0f0f0; /* Slightly lighter white for headings */
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Subtle text shadow */
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Subtle text shadow for depth */
     margin-bottom: 10px;
     text-align: center;
 }
 
-main > p { /* Styles for the main introductory paragraph */
+/* Main Introductory Paragraph Styling */
+main > p {
     font-size: 1.1em;
     color: #bbb;
     margin-top: 0;
     margin-bottom: 30px;
     text-align: center;
-    max-width: 600px; /* Limit width for readability */
+    max-width: 600px; /* Limits width for better readability on long paragraphs */
 }
 
-/* Navigation Bar */
+/* Navigation Bar Styling */
 nav {
-    background-color: #2a2a2a; /* Slightly lighter dark background for nav */
+    background-color: #2a2a2a; /* Dark background for the navigation bar */
     padding: 15px 0;
-    border-bottom: 1px solid #444; /* Subtle separator */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    border-bottom: 1px solid #444; /* Subtle separator line at the bottom */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Soft shadow below the nav bar */
     width: 100%;
 }
 
 nav ul {
-    list-style: none;
+    list-style: none; /* Removes bullet points from list items */
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: center;
-    gap: 25px; /* Space between nav items */
-    flex-wrap: wrap; /* Allow nav items to wrap on small screens */
+    display: flex; /* Uses flexbox for horizontal layout of nav items */
+    justify-content: center; /* Centers nav items horizontally */
+    gap: 25px; /* Space between each navigation button */
+    flex-wrap: wrap; /* Allows nav items to wrap to the next line on smaller screens */
 }
 
+/* Navigation Button Styling (general nav-button style) */
 .nav-button {
     display: inline-block;
-    background-color: transparent; /* No background for nav buttons */
-    color: #e0e0e0;
+    background-color: transparent; /* No background by default */
+    color: #e0e0e0; /* Light text color */
     padding: 10px 15px;
-    border: 2px solid transparent; /* Transparent border for hover effect */
-    border-radius: 5px;
-    text-decoration: none;
+    border: 2px solid transparent; /* Transparent border for a subtle hover effect */
+    border-radius: 5px; /* Slightly rounded corners */
+    text-decoration: none; /* Removes underline from links */
     font-size: 1.1em;
     font-weight: 500;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease; /* Smooth transition for hover effects */
 }
 
 .nav-button:hover {
     background-color: rgba(76, 175, 80, 0.1); /* Light green tint on hover */
     border-color: #4CAF50; /* Green border on hover */
-    color: #4CAF50;
-    transform: translateY(-2px);
+    color: #4CAF50; /* Green text on hover */
+    transform: translateY(-2px); /* Slight lift effect on hover */
 }
 
 .nav-button:active {
-    background-color: rgba(76, 175, 80, 0.2);
-    transform: translateY(0);
+    background-color: rgba(76, 175, 80, 0.2); /* Slightly darker green when clicked */
+    transform: translateY(0); /* Returns to original position */
 }
 
-/* Footer */
+/* Footer Styling */
 footer {
     background-color: #2a2a2a;
     padding: 15px;
     text-align: center;
     color: #888;
     border-top: 1px solid #444;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.3);
+    box-shadow: 0 -2px 5px rgba(0,0,0,0.3); /* Soft shadow above the footer */
     width: 100%;
 }
 
-/* --- Card Grids for Games and Projects --- */
-.games-grid,
-.projects-grid {
-    display: grid;
-    /* Responsive grid: 2 columns on larger screens, 1 on smaller */
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Adjusted minmax for better fit */
-    gap: 30px; /* Space between cards */
+/* --- Specific Item Styling for Games and Projects Pages --- */
+/* These styles apply to the container div for each game/project entry */
+.game-item,
+.project-item {
+    background-color: #2c2c2c; /* Dark background for each item/card as in your photo */
+    border-radius: 8px; /* Rounded corners for the item block */
+    padding: 25px; /* Internal spacing within each item */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
+    color: #e0e0e0; /* Light text color within the item */
+    margin-bottom: 20px; /* Space between individual items */
     width: 100%;
-    max-width: 900px; /* Max width for the grid container */
-    margin: 20px auto; /* Center the grid */
+    max-width: 700px; /* Maximum width for each item for better readability */
+    box-sizing: border-box; /* Include padding in the element's total width */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transitions for hover */
 }
 
-/* --- Individual Game/Project Cards --- */
-.game-card,
-.project-card {
-    background-color: #2c2c2c; /* Dark background for cards as in image */
-    border-radius: 12px; /* More rounded corners */
-    padding: 30px; /* More internal spacing */
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Deeper shadow */
-    color: #e0e0e0; /* Light text color */
-    display: flex; /* Use flexbox for internal layout */
-    flex-direction: column; /* Stack children vertically */
-    justify-content: space-between; /* Pushes button to bottom */
-    min-height: 200px; /* Ensure consistent minimum height */
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effects */
+.game-item:hover,
+.project-item:hover {
+    transform: translateY(-3px); /* Slight lift effect on hover */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4); /* Slightly larger shadow on hover */
 }
 
-.game-card:hover,
-.project-card:hover {
-    transform: translateY(-5px); /* Lift effect on hover */
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5); /* Enhanced shadow on hover */
-}
-
-.game-card h3,
-.project-card h3 {
-    color: #007bff; /* Blue for titles as in your image */
-    font-size: 1.8em; /* Slightly larger title */
+/* Heading (h3) within Game/Project Items */
+.game-item h3,
+.project-item h3 {
+    color: #007bff; /* Blue color for titles, matching your reference image */
+    font-size: 1.6em; /* Font size for item titles */
     margin-top: 0;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
-.game-card p,
-.project-card p {
-    font-size: 1.1em;
-    line-height: 1.6;
-    margin-bottom: 20px; /* More space between text and button */
-    flex-grow: 1; /* Allows description to take available space */
+/* Paragraph (p) within Game/Project Items */
+.game-item p,
+.project-item p {
+    font-size: 1em;
+    line-height: 1.5;
+    margin-bottom: 15px; /* Space between text and its associated button */
 }
 
-/* --- Buttons within Cards --- */
-.game-button,
-.project-button {
-    display: inline-block; /* Or 'block' if you want it full width within the card */
-    background-color: #007bff; /* Blue button as in your image */
-    color: white;
-    padding: 12px 25px; /* Larger padding for a more prominent button */
-    border: none;
-    border-radius: 8px; /* More rounded corners for buttons */
-    text-decoration: none; /* Remove underline */
-    font-size: 1.1em; /* Slightly larger font size */
-    font-weight: bold; /* Make text bold */
-    cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    align-self: flex-start; /* Align button to the start (left) within the flex container */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Button shadow */
-    text-transform: uppercase; /* Make button text uppercase */
-    letter-spacing: 0.5px; /* Add slight letter spacing */
+/* --- Link Buttons within Game/Project Items --- */
+/* These styles apply to the "Play Now", "Download", etc. buttons */
+.game-link-button,
+.project-link-button {
+    display: inline-block; /* Allows padding and horizontal alignment */
+    background-color: #007bff; /* Blue button color, matching your reference image */
+    color: white; /* White text on the button */
+    padding: 10px 20px; /* Padding inside the button */
+    border: none; /* No border */
+    border-radius: 5px; /* Rounded corners for the button */
+    text-decoration: none; /* Removes underline from the link */
+    font-size: 1em;
+    cursor: pointer; /* Indicates it's clickable */
+    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth hover effects */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Subtle shadow for the button */
 }
 
-.game-button:hover,
-.project-button:hover {
+.game-link-button:hover,
+.project-link-button:hover {
     background-color: #0056b3; /* Darker blue on hover */
-    transform: translateY(-2px); /* More pronounced lift effect */
-    box-shadow: 0 6px 12px rgba(0,0,0,0.4); /* Enhanced shadow on hover */
+    transform: translateY(-1px); /* Slight lift effect on hover */
 }
 
-.game-button:active,
-.project-button:active {
-    background-color: #004085;
-    transform: translateY(0);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+.game-link-button:active,
+.project-link-button:active {
+    background-color: #004085; /* Even darker blue when clicked */
+    transform: translateY(0); /* Returns to original position */
+    box-shadow: none; /* Removes shadow when clicked */
 }
 
 /* --- Responsive Adjustments --- */
 @media (max-width: 768px) {
     main {
-        padding: 15px;
+        padding: 15px; /* Adjust main padding for medium screens */
     }
 
     h2 {
-        font-size: 2em;
+        font-size: 2em; /* Smaller heading on medium screens */
     }
 
     main > p {
@@ -206,7 +196,7 @@ footer {
     }
 
     nav ul {
-        gap: 15px;
+        gap: 15px; /* Smaller gap in navigation */
     }
 
     .nav-button {
@@ -214,58 +204,47 @@ footer {
         font-size: 1em;
     }
 
-    .games-grid,
-    .projects-grid {
-        grid-template-columns: 1fr; /* Stack cards on smaller screens */
-        gap: 25px;
-        padding: 0 10px; /* Add some horizontal padding */
+    .game-item,
+    .project-item {
+        padding: 20px;
+        margin-bottom: 15px; /* Smaller space between items */
     }
 
-    .game-card,
-    .project-card {
-        padding: 25px;
-        min-height: 180px;
+    .game-item h3,
+    .project-item h3 {
+        font-size: 1.4em;
     }
 
-    .game-card h3,
-    .project-card h3 {
-        font-size: 1.6em;
-    }
-
-    .game-card p,
-    .project-card p {
+    .game-item p,
+    .project-item p {
         font-size: 0.95em;
     }
 
-    .game-button,
-    .project-button {
-        padding: 10px 20px;
-        font-size: 0.95em;
+    .game-link-button,
+    .project-link-button {
+        padding: 8px 18px;
+        font-size: 0.9em;
     }
 }
 
 @media (max-width: 480px) {
     main {
-        padding: 10px;
+        padding: 10px; /* Smallest padding for very small screens */
     }
     h2 {
         font-size: 1.8em;
     }
     nav ul {
-        flex-direction: column; /* Stack nav buttons vertically */
+        flex-direction: column; /* Stack navigation buttons vertically on small screens */
         gap: 10px;
     }
     .nav-button {
-        width: calc(100% - 20px); /* Full width minus padding */
+        width: calc(100% - 20px); /* Full width minus padding for nav buttons */
         text-align: center;
     }
-    .games-grid,
-    .projects-grid {
-        gap: 20px;
-    }
-    .game-card,
-    .project-card {
-        padding: 20px;
-        min-height: unset; /* Allow height to adjust */
+    .game-item,
+    .project-item {
+        padding: 15px;
+        margin-bottom: 10px;
     }
 }
