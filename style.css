@@ -1,250 +1,924 @@
-/* General Body and Layout */
-body {
-    background-color: #1a1a1a; /* Dark background as requested */
-    color: #e0e0e0; /* Light text color for readability */
-    font-family: 'Inter', sans-serif; /* A clean, modern font */
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh; /* Ensures footer sticks to the bottom of the viewport */
-    line-height: 1.6; /* Improved line spacing for readability */
+/* Add at the very top for smooth scrolling on internal links */
+html {
+    scroll-behavior: smooth;
 }
 
-/* Snow Container - Ensures the snow effect is visible and behind content */
+/* Basic Reset & Body Styling */
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #000000; /* OLED Black */
+    color: #FFFFFF;
+    overflow-x: hidden; /* Prevent horizontal scrollbar from snowflakes */
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: relative; /* Needed for absolute/fixed children */
+    /* Subtle Background Gradient */
+    background-color: #000000; /* Fallback */
+    background-image: radial-gradient(circle at top left, #1a1a1a 0%, #000000 60%); /* Subtle dark gradient */
+    background-attachment: fixed; /* Keep gradient fixed when scrolling */
+}
+
+/* Snowfall Container */
 #snow-container {
-    position: fixed; /* Fixed position relative to the viewport */
+    position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    pointer-events: none; /* Allows mouse events to pass through to elements beneath */
-    z-index: -1; /* Ensures snow is visually behind other content */
-    overflow: hidden; /* Prevent scrollbars if snow particles go slightly out of bounds */
+    pointer-events: none;
+    overflow: hidden;
+    display: block;
 }
+
+/* Individual Snowflake Style */
+.snowflake {
+    position: absolute;
+    top: -10px;
+    background-color: white;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: snowfall linear infinite;
+}
+
+/* Snowfall Animation */
+@keyframes snowfall {
+    0% {
+        transform: translateY(0) translateX(0) rotate(0deg);
+        opacity: 0.8;
+    }
+    100% {
+        transform: translateY(105vh) translateX(15px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Fade-in Animation Keyframes */
+@keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Item Entry Animation Keyframes */
+@keyframes itemEntry {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
 
 /* Main Content Area Styling */
 main {
-    flex: 1; /* Allows the main content area to expand and push the footer down */
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
-    align-items: center; /* Centers content horizontally within the main area */
-    padding: 20px; /* Padding around the main content */
-    box-sizing: border-box; /* Include padding in the element's total width/height */
-    max-width: 1200px; /* Maximum width for the central content block */
-    margin: 0 auto; /* Centers the main content block on the page */
-    width: 100%; /* Ensures it takes full width up to max-width */
+    align-items: center;
+    padding: 20px;
+    z-index: 1;
+    position: relative;
+    /* Fade-in Animation */
+    opacity: 0; /* Start invisible */
+    animation: fadeIn 1s ease-out forwards;
+    animation-delay: 0.5s;
 }
 
-/* Heading (h2) Styling */
-h2 {
-    font-size: 2.5em;
-    color: #f0f0f0; /* Slightly lighter white for headings */
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* Subtle text shadow for depth */
-    margin-bottom: 10px;
+/* Specific styling for the home page main element */
+main.home-main {
+    justify-content: center;
+    align-items: center;
     text-align: center;
 }
 
-/* Main Introductory Paragraph Styling */
-main > p {
-    font-size: 1.1em;
-    color: #bbb;
-    margin-top: 0;
-    margin-bottom: 30px;
+/* Wrapper Div for Centered Content on Homepage */
+.content-block {
     text-align: center;
-    max-width: 600px; /* Limits width for better readability on long paragraphs */
+    max-width: 90%;
 }
 
-/* Navigation Bar Styling */
+/* Giant Title Styling */
+.main-title {
+    font-size: 5rem;
+    font-weight: bold;
+    margin: 0 0 15px 0;
+    line-height: 1.2;
+    color: #FFFFFF;
+    text-shadow:
+        -1px -1px 0 #333,
+         1px -1px 0 #333,
+        -1px  1px 0 #333,
+         1px  1px 0 #333;
+}
+
+/* Description Styling */
+.description {
+    font-size: 1.2em;
+    color: #bbbbbb;
+    max-width: 650px;
+    line-height: 1.6;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 40px;
+}
+
+/* Last Updated Text Styling */
+.last-updated {
+    font-size: 0.9em;
+    color: #888; /* Dimmer color */
+    margin-bottom: 10px; /* Space below it */
+}
+
+/* Navigation Styling */
 nav {
-    background-color: #2a2a2a; /* Dark background for the navigation bar */
-    padding: 15px 0;
-    border-bottom: 1px solid #444; /* Subtle separator line at the bottom */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3); /* Soft shadow below the nav bar */
     width: 100%;
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+main:not(.home-main) nav {
+    margin-top: 20px;
 }
 
 nav ul {
-    list-style: none; /* Removes bullet points from list items */
-    margin: 0;
+    list-style: none;
     padding: 0;
-    display: flex; /* Uses flexbox for horizontal layout of nav items */
-    justify-content: center; /* Centers nav items horizontally */
-    gap: 25px; /* Space between each navigation button */
-    flex-wrap: wrap; /* Allows nav items to wrap to the next line on smaller screens */
+    margin: 0;
+    display: inline-flex;
+    flex-wrap: wrap; /* Added for responsiveness */
+    gap: 20px;
+    justify-content: center;
 }
 
-/* Navigation Button Styling (general nav-button style) */
-.nav-button {
+nav li {
     display: inline-block;
-    background-color: transparent; /* No background by default */
-    color: #e0e0e0; /* Light text color */
-    padding: 10px 15px;
-    border: 2px solid transparent; /* Transparent border for a subtle hover effect */
-    border-radius: 5px; /* Slightly rounded corners */
-    text-decoration: none; /* Removes underline from links */
+}
+
+.nav-button {
+    text-decoration: none;
+    padding: 10px 25px;
+    background-color: #1c1c1c; /* Dark background */
+    color: #FFFFFF; /* White text */
+    border: none;
+    border-radius: 5px;
     font-size: 1.1em;
     font-weight: 500;
-    transition: all 0.3s ease; /* Smooth transition for hover effects */
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
 .nav-button:hover {
-    background-color: rgba(76, 175, 80, 0.1); /* Light green tint on hover */
-    border-color: #4CAF50; /* Green border on hover */
-    color: #4CAF50; /* Green text on hover */
-    transform: translateY(-2px); /* Slight lift effect on hover */
+    background-color: #3a3a3a;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.5); /* White glow effect */
 }
 
 .nav-button:active {
-    background-color: rgba(76, 175, 80, 0.2); /* Slightly darker green when clicked */
-    transform: translateY(0); /* Returns to original position */
+    transform: scale(0.97);
 }
 
-/* Footer Styling */
-footer {
-    background-color: #2a2a2a;
-    padding: 15px;
-    text-align: center;
-    color: #888;
-    border-top: 1px solid #444;
-    box-shadow: 0 -2px 5px rgba(0,0,0,0.3); /* Soft shadow above the footer */
-    width: 100%;
+/* Styling for content on Projects/Games/Suggestions pages */
+main h2 {
+    font-size: 2.5em;
+    margin-bottom: 20px;
+    color: #eee;
 }
 
-/* --- Specific Item Styling for Games and Projects Pages --- */
-/* These styles apply to the container div for each game/project entry */
+main p:not(.description):not(.last-updated) { /* Exclude description and last-updated from this rule */
+    font-size: 1.1em;
+    color: #ccc;
+    max-width: 800px;
+    margin-bottom: 30px;
+    line-height: 1.6;
+}
+
+/* Project/Game item styling */
 .game-item,
 .project-item {
-    background-color: #2c2c2c; /* Dark background for each item/card as in your photo */
-    border-radius: 8px; /* Rounded corners for the item block */
-    padding: 25px; /* Internal spacing within each item */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Subtle shadow for depth */
-    color: #e0e0e0; /* Light text color within the item */
-    margin-bottom: 20px; /* Space between individual items */
-    width: 100%;
-    max-width: 700px; /* Maximum width for each item for better readability */
-    box-sizing: border-box; /* Include padding in the element's total width */
-    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth transitions for hover */
+    background-color: #1a1a1a;
+    padding: 25px;
+    margin-bottom: 25px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    width: 85%;
+    max-width: 750px;
+    text-align: left;
+    /* Transition for hover effects */
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
+    /* Item Entry Animation */
+    opacity: 0; /* Start hidden */
+    animation: itemEntry 0.6s ease-out forwards;
+    /* You can add animation-delay here or use JS to trigger on scroll */
 }
 
+/* Hover effects for Project/Game items */
 .game-item:hover,
 .project-item:hover {
-    transform: translateY(-3px); /* Slight lift effect on hover */
-    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4); /* Slightly larger shadow on hover */
+    transform: translateY(-8px) scale(1.02); /* Made lift slightly more pronounced */
+    box-shadow: 0 0 15px rgba(0, 170, 255, 0.6); /* Soft glow using the accent color */
+    border-color: #00aaff;
 }
 
-/* Heading (h3) within Game/Project Items */
+
 .game-item h3,
 .project-item h3 {
-    color: #007bff; /* Blue color for titles, matching your reference image */
-    font-size: 1.6em; /* Font size for item titles */
     margin-top: 0;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    color: #00aaff;
 }
 
-/* Paragraph (p) within Game/Project Items */
-.game-item p,
-.project-item p {
-    font-size: 1em;
-    line-height: 1.5;
-    margin-bottom: 15px; /* Space between text and its associated button */
-}
-
-/* --- Link Buttons within Game/Project Items --- */
-/* These styles apply to the "Play Now", "Download", etc. buttons */
+/* Style for links inside game/project items to look like buttons */
 .game-link-button,
 .project-link-button {
-    display: inline-block; /* Allows padding and horizontal alignment */
-    background-color: #007bff; /* Blue button color, matching your reference image */
-    color: white; /* White text on the button */
-    padding: 10px 20px; /* Padding inside the button */
-    border: none; /* No border */
-    border-radius: 5px; /* Rounded corners for the button */
-    text-decoration: none; /* Removes underline from the link */
-    font-size: 1em;
-    cursor: pointer; /* Indicates it's clickable */
-    transition: background-color 0.3s ease, transform 0.2s ease; /* Smooth hover effects */
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Subtle shadow for the button */
+    display: inline-block;
+    padding: 8px 15px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border: none;
+    border-radius: 4px;
+    margin-top: 10px;
+    /* Update the transition rule */
+    transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.1s ease;
+    font-weight: 500;
 }
 
 .game-link-button:hover,
 .project-link-button:hover {
-    background-color: #0056b3; /* Darker blue on hover */
-    transform: translateY(-1px); /* Slight lift effect on hover */
+    background-color: #0056b3;
 }
 
+/* Button pressing animation (active state) */
 .game-link-button:active,
 .project-link-button:active {
-    background-color: #004085; /* Even darker blue when clicked */
-    transform: translateY(0); /* Returns to original position */
-    box-shadow: none; /* Removes shadow when clicked */
+    transform: translateY(2px); /* Push down slightly */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5) inset; /* Add a subtle inner shadow */
+    background-color: #004080; /* A slightly darker blue */
 }
 
-/* --- Responsive Adjustments --- */
+
+/* Optional Footer Styling */
+footer {
+    text-align: center;
+    padding: 15px;
+    margin-top: auto;
+    background-color: #111111;
+    border-top: 1px solid #333;
+    color: #888;
+    font-size: 0.9em;
+    position: relative;
+    z-index: 1;
+}
+
+/* Google Form Container Styling */
+.google-form-container {
+    width: 90%;
+    max-width: 700px;
+    margin-top: 20px;
+    margin-bottom: 30px;
+    background-color: #111;
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+}
+
+.google-form-container iframe {
+    display: block;
+    width: 100%;
+    min-height: 600px;
+    border: none;
+    border-radius: 3px;
+}
+
+
+/* --- Styles for AI Page --- */
+
+.ai-container {
+    background-color: #1a1a1a; /* Dark background */
+    padding: 25px;
+    margin-top: 20px;
+    margin-bottom: 25px;
+    border-radius: 10px; /* Rounded corners for the main container */
+    border: 1px solid #333;
+    width: 90%;
+    max-width: 800px;
+    display: flex;
+    flex-direction: column; /* Stack response above input */
+    align-items: center;
+    min-height: 500px;
+    /* Item Entry Animation */
+    opacity: 0; /* Start hidden */
+    animation: itemEntry 0.6s ease-out forwards;
+    gap: 20px; /* Space between sections */
+}
+
+/* AI Model Selection Dropdown Styles */
+.ai-model-selection {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #eee;
+    font-size: 1.1em;
+}
+
+.ai-model-selection label {
+    font-weight: bold;
+}
+
+.ai-select {
+    padding: 8px 12px;
+    border: 1px solid #555;
+    border-radius: 5px;
+    background-color: #333;
+    color: #eee;
+    font-size: 1em;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    -webkit-appearance: none; /* Remove default dropdown arrow for custom styling */
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="%23eee"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+}
+
+.ai-select:hover {
+    border-color: #00aaff;
+}
+
+.ai-select:focus {
+    border-color: #00aaff;
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
+}
+
+
+/* Main Interaction Area (Response + Input) */
+.ai-interaction-area {
+    flex-grow: 1; /* Allow interaction area to take remaining space */
+    display: flex;
+    flex-direction: column; /* Stack preview, response, and input */
+    gap: 15px; /* Space between preview, response, and input */
+    width: 100%; /* Take full width within the container */
+    box-sizing: border-box;
+}
+
+/* Image Preview Area */
+.image-preview-area {
+    display: flex; /* Use flex to align image and remove button */
+    flex-direction: column; /* Stack image above button */
+    align-items: center; /* Center the image/button */
+    background-color: #222;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    max-width: 100%; /* Ensure it doesn't overflow */
+    box-sizing: border-box;
+    /* Initially hidden, shown by JS when image is selected */
+    display: none; /* Use display: none to hide when empty */
+}
+#uploaded-image-preview {
+    max-width: 100%; /* Make image responsive within its container */
+    height: auto; /* Maintain aspect ratio */
+    border-radius: 5px;
+    margin-bottom: 10px; /* Space below image */
+}
+.remove-image-button {
+    background-color: #ff6666; /* Red color for remove button */
+    color: white;
+    border: none;
+    border-radius: 50%; /* Make it round */
+    width: 25px; /* Size of the button */
+    height: 25px;
+    font-size: 1.2em;
+    line-height: 1; /* Center the 'x' */
+    padding: 0;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+.remove-image-button:hover {
+    background-color: #cc0000;
+}
+
+
+#ai-response {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #555;
+    border-radius: 8px; /* Rounded corners for response box */
+    background-color: #222; /* Dark background for response box */
+    color: #eee;
+    min-height: 150px;
+    overflow-y: auto;
+    text-align: left;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    flex-grow: 1; /* Allow response area to take available space */
+    box-sizing: border-box; /* Include padding and border in width */
+}
+
+#ai-response p {
+    margin: 0;
+    line-height: 1.6;
+    color: #bbb;
+}
+
+#ai-response.loading {
+    font-style: italic;
+    color: #888;
+    /* Add pulse glow for loading state */
+    animation: pulseGlow 1.5s infinite alternate;
+}
+@keyframes pulseGlow {
+    0% { box-shadow: 0 0 8px rgba(0, 170, 255, 0.3); }
+    100% { box-shadow: 0 0 15px rgba(0, 170, 255, 0.6); }
+}
+
+
+.prompt-input-area {
+    width: 100%; /* Make the wrapper fill the container width */
+    display: flex;
+    flex-direction: column; /* Stack prompt and controls vertically */
+    align-items: flex-start; /* Align children (prompt/button) to the left */
+    box-sizing: border-box;
+}
+
+#user-prompt {
+    width: 100%; /* Make textarea fill the wrapper width */
+    padding: 10px;
+    margin-bottom: 10px; /* Space below prompt box */
+    border: 1px solid #555;
+    border-radius: 8px; /* Rounded corners for prompt box */
+    background-color: #222; /* Dark background for prompt box */
+    color: #eee;
+    font-size: 1em;
+    resize: vertical;
+    box-sizing: border-box;
+    /* Optional: Glow on focus */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#user-prompt:focus {
+    outline: none;
+    border-color: #00aaff;
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
+}
+
+
+#user-prompt::placeholder {
+    color: #888;
+}
+
+.input-controls {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px; /* Space between buttons */
+}
+
+/* AI Page Buttons use the .nav-button style */
+/* Override the background color for AI page buttons */
+#upload-image-button,
+#send-prompt-button {
+    background-color: #3A3B3C; /* Dark Gray background */
+    /* Inherit other styles like color, border, border-radius, etc. from .nav-button */
+}
+
+/* Adjust hover and active states for the AI page buttons */
+#upload-image-button:hover,
+#send-prompt-button:hover {
+    background-color: #4A4B4C; /* Slightly lighter gray on hover */
+    /* Inherit text-shadow from .nav-button:hover */
+}
+
+#upload-image-button:active,
+#send-prompt-button:active {
+    background-color: #2A2B2C; /* Slightly darker gray on active */
+    /* Inherit transform and box-shadow from .nav-button:active */
+}
+
+
+/* --- Styles for Sliding Color Puzzle (color-match-game.css should contain these) --- */
+/* These styles are *not* in style.css anymore, they are in color-match-game.css */
+/*
+.game-container { ... }
+.target-image-container { ... }
+#target-image { ... }
+.player-game-area { ... }
+.game-info { ... }
+#game-status { ... }
+#move-counter, #score { ... }
+.game-grid { ... }
+.game-tile { ... }
+.game-tile.empty { ... }
+#player-grid .game-tile:not(.empty):hover { ... }
+.won { ... }
+*/
+
+/* --- NEW CHAT STYLES (Added to the end of your existing CSS) --- */
+/* General Wrapper for Chat */
+.chat-wrapper {
+    /* Most styles can be inherited from .game-wrapper which is similar */
+    background-color: #2a2a2a; /* Dark background */
+    border: 1px solid #444; /* Border color */
+    border-radius: 8px; /* Rounded corners */
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5); /* Shadow for depth */
+    padding: 20px;
+    margin: 20px 0; /* Vertical margin */
+    width: 100%;
+    max-width: 800px; /* Max width for consistency with other content */
+    display: flex;
+    flex-direction: column; /* Stack children vertically */
+    align-items: center; /* Center horizontally */
+    min-height: 400px; /* Give it some minimum height */
+    justify-content: center; /* Center content vertically initially */
+    /* Inherit entry animation from .game-item or .ai-container for consistency */
+    opacity: 0;
+    animation: itemEntry 0.6s ease-out forwards;
+}
+
+/* Individual Chat Screens (Username, Room Selection, Join Room, Chat Room) */
+.chat-screen {
+    background-color: #2a2a2a; /* Same as wrapper or slightly different */
+    padding: 25px;
+    border-radius: 8px;
+    border: 1px solid #444;
+    color: #eee;
+    text-align: center;
+    width: 100%;
+    max-width: 400px; /* Max width for these smaller screens */
+    margin-bottom: 20px; /* Space between screens if multiple are visible */
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+    display: flex; /* For internal layout */
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* Space between elements inside the screen */
+}
+
+.chat-screen h3 {
+    color: #00ffaa; /* Vibrant green, consistent with titles */
+    margin-top: 0;
+    margin-bottom: 5px;
+}
+
+.chat-screen input[type="text"] {
+    width: calc(100% - 20px); /* Full width minus padding */
+    padding: 10px;
+    border: 1px solid #555;
+    background-color: #333;
+    color: #eee;
+    border-radius: 5px;
+    font-size: 1em;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chat-screen input[type="text"]:focus {
+    border-color: #00aaff; /* Blue glow on focus, consistent with AI input */
+    box-shadow: 0 0 8px rgba(0, 170, 255, 0.8);
+}
+
+/* Small buttons within chat screens (e.g., Back button) */
+.chat-screen .nav-button.small-button {
+    width: auto; /* Override full width of regular nav-button */
+    max-width: fit-content; /* Adjust to content */
+    padding: 5px 10px;
+    font-size: 0.8em;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    background-color: #555; /* Slightly different background for sub-buttons */
+}
+
+.chat-screen .nav-button.small-button:hover {
+    background-color: #777;
+}
+
+.error-message {
+    color: #ff6347; /* Red for errors */
+    font-size: 0.9em;
+    margin-top: 10px;
+}
+
+/* Chat Room Specific Styles */
+#chat-room-container {
+    display: flex; /* Use flexbox for side-by-side layout */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 20px; /* Space between chat and info panels */
+    width: 100%;
+    max-width: 900px; /* Increased max-width to fit both panels */
+    justify-content: center; /* Center the panels */
+}
+
+#chat-room-screen {
+    flex: 2; /* Chat screen takes more space */
+    min-width: 350px; /* Minimum width for chat screen */
+    max-width: 600px; /* Max width for chat screen */
+    min-height: 450px;
+    justify-content: space-between; /* Push input to bottom */
+    margin-bottom: 0; /* Remove bottom margin as container handles spacing */
+}
+
+/* NEW: Room Info Panel Styles */
+.room-info-panel {
+    flex: 1; /* Info panel takes remaining space */
+    min-width: 250px; /* Minimum width for info panel */
+    max-width: 300px; /* Max width for info panel */
+    text-align: left; /* Align text left within info panel */
+    margin-bottom: 0; /* Remove bottom margin */
+    align-items: flex-start; /* Align content to the start (left) */
+}
+
+.room-info-panel .info-section {
+    width: 100%;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed #444;
+}
+.room-info-panel .info-section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.room-info-panel h4 {
+    color: #00aaff; /* Blue for section titles */
+    margin-top: 0;
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+#roomOwnerUsername {
+    font-weight: bold;
+    color: #ffcc00; /* Yellow for owner name */
+}
+
+#roomMembersList {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 150px; /* Limit height for long lists */
+    overflow-y: auto; /* Scroll if list is long */
+    font-size: 0.95em;
+}
+
+#roomMembersList li {
+    margin-bottom: 3px;
+    color: #bbb;
+}
+
+#roomMembersList li.owner {
+    font-weight: bold;
+    color: #ffcc00; /* Highlight owner in list */
+}
+
+.command-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    font-size: 0.85em;
+    line-height: 1.5;
+    color: #aaffaa; /* Greenish for commands */
+}
+
+.command-list code {
+    background-color: #333;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+
+#messages {
+    width: 100%;
+    flex-grow: 1; /* Take available vertical space */
+    background-color: #1a1a1a; /* Darker background for message area */
+    border: 1px solid #333;
+    border-radius: 5px;
+    padding: 10px;
+    overflow-y: auto; /* Scroll for messages */
+    max-height: 300px; /* Max height for message area */
+    display: flex;
+    flex-direction: column; /* Stack messages */
+    gap: 5px; /* Space between messages */
+    margin-bottom: 10px;
+    text-align: left; /* Message text aligns left */
+}
+
+.chat-message {
+    font-size: 0.95em;
+    line-height: 1.4;
+    word-wrap: break-word; /* Wrap long words */
+}
+
+.chat-message .username {
+    font-weight: bold;
+    color: #00aaff; /* Blue for usernames, consistent with hover glows */
+    margin-right: 5px;
+}
+
+.chat-message .server-message {
+    color: #ffcc00; /* Yellow for server messages */
+    font-style: italic;
+    font-weight: normal;
+}
+
+.chat-message .timestamp {
+    font-size: 0.7em;
+    color: #888;
+    margin-left: 8px;
+}
+
+.chat-input-area {
+    display: flex;
+    width: 100%;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.chat-input-area input {
+    flex-grow: 1; /* Input takes most space */
+    width: auto; /* Override default width */
+}
+
+.chat-input-area button {
+    flex-shrink: 0; /* Button doesn't shrink */
+    width: auto; /* Auto width */
+    max-width: 100px;
+    margin: 0; /* Remove top/bottom margin inherited from .nav-button */
+}
+
+
+/* Media Queries for Responsiveness - Merged Chat Specifics */
 @media (max-width: 768px) {
-    main {
-        padding: 15px; /* Adjust main padding for medium screens */
-    }
+    .main-title { font-size: 3.5rem; }
+    .description { font-size: 1.1em; max-width: 90%; margin-bottom: 30px; }
+    nav ul { gap: 15px; }
+    .nav-button { padding: 8px 18px; font-size: 1em; }
+    main h2 { font-size: 2.2em; }
+    main p:not(.description):not(.last-updated) { font-size: 1em; margin-bottom: 25px; }
+    .game-item, .project-item { width: 90%; padding: 20px; margin-bottom: 20px; }
+    .game-item h3, .project-item h3 { font-size: 1.3em; }
+    .game-link-button, .project-link-button { padding: 7px 12px; font-size: 0.9em; margin-top: 8px; }
 
-    h2 {
-        font-size: 2em; /* Smaller heading on medium screens */
-    }
 
-    main > p {
-        font-size: 1em;
-        margin-bottom: 20px;
-    }
-
-    nav ul {
-        gap: 15px; /* Smaller gap in navigation */
-    }
-
-    .nav-button {
-        padding: 8px 12px;
-        font-size: 1em;
-    }
-
-    .game-item,
-    .project-item {
+    /* AI page adjustments */
+    .ai-container {
+        flex-direction: column; /* Stack history and interaction vertically on smaller screens */
+        width: 95%;
         padding: 20px;
-        margin-bottom: 15px; /* Smaller space between items */
+        min-height: 400px;
+        gap: 20px; /* Space between areas */
     }
-
-    .game-item h3,
-    .project-item h3 {
-        font-size: 1.4em;
+    .ai-interaction-area {
+        width: 100%; /* Interaction area takes full width */
     }
-
-    .game-item p,
-    .project-item p {
-        font-size: 0.95em;
+    #ai-response {
+        padding: 10px;
+        min-height: 100px;
+        margin-bottom: 0; /* Gap is handled by container */
     }
-
-    .game-link-button,
-    .project-link-button {
+    .prompt-input-area {
+        align-items: center; /* Center button on small screens */
+    }
+    #user-prompt {
+        margin-bottom: 10px; /* Reduce margin below prompt */
+    }
+    .input-controls {
+        justify-content: center; /* Center buttons when stacked */
+        gap: 10px; /* Space between buttons */
+    }
+    .nav-button { /* Applies to all .nav-button */
         padding: 8px 18px;
+        font-size: 1em;
+    }
+
+
+    /* Item Entry Animation adjustments */
+    .game-item, .project-item, .ai-container, .chat-wrapper { /* Added .chat-wrapper here */
+        animation-delay: 0.2s; /* Maybe reduce delay on smaller screens */
+    }
+
+    /* Chat specific adjustments for 768px breakpoint */
+    .chat-screen {
+        max-width: 350px;
+        padding: 20px;
+        gap: 10px;
+    }
+    #chat-room-container {
+        flex-direction: column; /* Stack chat and info panels vertically */
+        max-width: 600px; /* Revert to single-panel max-width */
+        gap: 15px; /* Space between stacked panels */
+    }
+    #chat-room-screen, .room-info-panel {
+        flex: none; /* Remove flex grow */
+        width: 100%; /* Take full width when stacked */
+        max-width: unset; /* Remove max-width when stacked */
+        margin-bottom: 0; /* Ensure no extra margin */
+    }
+    #chat-room-screen {
+        min-height: 350px; /* Adjust height for stacked layout */
+    }
+    .room-info-panel {
+        padding: 20px;
+    }
+    #roomMembersList {
+        max-height: 100px; /* Adjust height for smaller screen */
+    }
+    #messages {
+        max-height: 250px;
+    }
+    .chat-message {
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 600px) {
+    /* Adjust iframe height on smaller screens if needed */
+    .google-form-container iframe {
+        min-height: 500px;
+    }
+    nav ul {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    .nav-button {
+        font-size: 0.9em;
+        padding: 6px 12px;
+    }
+    .nav-button { /* Applies to all .nav-button */
+        padding: 6px 12px;
         font-size: 0.9em;
     }
 }
 
 @media (max-width: 480px) {
-    main {
-        padding: 10px; /* Smallest padding for very small screens */
-    }
-    h2 {
-        font-size: 1.8em;
-    }
-    nav ul {
-        flex-direction: column; /* Stack navigation buttons vertically on small screens */
-        gap: 10px;
-    }
-    .nav-button {
-        width: calc(100% - 20px); /* Full width minus padding for nav buttons */
-        text-align: center;
-    }
-    .game-item,
-    .project-item {
+    .main-title { font-size: 2.8rem; }
+    .description { font-size: 1em; margin-bottom: 25px; }
+    nav { margin-bottom: 25px; }
+    main h2 { font-size: 2em; margin-bottom: 15px; }
+    main p:not(.description):not(.last-updated) { margin-bottom: 20px; }
+    .game-item, .project-item { padding: 15px; margin-bottom: 15px; }
+    .game-item h3, .project-item h3 { font-size: 1.2em; }
+    .game-link-button, .project-link-button { padding: 6px 10px; font-size: 0.8em; margin-top: 6px; }
+
+    /* AI page adjustments */
+    .ai-container {
         padding: 15px;
-        margin-bottom: 10px;
+        min-height: 350px;
+        gap: 15px; /* Space between areas */
+    }
+    #ai-response {
+        padding: 8px;
+        min-height: 80px;
+    }
+    #user-prompt {
+        padding: 8px;
+        margin-bottom: 8px;
+    }
+    .input-controls {
+        flex-direction: column; /* Stack buttons vertically */
+        gap: 8px; /* Space between stacked buttons */
+        align-items: stretch; /* Make buttons fill width */
+    }
+    .nav-button { /* Applies to all .nav-button */
+        padding: 6px 10px;
+        font-size: 0.8em;
+        width: 100%; /* Make buttons fill the container width */
+        text-align: center; /* Center text in buttons */
+    }
+
+
+    /* Item Entry Animation adjustments */
+    .game-item, .project-item, .ai-container, .chat-wrapper { /* Added .chat-wrapper here */
+        animation-delay: 0s; /* Maybe remove delay on small screens */
+        animation: fadeIn 0.6s ease-out forwards; /* Use simpler fadeIn if entry looks bad */
+    }
+
+    /* Chat specific adjustments for 480px breakpoint */
+    .chat-screen {
+        max-width: 95%;
+        padding: 15px;
+        gap: 8px;
+    }
+    #chat-room-screen {
+        min-height: 300px; /* Adjust height for stacked layout */
+    }
+    #messages {
+        max-height: 150px;
+    }
+    .chat-message {
+        font-size: 0.85em;
+    }
+    .chat-input-area {
+        flex-direction: column; /* Stack input and button on very small screens */
+    }
+    .chat-input-area button {
+        width: 100%;
+        max-width: unset;
     }
 }
