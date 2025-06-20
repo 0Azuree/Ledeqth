@@ -107,62 +107,87 @@ footer {
     width: 100%;
 }
 
-/* --- Item Styling (for both games and projects) --- */
-.game-item,
-.project-item {
-    background-color: #2c2c2c; /* Dark background for items as in your image */
-    border-radius: 8px; /* Slightly rounded corners */
-    padding: 25px; /* Internal spacing */
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3); /* Subtle shadow */
-    color: #e0e0e0; /* Light text color */
-    margin-bottom: 20px; /* Space between items */
+/* --- Card Grids for Games and Projects --- */
+.games-grid,
+.projects-grid {
+    display: grid;
+    /* Responsive grid: 2 columns on larger screens, 1 on smaller */
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); /* Adjusted minmax for better fit */
+    gap: 30px; /* Space between cards */
     width: 100%;
-    max-width: 700px; /* Max width for each item for better readability */
-    box-sizing: border-box; /* Include padding in width */
+    max-width: 900px; /* Max width for the grid container */
+    margin: 20px auto; /* Center the grid */
 }
 
-.game-item h3,
-.project-item h3 {
+/* --- Individual Game/Project Cards --- */
+.game-card,
+.project-card {
+    background-color: #2c2c2c; /* Dark background for cards as in image */
+    border-radius: 12px; /* More rounded corners */
+    padding: 30px; /* More internal spacing */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4); /* Deeper shadow */
+    color: #e0e0e0; /* Light text color */
+    display: flex; /* Use flexbox for internal layout */
+    flex-direction: column; /* Stack children vertically */
+    justify-content: space-between; /* Pushes button to bottom */
+    min-height: 200px; /* Ensure consistent minimum height */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out; /* Smooth hover effects */
+}
+
+.game-card:hover,
+.project-card:hover {
+    transform: translateY(-5px); /* Lift effect on hover */
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.5); /* Enhanced shadow on hover */
+}
+
+.game-card h3,
+.project-card h3 {
     color: #007bff; /* Blue for titles as in your image */
-    font-size: 1.6em; /* Adjust font size */
+    font-size: 1.8em; /* Slightly larger title */
     margin-top: 0;
-    margin-bottom: 8px;
+    margin-bottom: 12px;
 }
 
-.game-item p,
-.project-item p {
-    font-size: 1em;
-    line-height: 1.5;
-    margin-bottom: 15px; /* Space between text and button */
+.game-card p,
+.project-card p {
+    font-size: 1.1em;
+    line-height: 1.6;
+    margin-bottom: 20px; /* More space between text and button */
+    flex-grow: 1; /* Allows description to take available space */
 }
 
-/* --- Link Buttons within Items --- */
-.game-link-button,
-.project-link-button {
-    display: inline-block;
+/* --- Buttons within Cards --- */
+.game-button,
+.project-button {
+    display: inline-block; /* Or 'block' if you want it full width within the card */
     background-color: #007bff; /* Blue button as in your image */
     color: white;
-    padding: 10px 20px;
+    padding: 12px 25px; /* Larger padding for a more prominent button */
     border: none;
-    border-radius: 5px; /* Rounded corners for buttons */
+    border-radius: 8px; /* More rounded corners for buttons */
     text-decoration: none; /* Remove underline */
-    font-size: 1em;
+    font-size: 1.1em; /* Slightly larger font size */
+    font-weight: bold; /* Make text bold */
     cursor: pointer;
-    transition: background-color 0.3s ease, transform 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2); /* Button shadow */
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    align-self: flex-start; /* Align button to the start (left) within the flex container */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3); /* Button shadow */
+    text-transform: uppercase; /* Make button text uppercase */
+    letter-spacing: 0.5px; /* Add slight letter spacing */
 }
 
-.game-link-button:hover,
-.project-link-button:hover {
+.game-button:hover,
+.project-button:hover {
     background-color: #0056b3; /* Darker blue on hover */
-    transform: translateY(-1px); /* Slight lift effect */
+    transform: translateY(-2px); /* More pronounced lift effect */
+    box-shadow: 0 6px 12px rgba(0,0,0,0.4); /* Enhanced shadow on hover */
 }
 
-.game-link-button:active,
-.project-link-button:active {
+.game-button:active,
+.project-button:active {
     background-color: #004085;
     transform: translateY(0);
-    box-shadow: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 /* --- Responsive Adjustments --- */
@@ -189,26 +214,33 @@ footer {
         font-size: 1em;
     }
 
-    .game-item,
-    .project-item {
-        padding: 20px;
-        margin-bottom: 15px;
+    .games-grid,
+    .projects-grid {
+        grid-template-columns: 1fr; /* Stack cards on smaller screens */
+        gap: 25px;
+        padding: 0 10px; /* Add some horizontal padding */
     }
 
-    .game-item h3,
-    .project-item h3 {
-        font-size: 1.4em;
+    .game-card,
+    .project-card {
+        padding: 25px;
+        min-height: 180px;
     }
 
-    .game-item p,
-    .project-item p {
+    .game-card h3,
+    .project-card h3 {
+        font-size: 1.6em;
+    }
+
+    .game-card p,
+    .project-card p {
         font-size: 0.95em;
     }
 
-    .game-link-button,
-    .project-link-button {
-        padding: 8px 18px;
-        font-size: 0.9em;
+    .game-button,
+    .project-button {
+        padding: 10px 20px;
+        font-size: 0.95em;
     }
 }
 
@@ -227,9 +259,13 @@ footer {
         width: calc(100% - 20px); /* Full width minus padding */
         text-align: center;
     }
-    .game-item,
-    .project-item {
-        padding: 15px;
-        margin-bottom: 10px;
+    .games-grid,
+    .projects-grid {
+        gap: 20px;
+    }
+    .game-card,
+    .project-card {
+        padding: 20px;
+        min-height: unset; /* Allow height to adjust */
     }
 }
