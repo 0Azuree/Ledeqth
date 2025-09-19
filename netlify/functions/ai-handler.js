@@ -1,4 +1,3 @@
-// netlify/functions/ai-handler.js
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 exports.handler = async function(event, context) {
@@ -16,7 +15,7 @@ exports.handler = async function(event, context) {
     const primaryApiKey = process.env.GEMINI_API_KEY; // This name must match Netlify
     const secondaryApiKey = process.env.GEMINI_API_KEY_2; // This name must match Netlify
 
-    // Check if primary key is missing (this causes the first error you saw)
+    // Check if primary key is missing
     if (!primaryApiKey) {
       return {
         statusCode: 500,
@@ -25,7 +24,7 @@ exports.handler = async function(event, context) {
     }
 
     let apiKeysToTry = [];
-    const targetModel = "gemini-2.0-flash"; // Force all requests to use gemini-2.0-flash
+    const targetModel = "gemini-2.5-flash"; // Force all requests to use gemini-2.5-flash
 
     if (model === 'gemini-2.0-flash') {
       // If AI-1 is selected, try primary then secondary key
@@ -45,10 +44,10 @@ exports.handler = async function(event, context) {
     }
 
     if (apiKeysToTry.length === 0) {
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ message: 'No valid API keys configured for the selected AI option.' })
-        };
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ message: 'No valid API keys configured for the selected AI option.' })
+      };
     }
 
     let aiResponseText = null;
@@ -56,38 +55,38 @@ exports.handler = async function(event, context) {
 
     // Try each API key until a successful response is received
     for (const apiKey of apiKeysToTry) {
-        try {
-            const genAI = new GoogleGenerativeAI(apiKey);
-            const generativeModel = genAI.getGenerativeModel({ model: targetModel }); // Use targetModel here
+      try {
+        const genAI = new GoogleGenerativeAI(apiKey);
+        const generativeModel = genAI.getGenerativeModel({ model: targetModel }); // Use targetModel here
 
-            let parts = [];
-            if (prompt) {
-                parts.push({ text: prompt });
-            }
-            if (imageData && imageData.data && imageData.mimeType) {
-                parts.push({
-                    inlineData: {
-                        mimeType: imageData.mimeType,
-                        data: imageData.data
-                    }
-                });
-            }
-
-            if (parts.length === 0) {
-                return {
-                    statusCode: 400,
-                    body: JSON.stringify({ message: 'No prompt or image data provided.' })
-                };
-            }
-
-            const result = await generativeModel.generateContent({ contents: [{ role: "user", parts: parts }] });
-            const response = await result.response;
-            aiResponseText = response.text();
-            break; // Exit loop on first successful response
-        } catch (error) {
-            console.warn(`Attempt with API key failed for model ${targetModel}. Trying next if available. Error: ${error.message}`);
-            lastError = error; // Store the last error
+        let parts = [];
+        if (prompt) {
+          parts.push({ text: prompt });
         }
+        if (imageData && imageData.data && imageData.mimeType) {
+          parts.push({
+            inlineData: {
+              mimeType: imageData.mimeType,
+              data: imageData.data
+            }
+          });
+        }
+
+        if (parts.length === 0) {
+          return {
+            statusCode: 400,
+            body: JSON.stringify({ message: 'No prompt or image data provided.' })
+          };
+        }
+
+        const result = await generativeModel.generateContent({ contents: [{ role: "user", parts: parts }] });
+        const response = await result.response;
+        aiResponseText = response.text();
+        break; // Exit loop on first successful response
+      } catch (error) {
+        console.warn(`Attempt with API key failed for model ${targetModel}. Trying next if available. Error: ${error.message}`);
+        lastError = error; // Store the last error
+      }
     }
 
     if (aiResponseText !== null) {
